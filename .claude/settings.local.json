@@ -9,7 +9,8 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd core SDK structure and authentication\n\nImplemented:\n- Config struct with validation\n- Error types and wrapping\n- Common types and enums \\(TaskStatus, IntegrityLevel, etc.\\)\n- Client struct with GraphQL integration\n- Authentication: Login\\(\\), CreateAPIToken\\(\\), GetMe\\(\\)\n- Token refresh and session management\n- Request authentication with headers\n\nFiles:\n- pkg/mythic/config.go\n- pkg/mythic/errors.go  \n- pkg/mythic/types/common.go\n- pkg/mythic/client.go\n- pkg/mythic/auth.go\n\nDependencies added:\n- github.com/hasura/go-graphql-client@v0.10.0\n\nCode compiles successfully with `go build ./pkg/mythic/...`\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(go test:*)",
-      "Bash(go tool cover:*)"
+      "Bash(go tool cover:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd CI/CD workflows and linting configuration\n\nGitHub Actions workflows:\n- test.yml: Lint, test, and build on push/PR\n  - Matrix testing: Go 1.21, 1.22, 1.23\n  - Multi-OS: Ubuntu, macOS, Windows\n  - Code coverage upload to Codecov\n  - Verify go.mod is tidy\n\n- integration.yml: Integration tests against live Mythic\n  - Scheduled daily runs\n  - Manual trigger support\n  - Docker Compose setup for test Mythic instance\n  - Artifact upload on failure\n\nConfiguration:\n- .golangci.yml: Comprehensive linter configuration\n  - 13 linters enabled \\(errcheck, gosimple, govet, etc.\\)\n  - gosec for security scanning\n  - Test-specific exclusions\n\nIntegration test infrastructure:\n- tests/integration/docker-compose.yml\n  - Mythic server, PostgreSQL, RabbitMQ\n  - Isolated test network\n  - Persistent volumes\n\nCoverage: 36.4% \\(baseline for core types and config\\)\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
