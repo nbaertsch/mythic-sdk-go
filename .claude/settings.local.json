@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(go build:*)",
+      "Bash(go get:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go doc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd core SDK structure and authentication\n\nImplemented:\n- Config struct with validation\n- Error types and wrapping\n- Common types and enums \\(TaskStatus, IntegrityLevel, etc.\\)\n- Client struct with GraphQL integration\n- Authentication: Login\\(\\), CreateAPIToken\\(\\), GetMe\\(\\)\n- Token refresh and session management\n- Request authentication with headers\n\nFiles:\n- pkg/mythic/config.go\n- pkg/mythic/errors.go  \n- pkg/mythic/types/common.go\n- pkg/mythic/client.go\n- pkg/mythic/auth.go\n\nDependencies added:\n- github.com/hasura/go-graphql-client@v0.10.0\n\nCode compiles successfully with `go build ./pkg/mythic/...`\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
