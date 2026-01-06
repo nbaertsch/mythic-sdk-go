@@ -71,8 +71,8 @@ func NewClient(config *Config) (*Client, error) {
 		authenticated: false,
 	}
 
-	// If we already have an access token, consider authenticated
-	if config.AccessToken != "" {
+	// If we have an API token or access token, consider authenticated
+	if config.APIToken != "" || config.AccessToken != "" {
 		client.authenticated = true
 	}
 
