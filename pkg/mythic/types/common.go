@@ -6,13 +6,13 @@ import "time"
 type TaskStatus string
 
 const (
-	TaskStatusSubmitted    TaskStatus = "submitted"
-	TaskStatusProcessing   TaskStatus = "processing"
-	TaskStatusProcessed    TaskStatus = "processed"
-	TaskStatusCompleted    TaskStatus = "completed"
-	TaskStatusError        TaskStatus = "error"
+	TaskStatusSubmitted     TaskStatus = "submitted"
+	TaskStatusProcessing    TaskStatus = "processing"
+	TaskStatusProcessed     TaskStatus = "processed"
+	TaskStatusCompleted     TaskStatus = "completed"
+	TaskStatusError         TaskStatus = "error"
 	TaskStatusPreprocessing TaskStatus = "preprocessing"
-	TaskStatusDelegating   TaskStatus = "delegating"
+	TaskStatusDelegating    TaskStatus = "delegating"
 )
 
 // CallbackIntegrityLevel represents Windows integrity levels.
@@ -70,7 +70,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	}
 
 	for _, format := range formats {
-		parsed, err := time.Parse(format, s)
+		parsed, err = time.Parse(format, s)
 		if err == nil {
 			t.Time = parsed
 			return nil

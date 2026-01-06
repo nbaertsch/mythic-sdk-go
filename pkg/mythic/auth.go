@@ -121,10 +121,10 @@ func (c *Client) GetMe(ctx context.Context) (*Operator, error) {
 
 	var query struct {
 		Operator []struct {
-			ID              int    `graphql:"id"`
-			Username        string `graphql:"username"`
-			Admin           bool   `graphql:"admin"`
-			Active          bool   `graphql:"active"`
+			ID               int    `graphql:"id"`
+			Username         string `graphql:"username"`
+			Admin            bool   `graphql:"admin"`
+			Active           bool   `graphql:"active"`
 			CurrentOperation struct {
 				ID   int    `graphql:"id"`
 				Name string `graphql:"name"`

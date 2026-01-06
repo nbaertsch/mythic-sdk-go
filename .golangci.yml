@@ -20,7 +20,8 @@ linters-settings:
     check-blank: true
 
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
 
   revive:
     rules:
@@ -54,15 +55,18 @@ issues:
         - gosec
         - errcheck
 
+  exclude-dirs:
+    - vendor
+
+  exclude-files:
+    - ".*\\.pb\\.go$"
+
 run:
   timeout: 5m
   tests: true
-  skip-dirs:
-    - vendor
-  skip-files:
-    - ".*\\.pb\\.go$"
 
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
