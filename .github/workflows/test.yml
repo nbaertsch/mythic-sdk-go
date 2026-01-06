@@ -48,6 +48,7 @@ jobs:
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out -coverpkg=./pkg/mythic/... ./tests/unit/...
+        shell: bash
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.23'
