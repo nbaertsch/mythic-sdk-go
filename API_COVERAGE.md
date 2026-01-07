@@ -24,7 +24,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | C2 Profiles | 9 | 0 | 0 | 9 |
 | Artifacts | 7 | 0 | 0 | 7 |
 | Tags | 11 | 0 | 0 | 11 |
-| Tokens | 0 | 0 | 4 | 4 |
+| Tokens | 7 | 0 | 0 | 7 |
 | Processes | 6 | 0 | 0 | 6 |
 | Keylogs | 3 | 0 | 0 | 3 |
 | Browser Scripts | 0 | 0 | 3 | 3 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **100** | **0** | **44** | **144** |
+| **TOTAL** | **107** | **0** | **44** | **151** |
 
-**Overall Coverage: 69.4%**
+**Overall Coverage: 70.9%**
 
 ---
 
@@ -743,19 +743,125 @@ The tag system uses a two-tier structure:
 
 ## 11. Tokens
 
-### ⏳ Pending (4/4)
+### ✅ Tested (7/7 - 100%)
 
-- **GetTokens()** - List tokens (process/user tokens)
+**Note:** This includes 4 core Client API methods plus 3 additional helper methods for token management. Mythic tracks three types of tokens: process/user security tokens, callback token associations, and API authentication tokens.
+
+**Process/User Security Tokens:**
+
+- **GetTokens()** - List tokens (process/user tokens) for current operation
+  - File: `pkg/mythic/tokens.go:10`
+  - Tests: `tests/integration/tokens_test.go:13`
+  - Database: `token` table with operation filter
+  - Returns non-deleted tokens sorted by timestamp (newest first)
+
+- **GetTokensByOperation()** - List tokens for specific operation
+  - File: `pkg/mythic/tokens.go:26`
+  - Tests: `tests/integration/tokens_test.go:53`
+  - Database: `token` table with operation filter
+
+- **GetTokenByID()** - Get specific token by ID
+  - File: `pkg/mythic/tokens.go:106`
+  - Tests: `tests/integration/tokens_test.go:86`
   - Database: `token` table
 
-- **GetCallbackTokens()** - Get tokens for callback
+**Callback Token Associations:**
+
+- **GetCallbackTokens()** - Get callback tokens for current operation
+  - File: `pkg/mythic/tokens.go:184`
+  - Tests: `tests/integration/tokens_test.go:103`
   - Database: `callbacktoken` table
+  - Returns tokens associated with callbacks, sorted by timestamp (newest first)
 
-- **GetAPITokens()** - List API tokens
+- **GetCallbackTokensByCallback()** - Get tokens for specific callback
+  - File: `pkg/mythic/tokens.go:220`
+  - Tests: `tests/integration/tokens_test.go:133`
+  - Database: `callbacktoken` table with callback filter
+  - Input: callback ID
+
+**API Authentication Tokens:**
+
+- **GetAPITokens()** - List API authentication tokens
+  - File: `pkg/mythic/tokens.go:262`
+  - Tests: `tests/integration/tokens_test.go:173`
   - Database: `apitokens` table
+  - Returns non-deleted API tokens sorted by creation time (newest first)
 
-- **DeleteAPIToken()** - Delete API token
+- **DeleteAPIToken()** - Delete API authentication token
+  - File: `pkg/mythic/tokens.go:298`
+  - Tests: `tests/integration/tokens_test.go:202`
   - GraphQL: `deleteAPIToken` mutation
+  - Input: API token ID
+
+**Helper Methods (on Token type):**
+
+- **Token.String()** - String representation showing user and host
+  - File: `pkg/mythic/types/token.go:35`
+  - Tests: `tests/unit/tokens_test.go:11`
+
+- **Token.IsDeleted()** - Check if token is marked as deleted
+  - File: `pkg/mythic/types/token.go:51`
+  - Tests: `tests/unit/tokens_test.go:60`
+
+- **Token.HasTask()** - Check if token is linked to a task
+  - File: `pkg/mythic/types/token.go:56`
+  - Tests: `tests/unit/tokens_test.go:80`
+
+- **Token.GetIntegrityLevelString()** - Get human-readable integrity level
+  - File: `pkg/mythic/types/token.go:61`
+  - Tests: `tests/unit/tokens_test.go:97`
+  - Returns: Untrusted, Low, Medium, High, System, or Unknown
+
+**Helper Methods (on CallbackToken type):**
+
+- **CallbackToken.String()** - String representation
+  - File: `pkg/mythic/types/token.go:86`
+  - Tests: `tests/unit/tokens_test.go:192`
+
+**Helper Methods (on APIToken type):**
+
+- **APIToken.String()** - String representation showing name and type
+  - File: `pkg/mythic/types/token.go:112`
+  - Tests: `tests/unit/tokens_test.go:271`
+
+- **APIToken.IsActive()** - Check if token is active
+  - File: `pkg/mythic/types/token.go:120`
+  - Tests: `tests/unit/tokens_test.go:293`
+
+- **APIToken.IsDeleted()** - Check if token is marked as deleted
+  - File: `pkg/mythic/types/token.go:125`
+  - Tests: `tests/unit/tokens_test.go:314`
+
+**Token Types:**
+
+1. **Token (Process/User Security Tokens)**: Windows security tokens used for impersonation and privilege escalation
+   - Contains: User, Groups, Privileges, Process ID, Thread ID, Session ID, Integrity Level
+   - Used by agents to track and leverage stolen tokens
+   - Viewable from "Search" -> "Tokens" page in Mythic UI
+
+2. **CallbackToken**: Association between callbacks and tokens for tasking
+   - Links tokens to specific callbacks
+   - Allows agents to use tokens for subsequent tasking
+   - Separate from general token reporting
+
+3. **APIToken**: Authentication tokens for Mythic API access
+   - Used for programmatic access to Mythic
+   - Token types: User, C2
+   - Can be created via CreateAPIToken() in auth.go:138
+   - Active/inactive state tracking
+
+**Token Integrity Levels:**
+- 0: Untrusted
+- 1: Low (restricted user)
+- 2: Medium (standard user)
+- 3: High (administrator)
+- 4: System (SYSTEM account)
+
+**Use Cases:**
+- Track stolen Windows security tokens during operations
+- Associate tokens with callbacks for token impersonation
+- Manage API tokens for automation and integration
+- Monitor token privilege levels across the operation
 
 ---
 
