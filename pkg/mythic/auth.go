@@ -247,7 +247,8 @@ func (c *Client) ClearRefreshToken() {
 }
 
 // RefreshAccessToken refreshes the access token using the refresh token.
-// This is called automatically when a request fails with an authentication error.
+// This uses the REST /refresh endpoint, not GraphQL.
+// Requires both access_token and refresh_token from the initial login.
 func (c *Client) RefreshAccessToken(ctx context.Context) error {
 	c.authMutex.Lock()
 	defer c.authMutex.Unlock()
@@ -256,39 +257,87 @@ func (c *Client) RefreshAccessToken(ctx context.Context) error {
 		return WrapError("RefreshAccessToken", ErrAuthenticationFailed, "no refresh token available")
 	}
 
-	var mutation struct {
-		RefreshToken struct {
-			AccessToken  string `graphql:"access_token"`
-			RefreshToken string `graphql:"refresh_token"`
-		} `graphql:"refreshToken(refresh_token: $refresh_token)"`
+	// Construct refresh endpoint URL
+	scheme := "https"
+	if !c.config.SSL {
+		scheme = "http"
 	}
+	refreshURL := fmt.Sprintf("%s://%s/refresh", scheme, stripScheme(c.config.ServerURL))
 
-	variables := map[string]interface{}{
+	// Prepare refresh request
+	refreshReq := map[string]string{
+		"access_token":  c.config.AccessToken,
 		"refresh_token": c.config.RefreshToken,
 	}
 
-	// Create authenticated GraphQL client manually to avoid deadlock
-	// We can't use executeMutation() because we're already holding authMutex lock
-	// and executeMutation() calls IsAuthenticated() which would try to acquire the lock again
-	headers := c.getAuthHeaders()
-	client := c.graphqlClient.WithRequestModifier(func(req *http.Request) {
-		for key, value := range headers {
-			req.Header.Set(key, value)
-		}
-	})
-
-	err := client.Mutate(ctx, &mutation, variables)
+	jsonData, err := json.Marshal(refreshReq)
 	if err != nil {
-		return WrapError("RefreshAccessToken", err, "failed to refresh token")
+		return WrapError("RefreshAccessToken", err, "failed to marshal refresh request")
 	}
 
-	if mutation.RefreshToken.AccessToken == "" {
-		return WrapError("RefreshAccessToken", ErrInvalidResponse, "no access token returned")
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", refreshURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return WrapError("RefreshAccessToken", err, "failed to create refresh request")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Add authentication header (refresh endpoint requires authentication)
+	if c.config.APIToken != "" {
+		req.Header.Set("apitoken", c.config.APIToken)
+	} else if c.config.AccessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.config.AccessToken)
 	}
 
-	// Update tokens
-	c.config.AccessToken = mutation.RefreshToken.AccessToken
-	c.config.RefreshToken = mutation.RefreshToken.RefreshToken
+	// Execute request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return WrapError("RefreshAccessToken", err, "failed to execute refresh request")
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return WrapError("RefreshAccessToken", err, "failed to read refresh response")
+	}
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return WrapError("RefreshAccessToken", ErrAuthenticationFailed, fmt.Sprintf("refresh failed with status %d: %s", resp.StatusCode, string(body)))
+	}
+
+	// Parse response (same structure as login response)
+	var refreshResp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		User         struct {
+			ID                     int    `json:"id"`
+			UserID                 int    `json:"user_id"`
+			Username               string `json:"username"`
+			CurrentOperationID     int    `json:"current_operation_id"`
+			CurrentOperation       string `json:"current_operation"`
+			CurrentOperationBanner string `json:"current_operation_banner_text"`
+		} `json:"user"`
+	}
+
+	if err := json.Unmarshal(body, &refreshResp); err != nil {
+		return WrapError("RefreshAccessToken", err, "failed to parse refresh response")
+	}
+
+	// Check if we got tokens
+	if refreshResp.AccessToken == "" {
+		return WrapError("RefreshAccessToken", ErrAuthenticationFailed, "no access token returned")
+	}
+
+	// Update tokens in config
+	c.config.AccessToken = refreshResp.AccessToken
+	c.config.RefreshToken = refreshResp.RefreshToken
+
+	// Update current operation ID if provided
+	if refreshResp.User.CurrentOperationID > 0 {
+		c.currentOperationID = &refreshResp.User.CurrentOperationID
+	}
 
 	return nil
 }
