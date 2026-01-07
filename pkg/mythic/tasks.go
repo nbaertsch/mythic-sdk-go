@@ -422,6 +422,273 @@ func (t *Task) String() string {
 		t.DisplayID, t.CommandName, t.DisplayParams, t.Status, t.Completed)
 }
 
+// ReissueTask reissues an existing task (creates a copy with same parameters).
+func (c *Client) ReissueTask(ctx context.Context, taskID int) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if taskID <= 0 {
+		return WrapError("ReissueTask", ErrInvalidInput, "task_id must be positive")
+	}
+
+	var mutation struct {
+		ReissueTask struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"reissue_task(task_id: $task_id)"`
+	}
+
+	variables := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("ReissueTask", err, "failed to reissue task")
+	}
+
+	if mutation.ReissueTask.Status != "success" {
+		return WrapError("ReissueTask", ErrInvalidResponse, fmt.Sprintf("reissue failed: %s", mutation.ReissueTask.Error))
+	}
+
+	return nil
+}
+
+// ReissueTaskWithHandler reissues a task using the handler (advanced reissue).
+func (c *Client) ReissueTaskWithHandler(ctx context.Context, taskID int) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if taskID <= 0 {
+		return WrapError("ReissueTaskWithHandler", ErrInvalidInput, "task_id must be positive")
+	}
+
+	var mutation struct {
+		ReissueTaskHandler struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"reissue_task_handler(task_id: $task_id)"`
+	}
+
+	variables := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("ReissueTaskWithHandler", err, "failed to reissue task with handler")
+	}
+
+	if mutation.ReissueTaskHandler.Status != "success" {
+		return WrapError("ReissueTaskWithHandler", ErrInvalidResponse, fmt.Sprintf("reissue failed: %s", mutation.ReissueTaskHandler.Error))
+	}
+
+	return nil
+}
+
+// RequestOpsecBypass requests OPSEC bypass for a blocked task.
+func (c *Client) RequestOpsecBypass(ctx context.Context, taskID int) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if taskID <= 0 {
+		return WrapError("RequestOpsecBypass", ErrInvalidInput, "task_id must be positive")
+	}
+
+	var mutation struct {
+		RequestOpsecBypass struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"requestOpsecBypass(task_id: $task_id)"`
+	}
+
+	variables := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("RequestOpsecBypass", err, "failed to request OPSEC bypass")
+	}
+
+	if mutation.RequestOpsecBypass.Status != "success" {
+		return WrapError("RequestOpsecBypass", ErrInvalidResponse, fmt.Sprintf("bypass request failed: %s", mutation.RequestOpsecBypass.Error))
+	}
+
+	return nil
+}
+
+// AddMITREAttackToTask tags a task with a MITRE ATT&CK technique.
+func (c *Client) AddMITREAttackToTask(ctx context.Context, taskDisplayID int, attackID string) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if taskDisplayID <= 0 {
+		return WrapError("AddMITREAttackToTask", ErrInvalidInput, "task_display_id must be positive")
+	}
+
+	if attackID == "" {
+		return WrapError("AddMITREAttackToTask", ErrInvalidInput, "attack ID (t_num) is required")
+	}
+
+	var mutation struct {
+		AddAttackToTask struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"addAttackToTask(task_display_id: $task_display_id, t_num: $t_num)"`
+	}
+
+	variables := map[string]interface{}{
+		"task_display_id": taskDisplayID,
+		"t_num":           attackID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("AddMITREAttackToTask", err, "failed to add MITRE ATT&CK tag")
+	}
+
+	if mutation.AddAttackToTask.Status != "success" {
+		return WrapError("AddMITREAttackToTask", ErrInvalidResponse, fmt.Sprintf("failed to add attack: %s", mutation.AddAttackToTask.Error))
+	}
+
+	return nil
+}
+
+// GetTasksByStatus retrieves tasks filtered by status.
+func (c *Client) GetTasksByStatus(ctx context.Context, callbackDisplayID int, status TaskStatus, limit int) ([]*Task, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if callbackDisplayID <= 0 {
+		return nil, WrapError("GetTasksByStatus", ErrInvalidInput, "callback_display_id must be positive")
+	}
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var query struct {
+		Task []struct {
+			ID             int    `graphql:"id"`
+			DisplayID      int    `graphql:"display_id"`
+			CommandName    string `graphql:"command_name"`
+			DisplayParams  string `graphql:"display_params"`
+			OriginalParams string `graphql:"original_params"`
+			Status         string `graphql:"status"`
+			Completed      bool   `graphql:"completed"`
+			Timestamp      string `graphql:"timestamp"`
+			OperatorID     int    `graphql:"operator_id"`
+		} `graphql:"task(where: {callback: {display_id: {_eq: $callback_display_id}}, status: {_eq: $status}}, order_by: {id: desc}, limit: $limit)"`
+	}
+
+	variables := map[string]interface{}{
+		"callback_display_id": callbackDisplayID,
+		"status":              string(status),
+		"limit":               limit,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetTasksByStatus", err, "failed to query tasks by status")
+	}
+
+	tasks := make([]*Task, 0, len(query.Task))
+	for _, t := range query.Task {
+		// Parse timestamp
+		var timestamp time.Time
+		if t.Timestamp != "" {
+			var mt Timestamp
+			if err := mt.UnmarshalJSON([]byte(`"` + t.Timestamp + `"`)); err == nil {
+				timestamp = mt.Time
+			}
+		}
+
+		tasks = append(tasks, &Task{
+			ID:             t.ID,
+			DisplayID:      t.DisplayID,
+			CommandName:    t.CommandName,
+			DisplayParams:  t.DisplayParams,
+			OriginalParams: t.OriginalParams,
+			Status:         t.Status,
+			Completed:      t.Completed,
+			Timestamp:      timestamp,
+			OperatorID:     t.OperatorID,
+		})
+	}
+
+	return tasks, nil
+}
+
+// TaskArtifact represents an artifact (IOC) created by a task.
+type TaskArtifact struct {
+	ID           int       `json:"id"`
+	TaskID       int       `json:"task_id"`
+	Artifact     string    `json:"artifact"`
+	BaseArtifact string    `json:"base_artifact"`
+	Host         string    `json:"host"`
+	Timestamp    time.Time `json:"timestamp"`
+}
+
+// GetTaskArtifacts retrieves artifacts/IOCs created by a task.
+func (c *Client) GetTaskArtifacts(ctx context.Context, taskDisplayID int) ([]*TaskArtifact, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if taskDisplayID <= 0 {
+		return nil, WrapError("GetTaskArtifacts", ErrInvalidInput, "task_display_id must be positive")
+	}
+
+	var query struct {
+		TaskArtifact []struct {
+			ID           int    `graphql:"id"`
+			TaskID       int    `graphql:"task_id"`
+			Artifact     string `graphql:"artifact"`
+			BaseArtifact string `graphql:"base_artifact"`
+			Host         string `graphql:"host"`
+			Timestamp    string `graphql:"timestamp"`
+		} `graphql:"taskartifact(where: {task: {display_id: {_eq: $task_display_id}}}, order_by: {id: desc})"`
+	}
+
+	variables := map[string]interface{}{
+		"task_display_id": taskDisplayID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetTaskArtifacts", err, "failed to query task artifacts")
+	}
+
+	artifacts := make([]*TaskArtifact, 0, len(query.TaskArtifact))
+	for _, a := range query.TaskArtifact {
+		// Parse timestamp
+		var timestamp time.Time
+		if a.Timestamp != "" {
+			var mt Timestamp
+			if err := mt.UnmarshalJSON([]byte(`"` + a.Timestamp + `"`)); err == nil {
+				timestamp = mt.Time
+			}
+		}
+
+		artifacts = append(artifacts, &TaskArtifact{
+			ID:           a.ID,
+			TaskID:       a.TaskID,
+			Artifact:     a.Artifact,
+			BaseArtifact: a.BaseArtifact,
+			Host:         a.Host,
+			Timestamp:    timestamp,
+		})
+	}
+
+	return artifacts, nil
+}
+
 // IsCompleted returns whether the task has completed.
 func (t *Task) IsCompleted() bool {
 	return t.Completed

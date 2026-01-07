@@ -319,3 +319,40 @@ func TestTaskRequest_OptionalFields(t *testing.T) {
 func intPtr(i int) *int {
 	return &i
 }
+
+func TestTaskArtifact_Structure(t *testing.T) {
+	now := time.Now()
+
+	artifact := &mythic.TaskArtifact{
+		ID:           1,
+		TaskID:       100,
+		Artifact:     "C:\\Windows\\Temp\\malware.exe",
+		BaseArtifact: "C:\\Windows\\Temp",
+		Host:         "WORKSTATION01",
+		Timestamp:    now,
+	}
+
+	if artifact.ID != 1 {
+		t.Errorf("Expected ID 1, got %d", artifact.ID)
+	}
+
+	if artifact.TaskID != 100 {
+		t.Errorf("Expected TaskID 100, got %d", artifact.TaskID)
+	}
+
+	if artifact.Artifact != "C:\\Windows\\Temp\\malware.exe" {
+		t.Errorf("Expected Artifact path, got %q", artifact.Artifact)
+	}
+
+	if artifact.BaseArtifact != "C:\\Windows\\Temp" {
+		t.Errorf("Expected BaseArtifact, got %q", artifact.BaseArtifact)
+	}
+
+	if artifact.Host != "WORKSTATION01" {
+		t.Errorf("Expected Host 'WORKSTATION01', got %q", artifact.Host)
+	}
+
+	if !artifact.Timestamp.Equal(now) {
+		t.Errorf("Expected Timestamp %v, got %v", now, artifact.Timestamp)
+	}
+}
