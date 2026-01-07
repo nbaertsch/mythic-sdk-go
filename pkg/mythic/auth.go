@@ -267,9 +267,17 @@ func (c *Client) RefreshAccessToken(ctx context.Context) error {
 		"refresh_token": c.config.RefreshToken,
 	}
 
-	// Execute with authentication using current access token
-	// Mythic's GraphQL authentication hook may require authentication even for refresh
-	err := c.executeMutation(ctx, &mutation, variables)
+	// Create authenticated GraphQL client manually to avoid deadlock
+	// We can't use executeMutation() because we're already holding authMutex lock
+	// and executeMutation() calls IsAuthenticated() which would try to acquire the lock again
+	headers := c.getAuthHeaders()
+	client := c.graphqlClient.WithRequestModifier(func(req *http.Request) {
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
+	})
+
+	err := client.Mutate(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("RefreshAccessToken", err, "failed to refresh token")
 	}
