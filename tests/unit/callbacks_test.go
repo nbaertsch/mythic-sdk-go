@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
@@ -258,5 +259,88 @@ func TestCallbackIntegrityLevels(t *testing.T) {
 	}
 	if types.IntegrityLevelSystem != 5 {
 		t.Errorf("IntegrityLevelSystem = %d, want 5", types.IntegrityLevelSystem)
+	}
+}
+
+func TestCreateCallbackInput_Structure(t *testing.T) {
+	// Test CreateCallbackInput with all optional fields
+	ip := "192.168.1.100"
+	externalIP := "1.2.3.4"
+	user := "testuser"
+	host := "TESTHOST"
+	domain := "WORKGROUP"
+	description := "Test callback"
+	processName := "explorer.exe"
+	sleepInfo := "60s/10%"
+	extraInfo := "Additional info"
+
+	input := &mythic.CreateCallbackInput{
+		PayloadUUID:  "test-uuid-123",
+		IP:           &ip,
+		ExternalIP:   &externalIP,
+		User:         &user,
+		Host:         &host,
+		Domain:       &domain,
+		Description:  &description,
+		ProcessName:  &processName,
+		SleepInfo:    &sleepInfo,
+		ExtraInfo:    &extraInfo,
+	}
+
+	// Verify all fields are set correctly
+	if input.PayloadUUID != "test-uuid-123" {
+		t.Errorf("Expected PayloadUUID 'test-uuid-123', got %q", input.PayloadUUID)
+	}
+	if input.IP == nil || *input.IP != ip {
+		t.Errorf("Expected IP %q, got %v", ip, input.IP)
+	}
+	if input.ExternalIP == nil || *input.ExternalIP != externalIP {
+		t.Errorf("Expected ExternalIP %q, got %v", externalIP, input.ExternalIP)
+	}
+	if input.User == nil || *input.User != user {
+		t.Errorf("Expected User %q, got %v", user, input.User)
+	}
+	if input.Host == nil || *input.Host != host {
+		t.Errorf("Expected Host %q, got %v", host, input.Host)
+	}
+	if input.Domain == nil || *input.Domain != domain {
+		t.Errorf("Expected Domain %q, got %v", domain, input.Domain)
+	}
+	if input.Description == nil || *input.Description != description {
+		t.Errorf("Expected Description %q, got %v", description, input.Description)
+	}
+	if input.ProcessName == nil || *input.ProcessName != processName {
+		t.Errorf("Expected ProcessName %q, got %v", processName, input.ProcessName)
+	}
+	if input.SleepInfo == nil || *input.SleepInfo != sleepInfo {
+		t.Errorf("Expected SleepInfo %q, got %v", sleepInfo, input.SleepInfo)
+	}
+	if input.ExtraInfo == nil || *input.ExtraInfo != extraInfo {
+		t.Errorf("Expected ExtraInfo %q, got %v", extraInfo, input.ExtraInfo)
+	}
+}
+
+func TestCreateCallbackInput_MinimalRequired(t *testing.T) {
+	// Test CreateCallbackInput with only required field
+	input := &mythic.CreateCallbackInput{
+		PayloadUUID: "minimal-uuid",
+	}
+
+	if input.PayloadUUID != "minimal-uuid" {
+		t.Errorf("Expected PayloadUUID 'minimal-uuid', got %q", input.PayloadUUID)
+	}
+
+	// Verify optional fields are nil
+	if input.IP != nil {
+		t.Error("Expected IP to be nil")
+	}
+	if input.ExternalIP != nil {
+		t.Error("Expected ExternalIP to be nil")
+	}
+	if input.User != nil {
+		t.Error("Expected User to be nil")
+	}
+	if input.Host != nil {
+		t.Error("Expected Host to be nil")
 	}
 }
