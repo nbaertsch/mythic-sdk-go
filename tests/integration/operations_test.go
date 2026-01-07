@@ -204,7 +204,11 @@ func TestOperations_UpdateCurrentOperation(t *testing.T) {
 	}
 
 	// Store original operation ID
-	originalOpID := me.CurrentOperationID
+	var originalOpID *int
+	if me.CurrentOperation != nil {
+		id := me.CurrentOperation.ID
+		originalOpID = &id
+	}
 
 	// Get available operations
 	operations, err := client.GetOperations(ctx)
