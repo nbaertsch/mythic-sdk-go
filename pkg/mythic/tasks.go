@@ -8,37 +8,37 @@ import (
 
 // Task represents a Mythic task.
 type Task struct {
-	ID                   int       `json:"id"`
-	DisplayID            int       `json:"display_id"`
-	AgentTaskID          string    `json:"agent_task_id"`
-	CommandName          string    `json:"command_name"`
-	Params               string    `json:"params"`
-	DisplayParams        string    `json:"display_params"`
-	OriginalParams       string    `json:"original_params"`
-	Status               string    `json:"status"`
-	Completed            bool      `json:"completed"`
-	Comment              string    `json:"comment"`
-	Timestamp            time.Time `json:"timestamp"`
-	CallbackID           int       `json:"callback_id"`
-	OperatorID           int       `json:"operator_id"`
-	OperationID          int       `json:"operation_id"`
-	ParentTaskID         *int      `json:"parent_task_id,omitempty"`
-	ResponseCount        int       `json:"response_count"`
-	IsInteractiveTask    bool      `json:"is_interactive_task"`
-	InteractiveTaskType  *int      `json:"interactive_task_type,omitempty"`
-	TaskingLocation      string    `json:"tasking_location"`
-	ParameterGroupName   string    `json:"parameter_group_name"`
-	Stdout               string    `json:"stdout"`
-	Stderr               string    `json:"stderr"`
-	CompletedCallbackFunction string `json:"completed_callback_function"`
-	SubtaskCallbackFunction   string `json:"subtask_callback_function"`
-	GroupCallbackFunction     string `json:"group_callback_function"`
-	OpsecPreBlocked      *bool  `json:"opsec_pre_blocked,omitempty"`
-	OpsecPreBypassed     bool   `json:"opsec_pre_bypassed"`
-	OpsecPreMessage      string `json:"opsec_pre_message"`
-	OpsecPostBlocked     *bool  `json:"opsec_post_blocked,omitempty"`
-	OpsecPostBypassed    bool   `json:"opsec_post_bypassed"`
-	OpsecPostMessage     string `json:"opsec_post_message"`
+	ID                        int       `json:"id"`
+	DisplayID                 int       `json:"display_id"`
+	AgentTaskID               string    `json:"agent_task_id"`
+	CommandName               string    `json:"command_name"`
+	Params                    string    `json:"params"`
+	DisplayParams             string    `json:"display_params"`
+	OriginalParams            string    `json:"original_params"`
+	Status                    string    `json:"status"`
+	Completed                 bool      `json:"completed"`
+	Comment                   string    `json:"comment"`
+	Timestamp                 time.Time `json:"timestamp"`
+	CallbackID                int       `json:"callback_id"`
+	OperatorID                int       `json:"operator_id"`
+	OperationID               int       `json:"operation_id"`
+	ParentTaskID              *int      `json:"parent_task_id,omitempty"`
+	ResponseCount             int       `json:"response_count"`
+	IsInteractiveTask         bool      `json:"is_interactive_task"`
+	InteractiveTaskType       *int      `json:"interactive_task_type,omitempty"`
+	TaskingLocation           string    `json:"tasking_location"`
+	ParameterGroupName        string    `json:"parameter_group_name"`
+	Stdout                    string    `json:"stdout"`
+	Stderr                    string    `json:"stderr"`
+	CompletedCallbackFunction string    `json:"completed_callback_function"`
+	SubtaskCallbackFunction   string    `json:"subtask_callback_function"`
+	GroupCallbackFunction     string    `json:"group_callback_function"`
+	OpsecPreBlocked           *bool     `json:"opsec_pre_blocked,omitempty"`
+	OpsecPreBypassed          bool      `json:"opsec_pre_bypassed"`
+	OpsecPreMessage           string    `json:"opsec_pre_message"`
+	OpsecPostBlocked          *bool     `json:"opsec_post_blocked,omitempty"`
+	OpsecPostBypassed         bool      `json:"opsec_post_bypassed"`
+	OpsecPostMessage          string    `json:"opsec_post_message"`
 }
 
 // TaskResponse represents output from a task.
@@ -98,13 +98,13 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 
 	var mutation struct {
 		CreateTask struct {
-			ID            int    `graphql:"id"`
-			DisplayID     int    `graphql:"display_id"`
-			AgentTaskID   string `graphql:"agent_task_id"`
-			Status        string `graphql:"status"`
-			Error         string `graphql:"error"`
-			Stdout        string `graphql:"stdout"`
-			Stderr        string `graphql:"stderr"`
+			ID          int    `graphql:"id"`
+			DisplayID   int    `graphql:"display_id"`
+			AgentTaskID string `graphql:"agent_task_id"`
+			Status      string `graphql:"status"`
+			Error       string `graphql:"error"`
+			Stdout      string `graphql:"stdout"`
+			Stderr      string `graphql:"stderr"`
 		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
 	}
 
@@ -246,19 +246,19 @@ func (c *Client) GetTasksForCallback(ctx context.Context, callbackDisplayID int,
 
 	var query struct {
 		Task []struct {
-			ID                        int       `graphql:"id"`
-			DisplayID                 int       `graphql:"display_id"`
-			AgentTaskID               string    `graphql:"agent_task_id"`
-			CommandName               string    `graphql:"command_name"`
-			Params                    string    `graphql:"params"`
-			DisplayParams             string    `graphql:"display_params"`
-			Status                    string    `graphql:"status"`
-			Completed                 bool      `graphql:"completed"`
-			Comment                   string    `graphql:"comment"`
-			Timestamp                 time.Time `graphql:"timestamp"`
-			CallbackID                int       `graphql:"callback_id"`
-			ResponseCount             int       `graphql:"response_count"`
-			IsInteractiveTask         bool      `graphql:"is_interactive_task"`
+			ID                int       `graphql:"id"`
+			DisplayID         int       `graphql:"display_id"`
+			AgentTaskID       string    `graphql:"agent_task_id"`
+			CommandName       string    `graphql:"command_name"`
+			Params            string    `graphql:"params"`
+			DisplayParams     string    `graphql:"display_params"`
+			Status            string    `graphql:"status"`
+			Completed         bool      `graphql:"completed"`
+			Comment           string    `graphql:"comment"`
+			Timestamp         time.Time `graphql:"timestamp"`
+			CallbackID        int       `graphql:"callback_id"`
+			ResponseCount     int       `graphql:"response_count"`
+			IsInteractiveTask bool      `graphql:"is_interactive_task"`
 		} `graphql:"task(where: {callback_id: {_eq: $callback_id}}, order_by: {id: desc}, limit: $limit)"`
 	}
 

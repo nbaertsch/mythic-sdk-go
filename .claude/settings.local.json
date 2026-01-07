@@ -12,7 +12,23 @@
       "Bash(go tool cover:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd CI/CD workflows and linting configuration\n\nGitHub Actions workflows:\n- test.yml: Lint, test, and build on push/PR\n  - Matrix testing: Go 1.21, 1.22, 1.23\n  - Multi-OS: Ubuntu, macOS, Windows\n  - Code coverage upload to Codecov\n  - Verify go.mod is tidy\n\n- integration.yml: Integration tests against live Mythic\n  - Scheduled daily runs\n  - Manual trigger support\n  - Docker Compose setup for test Mythic instance\n  - Artifact upload on failure\n\nConfiguration:\n- .golangci.yml: Comprehensive linter configuration\n  - 13 linters enabled \\(errcheck, gosimple, govet, etc.\\)\n  - gosec for security scanning\n  - Test-specific exclusions\n\nIntegration test infrastructure:\n- tests/integration/docker-compose.yml\n  - Mythic server, PostgreSQL, RabbitMQ\n  - Isolated test network\n  - Persistent volumes\n\nCoverage: 36.4% \\(baseline for core types and config\\)\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose up:*)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(export MYTHIC_URL=\"https://127.0.0.1:7443\")",
+      "Bash(export MYTHIC_USERNAME=\"mythic_admin\")",
+      "Bash(export MYTHIC_PASSWORD=\"ddPC49sUXUlzXUp3JppaxxHJoTnhzU\")",
+      "Bash(export MYTHIC_SKIP_TLS_VERIFY=\"true\")",
+      "Bash(cat:*)",
+      "Bash(cd:*)",
+      "Bash(source:*)",
+      "Bash(python3:*)",
+      "Bash(sudo ./mythic-cli status:*)",
+      "Bash(gofmt:*)"
     ]
   }
 }

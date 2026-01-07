@@ -102,11 +102,11 @@ func (c *Client) Login(ctx context.Context) error {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 		User         struct {
-			ID                    int    `json:"id"`
-			UserID                int    `json:"user_id"`
-			Username              string `json:"username"`
-			CurrentOperationID    int    `json:"current_operation_id"`
-			CurrentOperation      string `json:"current_operation"`
+			ID                     int    `json:"id"`
+			UserID                 int    `json:"user_id"`
+			Username               string `json:"username"`
+			CurrentOperationID     int    `json:"current_operation_id"`
+			CurrentOperation       string `json:"current_operation"`
 			CurrentOperationBanner string `json:"current_operation_banner_text"`
 		} `json:"user"`
 	}
@@ -148,7 +148,7 @@ func (c *Client) CreateAPIToken(ctx context.Context) (string, error) {
 	}
 
 	variables := map[string]interface{}{
-		"token_type": "User",  // User token type for API access
+		"token_type": "User", // User token type for API access
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
