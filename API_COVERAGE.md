@@ -20,7 +20,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Files | 8 | 0 | 0 | 8 |
 | Operations | 11 | 0 | 0 | 11 |
 | Payloads | 12 | 0 | 0 | 12 |
-| Credentials | 0 | 0 | 3 | 3 |
+| Credentials | 5 | 0 | 0 | 5 |
 | C2 Profiles | 0 | 0 | 9 | 9 |
 | Artifacts | 0 | 0 | 3 | 3 |
 | Tags | 0 | 0 | 3 | 3 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **59** | **0** | **74** | **133** |
+| **TOTAL** | **64** | **0** | **69** | **133** |
 
-**Overall Coverage: 44.4%**
+**Overall Coverage: 48.1%**
 
 ---
 
@@ -384,17 +384,60 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ## 7. Credentials
 
-### ⏳ Pending (3/3)
+### ✅ Tested (5/5 - 100%)
 
-- **GetCredentials()** - List all credentials
+**Note:** This includes 3 core Client API methods plus 2 additional helper methods (GetCredentialsByOperation, DeleteCredential).
+
+**Client API Methods:**
+
+- **GetCredentials()** - List all credentials (non-deleted)
+  - File: `pkg/mythic/credentials.go:11`
+  - Tests: `tests/integration/credentials_test.go:12`
   - Database: `credential` table
+  - Returns credentials sorted by timestamp (newest first)
+
+- **GetCredentialsByOperation()** - List credentials for specific operation
+  - File: `pkg/mythic/credentials.go:61`
+  - Tests: `tests/integration/credentials_test.go:295`
+  - Database: `credential` table with operation filter
+  - Input: operation ID
 
 - **CreateCredential()** - Add new credential
+  - File: `pkg/mythic/credentials.go:118`
+  - Tests: `tests/integration/credentials_test.go:47`
   - GraphQL: `createCredential` mutation
-  - Fields: realm, account, credential, comment, credential_type
+  - Fields: type, account, realm, credential, comment, task_id, metadata
+  - Requires current operation to be set
 
 - **UpdateCredential()** - Update credential
-  - Database: `credential` table (direct update)
+  - File: `pkg/mythic/credentials.go:213`
+  - Tests: `tests/integration/credentials_test.go:47` (within create/update test)
+  - GraphQL: `update_credential` mutation
+  - Fields: type, account, realm, credential, comment, deleted, metadata
+  - Supports partial updates (only specified fields)
+
+- **DeleteCredential()** - Mark credential as deleted
+  - File: `pkg/mythic/credentials.go:311`
+  - Tests: `tests/integration/credentials_test.go:47` (cleanup)
+  - Wrapper around UpdateCredential with deleted=true
+
+**Helper Methods (on Credential type):**
+
+- **Credential.String()** - String representation showing realm\account (type)
+  - File: `pkg/mythic/types/credential.go:49`
+  - Tests: `tests/unit/credentials_test.go:12`
+
+- **Credential.IsDeleted()** - Check if credential is marked as deleted
+  - File: `pkg/mythic/types/credential.go:61`
+  - Tests: `tests/unit/credentials_test.go:66`
+
+**Supported Credential Types:**
+- `plaintext` - Plain text passwords
+- `hash` - Password hashes (NTLM, etc.)
+- `key` - SSH keys, API keys, etc.
+- `ticket` - Kerberos tickets
+- `cookie` - Session cookies
+- `certificate` - SSL/TLS certificates
 
 ---
 
@@ -727,7 +770,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 ### High Priority (Core Functionality)
 1. ✅ **Operations Management** - Essential for multi-operation environments
 2. ✅ **Payloads** - Critical for agent deployment
-3. **Credentials** - Important for tracking compromised accounts
+3. ✅ **Credentials** - Important for tracking compromised accounts
 4. **C2 Profiles** - Needed for agent communication management
 5. **Processes** - Important for situational awareness
 

@@ -38,11 +38,12 @@ const (
 type CredentialType string
 
 const (
-	CredentialTypePlaintext CredentialType = "plaintext"
-	CredentialTypeHash      CredentialType = "hash"
-	CredentialTypeKey       CredentialType = "key"
-	CredentialTypeTicket    CredentialType = "ticket"
-	CredentialTypeCookie    CredentialType = "cookie"
+	CredentialTypePlaintext   CredentialType = "plaintext"
+	CredentialTypeHash        CredentialType = "hash"
+	CredentialTypeKey         CredentialType = "key"
+	CredentialTypeTicket      CredentialType = "ticket"
+	CredentialTypeCookie      CredentialType = "cookie"
+	CredentialTypeCertificate CredentialType = "certificate"
 )
 
 // Timestamp is a custom time type that handles Mythic's timestamp format.
