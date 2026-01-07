@@ -16,9 +16,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 |----------|-------------|-------------|---------|-------|
 | Authentication | 4 | 0 | 0 | 4 |
 | Callbacks | 12 | 0 | 0 | 12 |
-| Tasks | 11 | 0 | 1 | 12 |
+| Tasks | 12 | 0 | 0 | 12 |
 | Files | 8 | 0 | 0 | 8 |
-| Operations | 0 | 0 | 11 | 11 |
+| Operations | 11 | 0 | 0 | 11 |
 | Payloads | 0 | 0 | 10 | 10 |
 | Credentials | 0 | 0 | 3 | 3 |
 | C2 Profiles | 0 | 0 | 9 | 9 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **35** | **0** | **98** | **133** |
+| **TOTAL** | **47** | **0** | **86** | **133** |
 
-**Overall Coverage: 26.3%**
+**Overall Coverage: 35.3%**
 
 ---
 
@@ -66,7 +66,11 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ### ✅ Tested (12/12 - 100%)
 
-- **GetCallbacks()** - List all callbacks with filtering
+**Note:** This includes 10 Client API methods and 3 helper methods on the Callback type.
+
+**Client API Methods:**
+
+- **GetAllCallbacks()** - List all callbacks with filtering
   - File: `pkg/mythic/callbacks.go:106`
   - Tests: `tests/integration/callbacks_test.go:11`
 
@@ -74,22 +78,13 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - File: `pkg/mythic/callbacks.go:181`
   - Tests: `tests/integration/callbacks_test.go:33`
 
-- **GetActiveCallbacks()** - Filter only active callbacks
+- **GetAllActiveCallbacks()** - Filter only active callbacks
   - File: `pkg/mythic/callbacks.go:240`
   - Tests: `tests/integration/callbacks_test.go:51`
 
 - **UpdateCallback()** - Update callback properties (description, ips, host, etc.)
   - File: `pkg/mythic/callbacks.go:293`
   - GraphQL: `updateCallback` mutation
-
-- **Callback.IsActive()** - Helper to check if callback is active
-  - File: `pkg/mythic/callbacks.go:379`
-
-- **Callback.IsDead()** - Helper to check if callback is dead
-  - File: `pkg/mythic/callbacks.go:384`
-
-- **Callback.String()** - String representation
-  - File: `pkg/mythic/callbacks.go:374`
 
 - **CreateCallback()** - Manually register a new callback
   - File: `pkg/mythic/callbacks.go:396`
@@ -116,13 +111,24 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - File: `pkg/mythic/callbacks.go:625`
   - GraphQL: `importCallbackConfig` mutation
 
+**Helper Methods (on Callback type):**
+
+- **Callback.IsActive()** - Helper to check if callback is active
+  - File: `pkg/mythic/callbacks.go:379`
+
+- **Callback.IsDead()** - Helper to check if callback is dead
+  - File: `pkg/mythic/callbacks.go:384`
+
+- **Callback.String()** - String representation
+  - File: `pkg/mythic/callbacks.go:374`
+
 ---
 
 ## 3. Tasks (Commands)
 
-### ✅ Tested (11/12 - 91.7%)
+### ✅ Tested (12/12 - 100%)
 
-- **CreateTask()** - Issue task to callback(s)
+- **IssueTask()** - Issue task to callback(s)
   - File: `pkg/mythic/tasks.go:82`
   - Tests: `tests/integration/tasks_test.go`
   - GraphQL: `createTask` mutation
@@ -131,14 +137,14 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - File: `pkg/mythic/tasks.go:171`
   - Tests: `tests/integration/tasks_test.go`
 
-- **GetTasksByCallback()** - List all tasks for a callback
+- **GetTasksForCallback()** - List all tasks for a callback
   - File: `pkg/mythic/tasks.go:239`
 
 - **GetTaskOutput()** - Get task responses/output
   - File: `pkg/mythic/tasks.go:312`
   - Tests: `tests/integration/tasks_test.go`
 
-- **UpdateTaskComment()** - Add/update task comment
+- **UpdateTask()** - Add/update task comment
   - File: `pkg/mythic/tasks.go:389`
 
 - **ReissueTask()** - Re-issue a task
@@ -166,11 +172,14 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - Tests: `tests/unit/tasks_test.go:323`
   - Database: `taskartifact` table
 
-### ⏳ Pending (1/12)
+- **WaitForTaskComplete()** - Wait for task to complete with timeout
+  - File: `pkg/mythic/tasks.go` (helper method)
+  - Tests: `tests/integration/tasks_test.go:TestTasks_WaitForTaskComplete_Timeout`
+  - Polls task status until completion or timeout
 
-- **SubscribeToTaskOutput()** - Real-time task output subscription
-  - GraphQL: Subscription (requires websocket support)
-  - Note: Requires WebSocket transport layer implementation
+### ⏳ Pending (0/12)
+
+**Note:** Real-time task output subscriptions via WebSocket are a future enhancement and not part of the core 12 task operations.
 
 ---
 
@@ -219,40 +228,59 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ## 5. Operations
 
-### ⏳ Pending (11/11)
+### ✅ Tested (11/11 - 100%)
 
 - **GetOperations()** - List all operations
+  - File: `pkg/mythic/operations.go:12`
+  - Tests: `tests/unit/operations_test.go`
   - Database: `operation` table
 
 - **GetOperationByID()** - Get specific operation
+  - File: `pkg/mythic/operations.go:77`
+  - Tests: `tests/unit/operations_test.go`
   - Database: `operation` table
 
 - **CreateOperation()** - Create new operation
+  - File: `pkg/mythic/operations.go:145`
+  - Tests: `tests/unit/operations_test.go`
   - GraphQL: `createOperation` mutation
 
 - **UpdateOperation()** - Update operation details
-  - GraphQL: `updateOperation` mutation
+  - File: `pkg/mythic/operations.go:186`
+  - Tests: `tests/unit/operations_test.go`
+  - GraphQL: `update_operation` mutation
   - Fields: name, channel, complete, webhook, admin_id, banner_text, banner_color
 
-- **UpdateCurrentOperation()** - Switch user's current operation
+- **UpdateCurrentOperationForUser()** - Switch user's current operation
+  - File: `pkg/mythic/operations.go:249`
   - GraphQL: `updateCurrentOperation` mutation
 
 - **GetOperatorsByOperation()** - List operators in operation
+  - File: `pkg/mythic/operations.go:285`
+  - Tests: `tests/unit/operations_test.go`
   - Database: `operatoroperation` table
 
 - **UpdateOperatorOperation()** - Add/remove operators from operation
+  - File: `pkg/mythic/operations.go:325`
+  - Tests: `tests/unit/operations_test.go`
   - GraphQL: `updateOperatorOperation` mutation
 
 - **GetOperationEventLog()** - Get operation event logs
+  - File: `pkg/mythic/operations.go:391`
+  - Tests: `tests/unit/operations_test.go`
   - Database: `operationeventlog` table
 
 - **CreateOperationEventLog()** - Create event log entry
-  - GraphQL: `createOperationEventLog` mutation
+  - File: `pkg/mythic/operations.go:441`
+  - Tests: `tests/unit/operations_test.go`
+  - GraphQL: `insert_operationeventlog` mutation
 
 - **GetGlobalSettings()** - Get Mythic global settings
+  - File: `pkg/mythic/operations.go:531`
   - GraphQL: `getGlobalSettings` query
 
 - **UpdateGlobalSettings()** - Update global settings
+  - File: `pkg/mythic/operations.go:547`
   - GraphQL: `updateGlobalSettings` mutation
 
 ---

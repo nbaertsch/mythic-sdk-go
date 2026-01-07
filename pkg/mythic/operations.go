@@ -1,0 +1,575 @@
+package mythic
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
+)
+
+// GetOperations retrieves all operations.
+func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	var query struct {
+		Operation []struct {
+			ID                  int       `graphql:"id"`
+			Name                string    `graphql:"name"`
+			Complete            bool      `graphql:"complete"`
+			Webhook             string    `graphql:"webhook"`
+			Channel             string    `graphql:"channel"`
+			AdminID             int       `graphql:"admin_id"`
+			BannerText          string    `graphql:"banner_text"`
+			BannerColor         string    `graphql:"banner_color"`
+			DisplayName         string    `graphql:"display_name"`
+			Icon                string    `graphql:"icon"`
+			IconURL             string    `graphql:"icon_url"`
+			IconEmoji           string    `graphql:"icon_emoji"`
+			AESPSK              string    `graphql:"AESPSK"`
+			OperationEventLogID int       `graphql:"operation_event_log_id"`
+			Created             time.Time `graphql:"created"`
+			Admin               struct {
+				ID       int    `graphql:"id"`
+				Username string `graphql:"username"`
+				Admin    bool   `graphql:"admin"`
+			} `graphql:"admin"`
+		} `graphql:"operation(order_by: {id: desc})"`
+	}
+
+	err := c.executeQuery(ctx, &query, nil)
+	if err != nil {
+		return nil, WrapError("GetOperations", err, "failed to query operations")
+	}
+
+	operations := make([]*types.Operation, len(query.Operation))
+	for i, op := range query.Operation {
+		operations[i] = &types.Operation{
+			ID:                  op.ID,
+			Name:                op.Name,
+			Complete:            op.Complete,
+			Webhook:             op.Webhook,
+			Channel:             op.Channel,
+			AdminID:             op.AdminID,
+			BannerText:          op.BannerText,
+			BannerColor:         op.BannerColor,
+			DisplayName:         op.DisplayName,
+			Icon:                op.Icon,
+			IconURL:             op.IconURL,
+			IconEmoji:           op.IconEmoji,
+			AESPSK:              op.AESPSK,
+			OperationEventLogID: op.OperationEventLogID,
+			Created:             op.Created,
+			Admin: &types.Operator{
+				ID:       op.Admin.ID,
+				Username: op.Admin.Username,
+				Admin:    op.Admin.Admin,
+			},
+		}
+	}
+
+	return operations, nil
+}
+
+// GetOperationByID retrieves a specific operation by ID.
+func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.Operation, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	var query struct {
+		Operation []struct {
+			ID                  int       `graphql:"id"`
+			Name                string    `graphql:"name"`
+			Complete            bool      `graphql:"complete"`
+			Webhook             string    `graphql:"webhook"`
+			Channel             string    `graphql:"channel"`
+			AdminID             int       `graphql:"admin_id"`
+			BannerText          string    `graphql:"banner_text"`
+			BannerColor         string    `graphql:"banner_color"`
+			DisplayName         string    `graphql:"display_name"`
+			Icon                string    `graphql:"icon"`
+			IconURL             string    `graphql:"icon_url"`
+			IconEmoji           string    `graphql:"icon_emoji"`
+			AESPSK              string    `graphql:"AESPSK"`
+			OperationEventLogID int       `graphql:"operation_event_log_id"`
+			Created             time.Time `graphql:"created"`
+			Admin               struct {
+				ID       int    `graphql:"id"`
+				Username string `graphql:"username"`
+				Admin    bool   `graphql:"admin"`
+			} `graphql:"admin"`
+		} `graphql:"operation(where: {id: {_eq: $id}})"`
+	}
+
+	variables := map[string]interface{}{
+		"id": operationID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetOperationByID", err, "failed to query operation")
+	}
+
+	if len(query.Operation) == 0 {
+		return nil, WrapError("GetOperationByID", ErrNotFound, fmt.Sprintf("operation %d not found", operationID))
+	}
+
+	op := query.Operation[0]
+	return &types.Operation{
+		ID:                  op.ID,
+		Name:                op.Name,
+		Complete:            op.Complete,
+		Webhook:             op.Webhook,
+		Channel:             op.Channel,
+		AdminID:             op.AdminID,
+		BannerText:          op.BannerText,
+		BannerColor:         op.BannerColor,
+		DisplayName:         op.DisplayName,
+		Icon:                op.Icon,
+		IconURL:             op.IconURL,
+		IconEmoji:           op.IconEmoji,
+		AESPSK:              op.AESPSK,
+		OperationEventLogID: op.OperationEventLogID,
+		Created:             op.Created,
+		Admin: &types.Operator{
+			ID:       op.Admin.ID,
+			Username: op.Admin.Username,
+			Admin:    op.Admin.Admin,
+		},
+	}, nil
+}
+
+// CreateOperation creates a new operation.
+func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperationRequest) (*types.Operation, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if req == nil || req.Name == "" {
+		return nil, WrapError("CreateOperation", ErrInvalidInput, "operation name is required")
+	}
+
+	var mutation struct {
+		CreateOperation struct {
+			ID      int    `graphql:"id"`
+			Name    string `graphql:"name"`
+			AdminID int    `graphql:"admin_id"`
+			Channel string `graphql:"channel"`
+			Webhook string `graphql:"webhook"`
+		} `graphql:"createOperation(name: $name, admin_id: $admin_id, channel: $channel, webhook: $webhook)"`
+	}
+
+	variables := map[string]interface{}{
+		"name": req.Name,
+	}
+
+	if req.AdminID != nil {
+		variables["admin_id"] = *req.AdminID
+	}
+	if req.Channel != "" {
+		variables["channel"] = req.Channel
+	}
+	if req.Webhook != "" {
+		variables["webhook"] = req.Webhook
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return nil, WrapError("CreateOperation", err, "failed to create operation")
+	}
+
+	// Fetch the full operation details
+	return c.GetOperationByID(ctx, mutation.CreateOperation.ID)
+}
+
+// UpdateOperation updates an existing operation.
+func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperationRequest) (*types.Operation, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if req == nil || req.OperationID == 0 {
+		return nil, WrapError("UpdateOperation", ErrInvalidInput, "operation ID is required")
+	}
+
+	// Build the update fields
+	setFields := make(map[string]interface{})
+	if req.Name != nil {
+		setFields["name"] = *req.Name
+	}
+	if req.Channel != nil {
+		setFields["channel"] = *req.Channel
+	}
+	if req.Complete != nil {
+		setFields["complete"] = *req.Complete
+	}
+	if req.Webhook != nil {
+		setFields["webhook"] = *req.Webhook
+	}
+	if req.AdminID != nil {
+		setFields["admin_id"] = *req.AdminID
+	}
+	if req.BannerText != nil {
+		setFields["banner_text"] = *req.BannerText
+	}
+	if req.BannerColor != nil {
+		setFields["banner_color"] = *req.BannerColor
+	}
+
+	if len(setFields) == 0 {
+		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
+	}
+
+	var mutation struct {
+		UpdateOperation struct {
+			Returning []struct {
+				ID int `graphql:"id"`
+			} `graphql:"returning"`
+		} `graphql:"update_operation(where: {id: {_eq: $id}}, _set: $set)"`
+	}
+
+	variables := map[string]interface{}{
+		"id":  req.OperationID,
+		"set": setFields,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return nil, WrapError("UpdateOperation", err, "failed to update operation")
+	}
+
+	if len(mutation.UpdateOperation.Returning) == 0 {
+		return nil, WrapError("UpdateOperation", ErrNotFound, fmt.Sprintf("operation %d not found", req.OperationID))
+	}
+
+	// Fetch the updated operation
+	return c.GetOperationByID(ctx, req.OperationID)
+}
+
+// UpdateCurrentOperationForUser switches the current operation for the authenticated user.
+func (c *Client) UpdateCurrentOperationForUser(ctx context.Context, operationID int) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	var mutation struct {
+		UpdateCurrentOperation struct {
+			Status string `graphql:"status"`
+		} `graphql:"updateCurrentOperation(operation_id: $operation_id)"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id": operationID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("UpdateCurrentOperationForUser", err, "failed to update current operation")
+	}
+
+	// Update the client's current operation ID
+	c.SetCurrentOperation(operationID)
+
+	return nil
+}
+
+// GetOperatorsByOperation lists all operators in an operation.
+func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) ([]*types.OperationOperator, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	var query struct {
+		OperatorOperation []struct {
+			ID          int    `graphql:"id"`
+			OperationID int    `graphql:"operation_id"`
+			OperatorID  int    `graphql:"operator_id"`
+			ViewMode    string `graphql:"view_mode"`
+			Operator    struct {
+				ID       int    `graphql:"id"`
+				Username string `graphql:"username"`
+				Admin    bool   `graphql:"admin"`
+			} `graphql:"operator"`
+		} `graphql:"operatoroperation(where: {operation_id: {_eq: $operation_id}})"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id": operationID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetOperatorsByOperation", err, "failed to query operators")
+	}
+
+	operators := make([]*types.OperationOperator, len(query.OperatorOperation))
+	for i, opOp := range query.OperatorOperation {
+		operators[i] = &types.OperationOperator{
+			ID:          opOp.ID,
+			OperationID: opOp.OperationID,
+			OperatorID:  opOp.OperatorID,
+			ViewMode:    types.OperatorViewMode(opOp.ViewMode),
+			Operator: &types.Operator{
+				ID:       opOp.Operator.ID,
+				Username: opOp.Operator.Username,
+				Admin:    opOp.Operator.Admin,
+			},
+		}
+	}
+
+	return operators, nil
+}
+
+// UpdateOperatorOperation adds/removes/updates an operator in an operation.
+func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateOperatorOperationRequest) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if req == nil || req.OperatorID == 0 || req.OperationID == 0 {
+		return WrapError("UpdateOperatorOperation", ErrInvalidInput, "operator ID and operation ID are required")
+	}
+
+	if req.Remove {
+		// Remove operator from operation
+		var mutation struct {
+			DeleteOperatorOperation struct {
+				AffectedRows int `graphql:"affected_rows"`
+			} `graphql:"delete_operatoroperation(where: {operator_id: {_eq: $operator_id}, operation_id: {_eq: $operation_id}})"`
+		}
+
+		variables := map[string]interface{}{
+			"operator_id":  req.OperatorID,
+			"operation_id": req.OperationID,
+		}
+
+		err := c.executeMutation(ctx, &mutation, variables)
+		if err != nil {
+			return WrapError("UpdateOperatorOperation", err, "failed to remove operator from operation")
+		}
+
+		return nil
+	}
+
+	// Add or update operator in operation
+	var mutation struct {
+		UpdateOperatorOperation struct {
+			Status string `graphql:"status"`
+		} `graphql:"updateOperatorOperation(operator_id: $operator_id, operation_id: $operation_id, view_mode: $view_mode)"`
+	}
+
+	variables := map[string]interface{}{
+		"operator_id":  req.OperatorID,
+		"operation_id": req.OperationID,
+	}
+
+	if req.ViewMode != nil {
+		variables["view_mode"] = string(*req.ViewMode)
+	} else {
+		variables["view_mode"] = string(types.ViewModeOperator)
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("UpdateOperatorOperation", err, "failed to update operator in operation")
+	}
+
+	return nil
+}
+
+// GetOperationEventLog retrieves event logs for an operation.
+func (c *Client) GetOperationEventLog(ctx context.Context, operationID int, limit int) ([]*types.OperationEventLog, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if limit <= 0 {
+		limit = 100 // Default limit
+	}
+
+	var query struct {
+		OperationEventLog []struct {
+			ID          int       `graphql:"id"`
+			OperatorID  int       `graphql:"operator_id"`
+			OperationID int       `graphql:"operation_id"`
+			Message     string    `graphql:"message"`
+			Timestamp   time.Time `graphql:"timestamp"`
+			Level       string    `graphql:"level"`
+			Source      string    `graphql:"source"`
+			Deleted     bool      `graphql:"deleted"`
+			Operator    struct {
+				ID       int    `graphql:"id"`
+				Username string `graphql:"username"`
+			} `graphql:"operator"`
+		} `graphql:"operationeventlog(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc}, limit: $limit)"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id": operationID,
+		"limit":        limit,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetOperationEventLog", err, "failed to query operation event log")
+	}
+
+	logs := make([]*types.OperationEventLog, len(query.OperationEventLog))
+	for i, log := range query.OperationEventLog {
+		logs[i] = &types.OperationEventLog{
+			ID:          log.ID,
+			OperatorID:  log.OperatorID,
+			OperationID: log.OperationID,
+			Message:     log.Message,
+			Timestamp:   log.Timestamp,
+			Level:       log.Level,
+			Source:      log.Source,
+			Deleted:     log.Deleted,
+			Operator: &types.Operator{
+				ID:       log.Operator.ID,
+				Username: log.Operator.Username,
+			},
+		}
+	}
+
+	return logs, nil
+}
+
+// CreateOperationEventLog creates a new event log entry for an operation.
+func (c *Client) CreateOperationEventLog(ctx context.Context, req *types.CreateOperationEventLogRequest) (*types.OperationEventLog, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if req == nil || req.OperationID == 0 || req.Message == "" {
+		return nil, WrapError("CreateOperationEventLog", ErrInvalidInput, "operation ID and message are required")
+	}
+
+	// Default level to "info" if not specified
+	level := "info"
+	if req.Level != "" {
+		level = req.Level
+	}
+
+	// Default source to "sdk" if not specified
+	source := "sdk"
+	if req.Source != "" {
+		source = req.Source
+	}
+
+	var mutation struct {
+		CreateOperationEventLog struct {
+			Returning []struct {
+				ID int `graphql:"id"`
+			} `graphql:"returning"`
+		} `graphql:"insert_operationeventlog(objects: [{operation_id: $operation_id, message: $message, level: $level, source: $source}])"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id": req.OperationID,
+		"message":      req.Message,
+		"level":        level,
+		"source":       source,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return nil, WrapError("CreateOperationEventLog", err, "failed to create operation event log")
+	}
+
+	if len(mutation.CreateOperationEventLog.Returning) == 0 {
+		return nil, WrapError("CreateOperationEventLog", ErrInvalidResponse, "no event log created")
+	}
+
+	logID := mutation.CreateOperationEventLog.Returning[0].ID
+
+	// Fetch the created log entry
+	var query struct {
+		OperationEventLog []struct {
+			ID          int       `graphql:"id"`
+			OperatorID  int       `graphql:"operator_id"`
+			OperationID int       `graphql:"operation_id"`
+			Message     string    `graphql:"message"`
+			Timestamp   time.Time `graphql:"timestamp"`
+			Level       string    `graphql:"level"`
+			Source      string    `graphql:"source"`
+			Deleted     bool      `graphql:"deleted"`
+		} `graphql:"operationeventlog(where: {id: {_eq: $id}})"`
+	}
+
+	queryVars := map[string]interface{}{
+		"id": logID,
+	}
+
+	err = c.executeQuery(ctx, &query, queryVars)
+	if err != nil {
+		return nil, WrapError("CreateOperationEventLog", err, "failed to fetch created event log")
+	}
+
+	if len(query.OperationEventLog) == 0 {
+		return nil, WrapError("CreateOperationEventLog", ErrNotFound, "created event log not found")
+	}
+
+	log := query.OperationEventLog[0]
+	return &types.OperationEventLog{
+		ID:          log.ID,
+		OperatorID:  log.OperatorID,
+		OperationID: log.OperationID,
+		Message:     log.Message,
+		Timestamp:   log.Timestamp,
+		Level:       log.Level,
+		Source:      log.Source,
+		Deleted:     log.Deleted,
+	}, nil
+}
+
+// GetGlobalSettings retrieves Mythic global settings.
+func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{}, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	var query struct {
+		Settings struct {
+			GlobalSettings map[string]interface{} `graphql:"global_settings"`
+		} `graphql:"getGlobalSettings"`
+	}
+
+	err := c.executeQuery(ctx, &query, nil)
+	if err != nil {
+		return nil, WrapError("GetGlobalSettings", err, "failed to query global settings")
+	}
+
+	return query.Settings.GlobalSettings, nil
+}
+
+// UpdateGlobalSettings updates Mythic global settings.
+func (c *Client) UpdateGlobalSettings(ctx context.Context, settings map[string]interface{}) error {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	if settings == nil || len(settings) == 0 {
+		return WrapError("UpdateGlobalSettings", ErrInvalidInput, "settings cannot be empty")
+	}
+
+	var mutation struct {
+		UpdateGlobalSettings struct {
+			Status string `graphql:"status"`
+		} `graphql:"updateGlobalSettings(settings: $settings)"`
+	}
+
+	variables := map[string]interface{}{
+		"settings": settings,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("UpdateGlobalSettings", err, "failed to update global settings")
+	}
+
+	return nil
+}
