@@ -474,8 +474,20 @@ func (c *Client) DownloadFile(ctx context.Context, agentFileID string) ([]byte, 
 		return nil, WrapError("DownloadFile", err, "failed to read file data")
 	}
 
-	// Check if response is base64-encoded JSON (Mythic sometimes returns {file: base64data})
+	// Check if response is JSON (Mythic returns JSON for errors and base64-encoded files)
 	if len(fileData) > 0 && fileData[0] == '{' {
+		// First check for error response
+		var errorResp struct {
+			Status string `json:"status"`
+			Error  string `json:"error"`
+		}
+		if err := parseJSON(fileData, &errorResp); err == nil {
+			if errorResp.Status == "error" {
+				return nil, WrapError("DownloadFile", ErrNotFound, errorResp.Error)
+			}
+		}
+
+		// Check if response is base64-encoded JSON (Mythic sometimes returns {file: base64data})
 		var jsonResp struct {
 			File string `json:"file"`
 		}
