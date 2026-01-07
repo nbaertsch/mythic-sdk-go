@@ -19,7 +19,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Tasks | 12 | 0 | 0 | 12 |
 | Files | 8 | 0 | 0 | 8 |
 | Operations | 11 | 0 | 0 | 11 |
-| Payloads | 0 | 0 | 10 | 10 |
+| Payloads | 12 | 0 | 0 | 12 |
 | Credentials | 0 | 0 | 3 | 3 |
 | C2 Profiles | 0 | 0 | 9 | 9 |
 | Artifacts | 0 | 0 | 3 | 3 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **47** | **0** | **86** | **133** |
+| **TOTAL** | **59** | **0** | **74** | **133** |
 
-**Overall Coverage: 35.3%**
+**Overall Coverage: 44.4%**
 
 ---
 
@@ -287,39 +287,98 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ## 6. Payloads
 
-### ⏳ Pending (10/10)
+### ✅ Tested (12/12 - 100%)
+
+**Note:** This includes 10 core Client API methods and 2 helper methods (WaitForPayloadComplete, DownloadPayload).
+
+**Client API Methods:**
 
 - **GetPayloads()** - List all payloads
+  - File: `pkg/mythic/payloads.go:15`
+  - Tests: `tests/integration/payloads_test.go:30`
   - Database: `payload` table
 
 - **GetPayloadByUUID()** - Get specific payload
+  - File: `pkg/mythic/payloads.go:82`
+  - Tests: `tests/integration/payloads_test.go:240`
   - Database: `payload` table
 
 - **CreatePayload()** - Build new payload
+  - File: `pkg/mythic/payloads.go:156`
+  - Tests: `tests/integration/payloads_test.go:78`
   - GraphQL: `createPayload` mutation
-  - Input: JSON payload definition
+  - Input: JSON payload definition with type, commands, C2 profiles, build parameters
 
 - **RebuildPayload()** - Rebuild existing payload
+  - File: `pkg/mythic/payloads.go:282`
+  - Tests: `tests/integration/payloads_test.go:330`
   - GraphQL: `rebuild_payload` mutation
 
 - **UpdatePayload()** - Update payload settings
+  - File: `pkg/mythic/payloads.go:220`
+  - Tests: `tests/integration/payloads_test.go:175`
   - GraphQL: `updatePayload` mutation
-  - Fields: callback_alert, callback_allowed, description, deleted
+  - Fields: callback_alert, description, deleted
 
 - **DeletePayload()** - Delete payload
+  - File: `pkg/mythic/payloads.go:276`
+  - Tests: `tests/integration/payloads_test.go:388`
   - GraphQL: `deleteFile` mutation
 
 - **ExportPayloadConfig()** - Export payload configuration
+  - File: `pkg/mythic/payloads.go:317`
+  - Tests: `tests/integration/payloads_test.go:531`
   - GraphQL: `exportPayloadConfig` query
+  - Returns: JSON configuration string
 
 - **GetPayloadTypes()** - List available payload types
+  - File: `pkg/mythic/payloads.go:356`
+  - Tests: `tests/integration/payloads_test.go:13`
   - Database: `payloadtype` table
 
 - **GetPayloadCommands()** - Get commands for payload
+  - File: `pkg/mythic/payloads.go:400`
+  - Tests: `tests/integration/payloads_test.go:255`
   - Database: `payloadcommand` table
+  - Input: payload ID (int)
 
 - **GetPayloadOnHost()** - Track payloads deployed on hosts
+  - File: `pkg/mythic/payloads.go:435`
+  - Tests: `tests/integration/payloads_test.go:291`
   - Database: `payloadonhost` table
+  - Input: operation ID
+
+**Helper Methods:**
+
+- **WaitForPayloadComplete()** - Wait for payload build to complete
+  - File: `pkg/mythic/payloads.go:490`
+  - Tests: `tests/integration/payloads_test.go:562`
+  - Polls payload status until ready, failed, or timeout
+  - Input: UUID, timeout in seconds
+
+- **DownloadPayload()** - Download built payload file
+  - File: `pkg/mythic/payloads.go:520`
+  - Tests: `tests/integration/payloads_test.go:579`
+  - REST: `GET /api/v1.4/files/download/{uuid}`
+  - Returns: Binary payload data
+
+**Helper Methods (on Payload type):**
+
+- **Payload.IsReady()** - Check if payload build succeeded
+  - File: `pkg/mythic/types/payload.go:149`
+  - Tests: `tests/unit/payloads_test.go:82`
+
+- **Payload.IsFailed()** - Check if payload build failed
+  - File: `pkg/mythic/types/payload.go:154`
+  - Tests: `tests/unit/payloads_test.go:94`
+
+- **Payload.IsBuilding()** - Check if payload is still building
+  - File: `pkg/mythic/types/payload.go:159`
+  - Tests: `tests/unit/payloads_test.go:106`
+
+- **Payload.String()** - String representation
+  - File: `pkg/mythic/types/payload.go:132`
+  - Tests: `tests/unit/payloads_test.go:22`
 
 ---
 
@@ -666,8 +725,8 @@ This document provides a comprehensive overview of all available Mythic APIs and
 ## Implementation Priority Recommendations
 
 ### High Priority (Core Functionality)
-1. **Operations Management** - Essential for multi-operation environments
-2. **Payloads** - Critical for agent deployment
+1. ✅ **Operations Management** - Essential for multi-operation environments
+2. ✅ **Payloads** - Critical for agent deployment
 3. **Credentials** - Important for tracking compromised accounts
 4. **C2 Profiles** - Needed for agent communication management
 5. **Processes** - Important for situational awareness
