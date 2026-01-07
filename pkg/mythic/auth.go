@@ -1,8 +1,12 @@
 package mythic
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 )
 
 // LoginResponse represents the response from a login mutation.
@@ -50,38 +54,81 @@ func (c *Client) Login(ctx context.Context) error {
 		return WrapError("Login", ErrAuthenticationFailed, "username and password required")
 	}
 
-	// Perform login mutation
-	var mutation struct {
-		Login struct {
-			AccessToken  string `graphql:"access_token"`
-			RefreshToken string `graphql:"refresh_token"`
-			User         struct {
-				ID       int    `graphql:"id"`
-				Username string `graphql:"username"`
-			} `graphql:"user"`
-		} `graphql:"login(username: $username, password: $password)"`
+	// Construct auth endpoint URL
+	scheme := "https"
+	if !c.config.SSL {
+		scheme = "http"
 	}
+	authURL := fmt.Sprintf("%s://%s/auth", scheme, stripScheme(c.config.ServerURL))
 
-	variables := map[string]interface{}{
+	// Prepare login request
+	loginReq := map[string]string{
 		"username": c.config.Username,
 		"password": c.config.Password,
 	}
 
-	// Execute login mutation without authentication (special case)
-	err := c.graphqlClient.Mutate(ctx, &mutation, variables)
+	jsonData, err := json.Marshal(loginReq)
 	if err != nil {
-		return WrapError("Login", err, "login mutation failed")
+		return WrapError("Login", err, "failed to marshal login request")
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", authURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return WrapError("Login", err, "failed to create login request")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Execute request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return WrapError("Login", err, "failed to execute login request")
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return WrapError("Login", err, "failed to read login response")
+	}
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return WrapError("Login", ErrAuthenticationFailed, fmt.Sprintf("login failed with status %d: %s", resp.StatusCode, string(body)))
+	}
+
+	// Parse response
+	var authResp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		User         struct {
+			ID                    int    `json:"id"`
+			UserID                int    `json:"user_id"`
+			Username              string `json:"username"`
+			CurrentOperationID    int    `json:"current_operation_id"`
+			CurrentOperation      string `json:"current_operation"`
+			CurrentOperationBanner string `json:"current_operation_banner_text"`
+		} `json:"user"`
+	}
+
+	if err := json.Unmarshal(body, &authResp); err != nil {
+		return WrapError("Login", err, "failed to parse login response")
 	}
 
 	// Check if we got tokens
-	if mutation.Login.AccessToken == "" {
+	if authResp.AccessToken == "" {
 		return WrapError("Login", ErrAuthenticationFailed, "no access token returned")
 	}
 
 	// Store tokens in config
-	c.config.AccessToken = mutation.Login.AccessToken
-	c.config.RefreshToken = mutation.Login.RefreshToken
+	c.config.AccessToken = authResp.AccessToken
+	c.config.RefreshToken = authResp.RefreshToken
 	c.authenticated = true
+
+	// Store current operation ID
+	if authResp.User.CurrentOperationID > 0 {
+		c.currentOperationID = &authResp.User.CurrentOperationID
+	}
 
 	return nil
 }
@@ -97,11 +144,14 @@ func (c *Client) CreateAPIToken(ctx context.Context) (string, error) {
 		CreateAPIToken struct {
 			ID         int    `graphql:"id"`
 			TokenValue string `graphql:"token_value"`
-			Active     bool   `graphql:"active"`
-		} `graphql:"createAPIToken"`
+		} `graphql:"createAPIToken(token_type: $token_type)"`
 	}
 
-	err := c.executeMutation(ctx, &mutation, nil)
+	variables := map[string]interface{}{
+		"token_type": "User",  // User token type for API access
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return "", WrapError("CreateAPIToken", err, "failed to create API token")
 	}
@@ -119,17 +169,15 @@ func (c *Client) GetMe(ctx context.Context) (*Operator, error) {
 		return nil, ErrNotAuthenticated
 	}
 
+	// Query operator - filter by operation if we have one
 	var query struct {
 		Operator []struct {
-			ID               int    `graphql:"id"`
-			Username         string `graphql:"username"`
-			Admin            bool   `graphql:"admin"`
-			Active           bool   `graphql:"active"`
-			CurrentOperation struct {
-				ID   int    `graphql:"id"`
-				Name string `graphql:"name"`
-			} `graphql:"current_operation"`
-		} `graphql:"operator(limit: 1)"`
+			ID                 int    `graphql:"id"`
+			Username           string `graphql:"username"`
+			Admin              bool   `graphql:"admin"`
+			Active             bool   `graphql:"active"`
+			CurrentOperationID int    `graphql:"current_operation_id"`
+		} `graphql:"operator(order_by: {id: asc}, limit: 1)"`
 	}
 
 	err := c.executeQuery(ctx, &query, nil)
@@ -147,14 +195,15 @@ func (c *Client) GetMe(ctx context.Context) (*Operator, error) {
 		Username: op.Username,
 		Admin:    op.Admin,
 		Active:   op.Active,
-		CurrentOperation: &Operation{
-			ID:   op.CurrentOperation.ID,
-			Name: op.CurrentOperation.Name,
-		},
 	}
 
-	// Update current operation ID
-	c.SetCurrentOperation(op.CurrentOperation.ID)
+	// Set current operation if available
+	if op.CurrentOperationID > 0 {
+		operator.CurrentOperation = &Operation{
+			ID: op.CurrentOperationID,
+		}
+		c.SetCurrentOperation(op.CurrentOperationID)
+	}
 
 	return operator, nil
 }

@@ -59,7 +59,7 @@ func NewClient(config *Config) (*Client, error) {
 	if !config.SSL {
 		scheme = "http"
 	}
-	graphqlURL := fmt.Sprintf("%s://%s/graphql", scheme, stripScheme(config.ServerURL))
+	graphqlURL := fmt.Sprintf("%s://%s/graphql/", scheme, stripScheme(config.ServerURL))
 
 	// Create GraphQL client
 	gqlClient := graphql.NewClient(graphqlURL, httpClient)

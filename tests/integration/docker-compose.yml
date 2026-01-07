@@ -1,50 +1,29 @@
-version: '3.8'
+# This docker-compose file is a placeholder for integration tests.
+# Mythic C2 Framework requires the full repository and mythic-cli to run.
+#
+# NOTE: CI/CD uses full Mythic installation instead of docker-compose.
+# See .github/workflows/integration.yml for the automated CI setup.
+#
+# To run integration tests with a live Mythic instance:
+#
+# Option 1: Use an existing Mythic instance
+#   export MYTHIC_URL="https://your-mythic-server:7443"
+#   export MYTHIC_USERNAME="your_username"
+#   export MYTHIC_PASSWORD="your_password"
+#   go test -v -tags=integration ./tests/integration/...
+#
+# Option 2: Set up Mythic locally
+#   1. Clone Mythic: git clone https://github.com/its-a-feature/Mythic.git
+#   2. cd Mythic && sudo make
+#   3. sudo ./mythic-cli start
+#   4. Wait for Mythic to be ready (https://127.0.0.1:7443)
+#   5. Run tests with default credentials:
+#      export MYTHIC_URL="https://127.0.0.1:7443"
+#      export MYTHIC_USERNAME="mythic_admin"
+#      export MYTHIC_PASSWORD="<password from .env file>"
+#      go test -v -tags=integration ./tests/integration/...
+#
+# See tests/integration/README.md for more details.
 
-services:
-  mythic:
-    image: itsafeaturemythic/mythic_server:latest
-    container_name: mythic-test
-    ports:
-      - "7443:7443"
-    environment:
-      - MYTHIC_ADMIN_PASSWORD=mythic_password
-      - MYTHIC_SERVER_PORT=7443
-      - POSTGRES_PASSWORD=mythic_password
-      - RABBITMQ_PASSWORD=mythic_password
-      - HASURA_SECRET=supersecrethasura
-    depends_on:
-      - postgres
-      - rabbitmq
-    networks:
-      - mythic-test
-
-  postgres:
-    image: postgres:13-alpine
-    container_name: mythic-test-postgres
-    environment:
-      - POSTGRES_DB=mythic_db
-      - POSTGRES_USER=mythic_user
-      - POSTGRES_PASSWORD=mythic_password
-    networks:
-      - mythic-test
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: mythic-test-rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_USER=mythic_user
-      - RABBITMQ_DEFAULT_PASS=mythic_password
-    networks:
-      - mythic-test
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-
-networks:
-  mythic-test:
-    driver: bridge
-
-volumes:
-  postgres-data:
-  rabbitmq-data:
+# Note: Mythic does not provide a simple Docker image for testing.
+# It requires the full framework setup with multiple microservices.

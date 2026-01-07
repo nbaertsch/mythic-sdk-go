@@ -1,23 +1,21 @@
 name: Integration Tests
 
 on:
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
-  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
   pull_request:
-    types: [labeled]
+    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
   integration-test:
-    name: Integration Tests
-    # Only run if labeled with 'integration-test' or manually triggered
-    if: |
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'integration-test')
+    name: Integration Tests with Mythic
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-      - name: Checkout code
+      - name: Checkout SDK
         uses: actions/checkout@v4
 
       - name: Set up Go
@@ -26,48 +24,96 @@ jobs:
           go-version: '1.23'
           cache: true
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Start Mythic test instance
+      - name: Clone Mythic Framework
         run: |
-          cd tests/integration
-          docker-compose up -d
+          git clone --depth 1 https://github.com/its-a-feature/Mythic.git /tmp/mythic
+          cd /tmp/mythic
+          echo "Mythic version: $(cat VERSION)"
+
+      - name: Build Mythic CLI
+        run: |
+          cd /tmp/mythic
+          sudo make
+          sudo chmod +x mythic-cli
+
+      - name: Configure Mythic
+        run: |
+          cd /tmp/mythic
+          # Disable jupyter to avoid startup issues
+          sudo ./mythic-cli config set jupyter_bind_localhost_only false || true
+
+      - name: Start Mythic
+        run: |
+          cd /tmp/mythic
+          sudo ./mythic-cli start
+
+      - name: Wait for Mythic Ready
+        run: |
           echo "Waiting for Mythic to be ready..."
-          timeout=60
+          timeout=180
           attempt=0
           while [ $attempt -lt $timeout ]; do
-            if curl -k -s https://localhost:7443 > /dev/null 2>&1; then
-              echo "Mythic is ready"
+            if curl -k -s https://127.0.0.1:7443 > /dev/null 2>&1; then
+              echo "✓ Mythic is ready after $attempt seconds"
               break
             fi
-            echo "Waiting... ($attempt/$timeout)"
             sleep 5
-            attempt=$((attempt + 1))
+            attempt=$((attempt + 5))
           done
-          if [ $attempt -eq $timeout ]; then
-            echo "Mythic failed to start"
-            docker-compose logs
+
+          if [ $attempt -ge $timeout ]; then
+            echo "✗ Mythic failed to start within timeout"
+            cd /tmp/mythic
+            sudo ./mythic-cli status
             exit 1
           fi
 
-      - name: Run integration tests
+      - name: Extract Mythic Credentials
+        id: mythic-creds
         run: |
-          export MYTHIC_URL="https://localhost:7443"
-          export MYTHIC_USERNAME="mythic_admin"
-          export MYTHIC_PASSWORD="mythic_password"
-          export MYTHIC_SKIP_TLS_VERIFY="true"
-          go test -v -tags=integration ./tests/integration/...
+          PASSWORD=$(grep MYTHIC_ADMIN_PASSWORD /tmp/mythic/.env | cut -d'=' -f2 | tr -d '"')
+          echo "::add-mask::$PASSWORD"
+          echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
-      - name: Stop Mythic
+      - name: Run Integration Tests
+        env:
+          MYTHIC_URL: "https://127.0.0.1:7443"
+          MYTHIC_USERNAME: "mythic_admin"
+          MYTHIC_PASSWORD: ${{ steps.mythic-creds.outputs.password }}
+          MYTHIC_SKIP_TLS_VERIFY: "true"
+        run: |
+          go test -v -tags=integration ./tests/integration/... \
+            -timeout 10m \
+            2>&1 | tee integration-test-output.log
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: integration-test-output.log
+          retention-days: 7
+
+      - name: Collect Mythic Logs on Failure
+        if: failure()
+        run: |
+          cd /tmp/mythic
+          sudo ./mythic-cli logs > mythic-logs.txt 2>&1 || true
+          sudo docker ps -a > docker-containers.txt || true
+
+      - name: Upload Mythic Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythic-failure-logs
+          path: |
+            /tmp/mythic/mythic-logs.txt
+            /tmp/mythic/docker-containers.txt
+          retention-days: 7
+
+      - name: Cleanup Mythic
         if: always()
         run: |
-          cd tests/integration
-          docker-compose down -v
-
-      - name: Upload test logs
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: integration-test-logs
-          path: tests/integration/logs/
+          cd /tmp/mythic
+          sudo ./mythic-cli stop || true
+          sudo docker system prune -af || true

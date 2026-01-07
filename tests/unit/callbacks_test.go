@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/your-org/mythic-sdk-go/pkg/mythic/types"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 func TestCallbackString(t *testing.T) {

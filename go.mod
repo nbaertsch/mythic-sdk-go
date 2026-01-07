@@ -1,4 +1,4 @@
-module github.com/your-org/mythic-sdk-go
+module github.com/nbaertsch/mythic-sdk-go
 
 go 1.21
 

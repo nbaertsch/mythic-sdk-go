@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/your-org/mythic-sdk-go/pkg/mythic/types"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // GetAllCallbacks retrieves all callbacks (active and inactive).
@@ -37,18 +37,17 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 			ExtraInfo       string    `graphql:"extra_info"`
 			SleepInfo       string    `graphql:"sleep_info"`
 			OperationID     int       `graphql:"operation_id"`
-			PayloadTypeID   int       `graphql:"payload_type_id"`
 			OperatorID      int       `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
 				Description string `graphql:"description"`
 				OS          string `graphql:"os"`
+				PayloadType struct {
+					ID   int    `graphql:"id"`
+					Name string `graphql:"name"`
+				} `graphql:"payloadtype"`
 			} `graphql:"payload"`
-			PayloadType struct {
-				ID   int    `graphql:"id"`
-				Name string `graphql:"name"`
-			} `graphql:"payloadtype"`
 			Operator struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -85,7 +84,7 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 			ExtraInfo:       cb.ExtraInfo,
 			SleepInfo:       cb.SleepInfo,
 			OperationID:     cb.OperationID,
-			PayloadTypeID:   cb.PayloadTypeID,
+			PayloadTypeID:   cb.Payload.PayloadType.ID,
 			OperatorID:      cb.OperatorID,
 			Payload: &types.CallbackPayload{
 				ID:          cb.Payload.ID,
@@ -94,8 +93,8 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 				OS:          cb.Payload.OS,
 			},
 			PayloadType: &types.CallbackPayloadType{
-				ID:   cb.PayloadType.ID,
-				Name: cb.PayloadType.Name,
+				ID:   cb.Payload.PayloadType.ID,
+				Name: cb.Payload.PayloadType.Name,
 			},
 			Operator: &types.CallbackOperator{
 				ID:       cb.Operator.ID,
@@ -136,18 +135,17 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 			ExtraInfo       string    `graphql:"extra_info"`
 			SleepInfo       string    `graphql:"sleep_info"`
 			OperationID     int       `graphql:"operation_id"`
-			PayloadTypeID   int       `graphql:"payload_type_id"`
 			OperatorID      int       `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
 				Description string `graphql:"description"`
 				OS          string `graphql:"os"`
+				PayloadType struct {
+					ID   int    `graphql:"id"`
+					Name string `graphql:"name"`
+				} `graphql:"payloadtype"`
 			} `graphql:"payload"`
-			PayloadType struct {
-				ID   int    `graphql:"id"`
-				Name string `graphql:"name"`
-			} `graphql:"payloadtype"`
 			Operator struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -184,7 +182,7 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 			ExtraInfo:       cb.ExtraInfo,
 			SleepInfo:       cb.SleepInfo,
 			OperationID:     cb.OperationID,
-			PayloadTypeID:   cb.PayloadTypeID,
+			PayloadTypeID:   cb.Payload.PayloadType.ID,
 			OperatorID:      cb.OperatorID,
 			Payload: &types.CallbackPayload{
 				ID:          cb.Payload.ID,
@@ -193,8 +191,8 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 				OS:          cb.Payload.OS,
 			},
 			PayloadType: &types.CallbackPayloadType{
-				ID:   cb.PayloadType.ID,
-				Name: cb.PayloadType.Name,
+				ID:   cb.Payload.PayloadType.ID,
+				Name: cb.Payload.PayloadType.Name,
 			},
 			Operator: &types.CallbackOperator{
 				ID:       cb.Operator.ID,
@@ -235,18 +233,17 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 			ExtraInfo       string    `graphql:"extra_info"`
 			SleepInfo       string    `graphql:"sleep_info"`
 			OperationID     int       `graphql:"operation_id"`
-			PayloadTypeID   int       `graphql:"payload_type_id"`
 			OperatorID      int       `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
 				Description string `graphql:"description"`
 				OS          string `graphql:"os"`
+				PayloadType struct {
+					ID   int    `graphql:"id"`
+					Name string `graphql:"name"`
+				} `graphql:"payloadtype"`
 			} `graphql:"payload"`
-			PayloadType struct {
-				ID   int    `graphql:"id"`
-				Name string `graphql:"name"`
-			} `graphql:"payloadtype"`
 			Operator struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -290,7 +287,7 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 		ExtraInfo:       cb.ExtraInfo,
 		SleepInfo:       cb.SleepInfo,
 		OperationID:     cb.OperationID,
-		PayloadTypeID:   cb.PayloadTypeID,
+		PayloadTypeID:   cb.Payload.PayloadType.ID,
 		OperatorID:      cb.OperatorID,
 		Payload: &types.CallbackPayload{
 			ID:          cb.Payload.ID,
@@ -299,8 +296,8 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 			OS:          cb.Payload.OS,
 		},
 		PayloadType: &types.CallbackPayloadType{
-			ID:   cb.PayloadType.ID,
-			Name: cb.PayloadType.Name,
+			ID:   cb.Payload.PayloadType.ID,
+			Name: cb.Payload.PayloadType.Name,
 		},
 		Operator: &types.CallbackOperator{
 			ID:       cb.Operator.ID,

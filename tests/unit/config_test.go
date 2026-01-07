@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/your-org/mythic-sdk-go/pkg/mythic"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
 )
 
 func TestDefaultConfig(t *testing.T) {

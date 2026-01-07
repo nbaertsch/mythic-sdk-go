@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"github.com/your-org/mythic-sdk-go/pkg/mythic"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
 )
 
 func TestNewClient(t *testing.T) {

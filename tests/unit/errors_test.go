@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/your-org/mythic-sdk-go/pkg/mythic"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
 )
 
 func TestError(t *testing.T) {
