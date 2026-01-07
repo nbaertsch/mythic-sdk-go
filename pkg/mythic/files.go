@@ -13,14 +13,14 @@ import (
 	"time"
 )
 
-// MythicTimestamp is a custom type to handle Mythic's timestamp format
+// Timestamp is a custom type to handle Mythic's timestamp format
 // which may not include timezone information.
-type MythicTimestamp struct {
+type Timestamp struct {
 	time.Time
 }
 
 // UnmarshalJSON handles timestamp parsing for both RFC3339 and Mythic's format.
-func (mt *MythicTimestamp) UnmarshalJSON(b []byte) error {
+func (mt *Timestamp) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	if s == "null" || s == "" {
 		mt.Time = time.Time{}
@@ -61,7 +61,7 @@ func (mt *MythicTimestamp) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler.
-func (mt MythicTimestamp) MarshalJSON() ([]byte, error) {
+func (mt Timestamp) MarshalJSON() ([]byte, error) {
 	if mt.Time.IsZero() {
 		return []byte("null"), nil
 	}
@@ -147,7 +147,7 @@ func (c *Client) GetFiles(ctx context.Context, limit int) ([]*FileMeta, error) {
 		// Parse timestamp
 		var timestamp time.Time
 		if f.Timestamp != "" {
-			var mt MythicTimestamp
+			var mt Timestamp
 			if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
 				timestamp = mt.Time
 			}
@@ -229,7 +229,7 @@ func (c *Client) GetFileByID(ctx context.Context, agentFileID string) (*FileMeta
 	// Parse timestamp
 	var timestamp time.Time
 	if f.Timestamp != "" {
-		var mt MythicTimestamp
+		var mt Timestamp
 		if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
 			timestamp = mt.Time
 		}
@@ -308,7 +308,7 @@ func (c *Client) GetDownloadedFiles(ctx context.Context, limit int) ([]*FileMeta
 		// Parse timestamp
 		var timestamp time.Time
 		if f.Timestamp != "" {
-			var mt MythicTimestamp
+			var mt Timestamp
 			if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
 				timestamp = mt.Time
 			}
