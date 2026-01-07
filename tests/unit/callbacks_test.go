@@ -275,16 +275,16 @@ func TestCreateCallbackInput_Structure(t *testing.T) {
 	extraInfo := "Additional info"
 
 	input := &mythic.CreateCallbackInput{
-		PayloadUUID:  "test-uuid-123",
-		IP:           &ip,
-		ExternalIP:   &externalIP,
-		User:         &user,
-		Host:         &host,
-		Domain:       &domain,
-		Description:  &description,
-		ProcessName:  &processName,
-		SleepInfo:    &sleepInfo,
-		ExtraInfo:    &extraInfo,
+		PayloadUUID: "test-uuid-123",
+		IP:          &ip,
+		ExternalIP:  &externalIP,
+		User:        &user,
+		Host:        &host,
+		Domain:      &domain,
+		Description: &description,
+		ProcessName: &processName,
+		SleepInfo:   &sleepInfo,
+		ExtraInfo:   &extraInfo,
 	}
 
 	// Verify all fields are set correctly

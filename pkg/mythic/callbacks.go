@@ -395,16 +395,16 @@ func (c *Client) UpdateCallback(ctx context.Context, req *types.CallbackUpdateRe
 
 // CreateCallbackInput represents the input for manually creating a callback.
 type CreateCallbackInput struct {
-	PayloadUUID  string  `json:"payloadUuid"`
-	IP           *string `json:"ip,omitempty"`
-	ExternalIP   *string `json:"externalIp,omitempty"`
-	User         *string `json:"user,omitempty"`
-	Host         *string `json:"host,omitempty"`
-	Domain       *string `json:"domain,omitempty"`
-	Description  *string `json:"description,omitempty"`
-	ProcessName  *string `json:"processName,omitempty"`
-	SleepInfo    *string `json:"sleepInfo,omitempty"`
-	ExtraInfo    *string `json:"extraInfo,omitempty"`
+	PayloadUUID string  `json:"payloadUuid"`
+	IP          *string `json:"ip,omitempty"`
+	ExternalIP  *string `json:"externalIp,omitempty"`
+	User        *string `json:"user,omitempty"`
+	Host        *string `json:"host,omitempty"`
+	Domain      *string `json:"domain,omitempty"`
+	Description *string `json:"description,omitempty"`
+	ProcessName *string `json:"processName,omitempty"`
+	SleepInfo   *string `json:"sleepInfo,omitempty"`
+	ExtraInfo   *string `json:"extraInfo,omitempty"`
 }
 
 // CreateCallback manually registers a new callback session.
@@ -483,10 +483,10 @@ func (c *Client) DeleteCallback(ctx context.Context, callbackIDs []int) error {
 
 	var mutation struct {
 		DeleteTasksAndCallbacks struct {
-			Status           string `graphql:"status"`
-			Error            string `graphql:"error"`
-			FailedTasks      []int  `graphql:"failed_tasks"`
-			FailedCallbacks  []int  `graphql:"failed_callbacks"`
+			Status          string `graphql:"status"`
+			Error           string `graphql:"error"`
+			FailedTasks     []int  `graphql:"failed_tasks"`
+			FailedCallbacks []int  `graphql:"failed_callbacks"`
 		} `graphql:"deleteTasksAndCallbacks(callbacks: $callbacks)"`
 	}
 
