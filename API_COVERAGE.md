@@ -26,7 +26,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Tags | 0 | 0 | 3 | 3 |
 | Tokens | 0 | 0 | 4 | 4 |
 | Processes | 6 | 0 | 0 | 6 |
-| Keylogs | 0 | 0 | 2 | 2 |
+| Keylogs | 3 | 0 | 0 | 3 |
 | Browser Scripts | 0 | 0 | 3 | 3 |
 | MITRE ATT&CK | 0 | 0 | 3 | 3 |
 | Reporting | 0 | 0 | 2 | 2 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **70** | **0** | **63** | **133** |
+| **TOTAL** | **73** | **0** | **60** | **133** |
 
-**Overall Coverage: 52.6%**
+**Overall Coverage: 54.9%**
 
 ---
 
@@ -592,13 +592,40 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 
 ## 13. Keylogs
 
-### ⏳ Pending (2/2)
+### ✅ Tested (3/3 - 100%)
 
-- **GetKeylogs()** - List keylog entries
+**Note:** This includes 2 core Client API methods plus 1 additional helper method (GetKeylogsByOperation).
+
+**Client API Methods:**
+
+- **GetKeylogs()** - List all keylog entries
+  - File: `pkg/mythic/keylogs.go:10`
+  - Tests: `tests/integration/keylogs_test.go:13`
   - Database: `keylog` table
+  - Returns keylogs sorted by timestamp (newest first)
 
 - **GetKeylogsByCallback()** - Filter keylogs by callback
-  - Database: `keylog` table
+  - File: `pkg/mythic/keylogs.go:103`
+  - Tests: `tests/integration/keylogs_test.go:103`
+  - Database: `keylog` table with callback filter
+  - Returns keylogs sorted by timestamp (newest first)
+
+**Helper Methods:**
+
+- **GetKeylogsByOperation()** - Filter keylogs by operation
+  - File: `pkg/mythic/keylogs.go:48`
+  - Tests: `tests/integration/keylogs_test.go:54`
+  - Database: `keylog` table with operation filter
+
+**Helper Methods (on Keylog type):**
+
+- **Keylog.String()** - String representation showing timestamp, window, and user
+  - File: `pkg/mythic/types/keylog.go:18`
+  - Tests: `tests/unit/keylogs_test.go:11`
+
+- **Keylog.HasKeystrokes()** - Check if keylog has captured keystrokes
+  - File: `pkg/mythic/types/keylog.go:30`
+  - Tests: `tests/unit/keylogs_test.go:53`
 
 ---
 
