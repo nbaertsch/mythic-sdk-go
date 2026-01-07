@@ -23,7 +23,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Credentials | 5 | 0 | 0 | 5 |
 | C2 Profiles | 9 | 0 | 0 | 9 |
 | Artifacts | 7 | 0 | 0 | 7 |
-| Tags | 0 | 0 | 3 | 3 |
+| Tags | 11 | 0 | 0 | 11 |
 | Tokens | 0 | 0 | 4 | 4 |
 | Processes | 6 | 0 | 0 | 6 |
 | Keylogs | 3 | 0 | 0 | 3 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **89** | **0** | **47** | **136** |
+| **TOTAL** | **100** | **0** | **44** | **144** |
 
-**Overall Coverage: 65.4%**
+**Overall Coverage: 69.4%**
 
 ---
 
@@ -630,16 +630,114 @@ Both types track indicators of compromise but at different scopes and granularit
 
 ## 10. Tags
 
-### ⏳ Pending (3/3)
+### ✅ Tested (11/11 - 100%)
 
-- **GetTagTypes()** - List tag types
+**Note:** This includes 10 core Client API methods plus helper methods for tag management. Tags provide a two-tier system: TagType (definitions) and Tag (instances applied to objects).
+
+**TagType Management (Category Definitions):**
+
+- **GetTagTypes()** - List tag types for current operation
+  - File: `pkg/mythic/tags.go:11`
+  - Tests: `tests/integration/tags_test.go:15`
+  - Database: `tagtype` table with operation filter
+  - Returns non-deleted tag types sorted by name (ascending)
+
+- **GetTagTypesByOperation()** - List tag types for specific operation
+  - File: `pkg/mythic/tags.go:26`
+  - Tests: Implicitly tested via GetTagTypes()
+  - Database: `tagtype` table with operation filter
+
+- **GetTagTypeByID()** - Get specific tag type by ID
+  - File: `pkg/mythic/tags.go:73`
+  - Tests: `tests/integration/tags_test.go:75`
   - Database: `tagtype` table
 
-- **CreateTag()** - Tag an object (task, callback, file, etc.)
-  - GraphQL: `createTag` mutation
+- **CreateTagType()** - Create new tag type (category)
+  - File: `pkg/mythic/tags.go:120`
+  - Tests: `tests/integration/tags_test.go:38`
+  - GraphQL: `createTagtype` mutation
+  - Input: CreateTagTypeRequest (name, description, color)
+  - Requires current operation to be set
 
-- **DeleteTagType()** - Delete tag type
+- **UpdateTagType()** - Update tag type properties
+  - File: `pkg/mythic/tags.go:174`
+  - Tests: `tests/integration/tags_test.go:122`
+  - GraphQL: `update_tagtype` mutation
+  - Fields: name, description, color, deleted
+
+- **DeleteTagType()** - Mark tag type as deleted (soft delete)
+  - File: `pkg/mythic/tags.go:227`
+  - Tests: `tests/integration/tags_test.go:171`
   - GraphQL: `deleteTagtype` mutation
+
+**Tag Instance Management (Applied Tags):**
+
+- **CreateTag()** - Apply tag to an object (task, callback, file, etc.)
+  - File: `pkg/mythic/tags.go:260`
+  - Tests: `tests/integration/tags_test.go:223`
+  - GraphQL: `createTag` mutation
+  - Input: CreateTagRequest (tagtype_id, source_type, source_id)
+  - Supports 7 source types: task, callback, filemeta, payload, artifact, process, keylog
+
+- **GetTagByID()** - Get specific tag by ID
+  - File: `pkg/mythic/tags.go:297`
+  - Tests: `tests/integration/tags_test.go:223` (within create test)
+  - Database: `tag` table
+
+- **GetTags()** - List tags on specific object
+  - File: `pkg/mythic/tags.go:344`
+  - Tests: `tests/integration/tags_test.go:277`
+  - Database: `tag` table with source filter
+  - Returns tags sorted by timestamp (newest first)
+
+- **GetTagsByOperation()** - List all tags for operation
+  - File: `pkg/mythic/tags.go:392`
+  - Tests: `tests/integration/tags_test.go:337`
+  - Database: `tag` table with operation filter
+
+- **DeleteTag()** - Remove tag from object
+  - File: `pkg/mythic/tags.go:439`
+  - Tests: `tests/integration/tags_test.go:401`
+  - GraphQL: `delete_tag` mutation
+
+**Helper Methods (on TagType type):**
+
+- **TagType.String()** - String representation showing name and color
+  - File: `pkg/mythic/types/tag.go:21`
+  - Tests: `tests/unit/tags_test.go:11`
+
+- **TagType.IsDeleted()** - Check if tag type is marked as deleted
+  - File: `pkg/mythic/types/tag.go:29`
+  - Tests: `tests/unit/tags_test.go:56`
+
+**Helper Methods (on Tag type):**
+
+- **Tag.String()** - String representation showing tag type and target
+  - File: `pkg/mythic/types/tag.go:48`
+  - Tests: `tests/unit/tags_test.go:78`
+
+**Supported Tag Source Types:**
+- `task` - Tag applied to tasks
+- `callback` - Tag applied to callbacks (agent sessions)
+- `filemeta` - Tag applied to files
+- `payload` - Tag applied to payloads
+- `artifact` - Tag applied to artifacts/IOCs
+- `process` - Tag applied to processes
+- `keylog` - Tag applied to keylog entries
+
+**Tag System Architecture:**
+
+The tag system uses a two-tier structure:
+1. **TagType**: Defines the tag categories (e.g., "Critical", "Lateral Movement", "Data Exfil")
+   - Each TagType has: name, description, color (hex format like #FF0000)
+   - TagTypes are operation-specific
+   - Soft delete support (marked as deleted, not removed)
+
+2. **Tag**: Instances of TagTypes applied to specific objects
+   - Links a TagType to an object via source_type and source_id
+   - Tracks who applied the tag (operator_id) and when (timestamp)
+   - Multiple tags can be applied to the same object
+   - Tags can be filtered by object type, operation, or timestamp
 
 ---
 
@@ -998,7 +1096,7 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 
 ### Medium Priority (Enhanced Features)
 6. ✅ **Artifacts/IOCs** - Useful for tracking indicators
-7. **Tags** - Organization and categorization
+7. ✅ **Tags** - Organization and categorization
 8. ✅ **Keylogs** - Credential harvesting operations
 9. **MITRE ATT&CK** - Threat intelligence integration
 10. **Reporting** - Operation documentation
