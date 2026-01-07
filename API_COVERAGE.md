@@ -21,7 +21,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operations | 11 | 0 | 0 | 11 |
 | Payloads | 12 | 0 | 0 | 12 |
 | Credentials | 5 | 0 | 0 | 5 |
-| C2 Profiles | 0 | 0 | 9 | 9 |
+| C2 Profiles | 9 | 0 | 0 | 9 |
 | Artifacts | 0 | 0 | 3 | 3 |
 | Tags | 0 | 0 | 3 | 3 |
 | Tokens | 0 | 0 | 4 | 4 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **73** | **0** | **60** | **133** |
+| **TOTAL** | **82** | **0** | **51** | **133** |
 
-**Overall Coverage: 54.9%**
+**Overall Coverage: 61.7%**
 
 ---
 
@@ -443,34 +443,94 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ## 8. C2 Profiles
 
-### ⏳ Pending (9/9)
+### ✅ Tested (9/9 - 100%)
 
-- **GetC2Profiles()** - List all C2 profiles
+**Client API Methods:**
+
+- **GetC2Profiles()** - List all C2 profiles (non-deleted)
+  - File: `pkg/mythic/c2profiles.go:10`
+  - Tests: `tests/integration/c2profiles_test.go:13`
   - Database: `c2profile` table
+  - Returns profiles sorted by name (ascending)
 
-- **GetC2ProfileByID()** - Get specific C2 profile
+- **GetC2ProfileByID()** - Get specific C2 profile by ID
+  - File: `pkg/mythic/c2profiles.go:59`
+  - Tests: `tests/integration/c2profiles_test.go:52`
   - Database: `c2profile` table
+  - Input: profile ID
 
-- **CreateC2Instance()** - Create C2 profile instance
+- **CreateC2Instance()** - Create new C2 profile instance
+  - File: `pkg/mythic/c2profiles.go:118`
+  - Tests: Requires Mythic admin permissions
   - GraphQL: `create_c2_instance` mutation
+  - Input: CreateC2InstanceRequest (name, description, operation ID, parameters)
+  - Returns created C2Profile
 
-- **ImportC2Instance()** - Import C2 instance config
+- **ImportC2Instance()** - Import C2 instance configuration
+  - File: `pkg/mythic/c2profiles.go:168`
+  - Tests: Requires Mythic admin permissions
   - GraphQL: `import_c2_instance` mutation
+  - Input: ImportC2InstanceRequest (config JSON string, name)
+  - Returns imported C2Profile
 
-- **StartStopProfile()** - Start/stop C2 profile
+- **StartStopProfile()** - Start or stop a C2 profile
+  - File: `pkg/mythic/c2profiles.go:203`
+  - Tests: `tests/integration/c2profiles_test.go:188`
   - GraphQL: `startStopProfile` mutation
+  - Input: profile ID, start (bool)
 
 - **GetProfileOutput()** - Get C2 profile output/logs
+  - File: `pkg/mythic/c2profiles.go:235`
+  - Tests: `tests/integration/c2profiles_test.go:108`
   - GraphQL: `getProfileOutput` query
+  - Input: profile ID
+  - Returns: C2ProfileOutput (output, stdout, stderr)
 
 - **C2HostFile()** - Host file via C2 profile
+  - File: `pkg/mythic/c2profiles.go:273`
+  - Tests: `tests/integration/c2profiles_test.go:391`
   - GraphQL: `c2HostFile` mutation
+  - Input: profile ID, file UUID
 
-- **C2SampleMessage()** - Generate sample C2 message
+- **C2SampleMessage()** - Generate sample C2 message for testing
+  - File: `pkg/mythic/c2profiles.go:309`
+  - Tests: `tests/integration/c2profiles_test.go:281`
   - GraphQL: `c2SampleMessage` query
+  - Input: profile ID, message type (optional)
+  - Returns: C2SampleMessage with generated message
 
-- **C2GetIOC()** - Get IOCs for C2 profile
+- **C2GetIOC()** - Get indicators of compromise for C2 profile
+  - File: `pkg/mythic/c2profiles.go:343`
+  - Tests: `tests/integration/c2profiles_test.go:328`
   - GraphQL: `c2GetIOC` query
+  - Input: profile ID
+  - Returns: C2IOC with list of IOCs
+
+**Helper Methods (on C2Profile type):**
+
+- **C2Profile.String()** - String representation showing name and status
+  - File: `pkg/mythic/types/c2profile.go:31`
+  - Tests: `tests/unit/c2profiles_test.go:11`
+
+- **C2Profile.IsRunning()** - Check if profile is currently running
+  - File: `pkg/mythic/types/c2profile.go:40`
+  - Tests: `tests/unit/c2profiles_test.go:62`
+
+- **C2Profile.IsDeleted()** - Check if profile is marked as deleted
+  - File: `pkg/mythic/types/c2profile.go:45`
+  - Tests: `tests/unit/c2profiles_test.go:77`
+
+**C2 Profile Types:**
+
+C2 profiles can be:
+- **P2P Profiles** (`IsP2P: true`) - Used for peer-to-peer agent communication
+- **Server-Only Profiles** (`ServerOnly: true`) - Only run on the Mythic server, not embedded in payloads
+- **Standard Profiles** - Full C2 profiles embedded in payloads for agent communication
+
+**Profile States:**
+- Running: Profile container is active and accepting connections
+- Stopped: Profile container is not running
+- Deleted: Profile is marked as deleted (soft delete)
 
 ---
 
@@ -854,13 +914,13 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 1. ✅ **Operations Management** - Essential for multi-operation environments
 2. ✅ **Payloads** - Critical for agent deployment
 3. ✅ **Credentials** - Important for tracking compromised accounts
-4. **C2 Profiles** - Needed for agent communication management
+4. ✅ **C2 Profiles** - Needed for agent communication management
 5. ✅ **Processes** - Important for situational awareness
 
 ### Medium Priority (Enhanced Features)
 6. **Artifacts/IOCs** - Useful for tracking indicators
 7. **Tags** - Organization and categorization
-8. **Keylogs** - Credential harvesting operations
+8. ✅ **Keylogs** - Credential harvesting operations
 9. **MITRE ATT&CK** - Threat intelligence integration
 10. **Reporting** - Operation documentation
 

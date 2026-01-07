@@ -58,6 +58,9 @@ var (
 
 	// ErrTaskFailed indicates a task execution failed
 	ErrTaskFailed = fmt.Errorf("task failed")
+
+	// ErrOperationFailed indicates an operation failed (returned error status)
+	ErrOperationFailed = fmt.Errorf("operation failed")
 )
 
 // WrapError wraps an error with an operation and optional message.
