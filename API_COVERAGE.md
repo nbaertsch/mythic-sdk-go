@@ -22,7 +22,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Payloads | 12 | 0 | 0 | 12 |
 | Credentials | 5 | 0 | 0 | 5 |
 | C2 Profiles | 9 | 0 | 0 | 9 |
-| Artifacts | 0 | 0 | 3 | 3 |
+| Artifacts | 7 | 0 | 0 | 7 |
 | Tags | 0 | 0 | 3 | 3 |
 | Tokens | 0 | 0 | 4 | 4 |
 | Processes | 6 | 0 | 0 | 6 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **82** | **0** | **51** | **133** |
+| **TOTAL** | **89** | **0** | **47** | **136** |
 
-**Overall Coverage: 61.7%**
+**Overall Coverage: 65.4%**
 
 ---
 
@@ -536,16 +536,95 @@ C2 profiles can be:
 
 ## 9. Artifacts (Indicators)
 
-### ⏳ Pending (3/3)
+### ✅ Tested (7/7 - 100%)
 
-- **GetArtifacts()** - List task artifacts/IOCs
+**Note:** This includes 3 core Client API methods plus 4 additional helper methods for filtering and management.
+
+**Core API Methods:**
+
+- **GetArtifacts()** - List all artifacts (IOCs) for current operation
+  - File: `pkg/mythic/artifacts.go:10`
+  - Tests: `tests/integration/artifacts_test.go:16`
+  - Database: `artifact` table
+  - Returns artifacts sorted by timestamp (newest first)
+
+- **CreateArtifact()** - Create new artifact (IOC) entry
+  - File: `pkg/mythic/artifacts.go:84`
+  - Tests: `tests/integration/artifacts_test.go:59`
+  - GraphQL: `createArtifact` mutation
+  - Input: CreateArtifactRequest (artifact, base_artifact, host, type, task_id, metadata)
+  - Requires current operation to be set
+
+- **GetTaskArtifacts()** - Get artifacts for specific task (task-scoped)
+  - File: `pkg/mythic/tasks.go:639`
+  - Tests: `tests/unit/tasks_test.go:323`
+  - Database: `taskartifact` table
+  - Input: task display ID
+  - Returns TaskArtifact entries linked to specific task execution
+
+**Helper Methods:**
+
+- **GetArtifactsByOperation()** - List artifacts for specific operation
+  - File: `pkg/mythic/artifacts.go:24`
+  - Tests: Implicitly tested via GetArtifacts()
+  - Database: `artifact` table with operation filter
+
+- **GetArtifactByID()** - Get specific artifact by ID
+  - File: `pkg/mythic/artifacts.go:161`
+  - Tests: `tests/integration/artifacts_test.go:59` (within create test)
   - Database: `artifact` table
 
-- **CreateArtifact()** - Create artifact entry
-  - GraphQL: `createArtifact` mutation
+- **UpdateArtifact()** - Update artifact properties
+  - File: `pkg/mythic/artifacts.go:218`
+  - Tests: `tests/integration/artifacts_test.go:167`
+  - GraphQL: `update_artifact` mutation
+  - Fields: host, deleted, metadata
 
-- **GetTaskArtifacts()** - Get artifacts for specific task
-  - Database: `taskartifact` table
+- **DeleteArtifact()** - Mark artifact as deleted (soft delete)
+  - File: `pkg/mythic/artifacts.go:261`
+  - Tests: `tests/integration/artifacts_test.go:210`
+  - Wrapper around UpdateArtifact with deleted=true
+
+- **GetArtifactsByHost()** - Filter artifacts by host
+  - File: `pkg/mythic/artifacts.go:277`
+  - Tests: `tests/integration/artifacts_test.go:245`
+  - Database: `artifact` table with host filter
+
+- **GetArtifactsByType()** - Filter artifacts by type
+  - File: `pkg/mythic/artifacts.go:340`
+  - Tests: `tests/integration/artifacts_test.go:292`
+  - Database: `artifact` table with type filter
+
+**Helper Methods (on Artifact type):**
+
+- **Artifact.String()** - String representation showing artifact and location
+  - File: `pkg/mythic/types/artifact.go:26`
+  - Tests: `tests/unit/artifacts_test.go:11`
+
+- **Artifact.IsDeleted()** - Check if artifact is marked as deleted
+  - File: `pkg/mythic/types/artifact.go:39`
+  - Tests: `tests/unit/artifacts_test.go:60`
+
+- **Artifact.HasTask()** - Check if artifact is linked to a task
+  - File: `pkg/mythic/types/artifact.go:44`
+  - Tests: `tests/unit/artifacts_test.go:74`
+
+**Supported Artifact Types:**
+- `file` - File system artifacts (executables, DLLs, documents, etc.)
+- `registry` - Windows registry keys and values
+- `process` - Running processes
+- `network` - Network connections, domains, IPs
+- `user` - User accounts and credentials
+- `service` - System services
+- `scheduled_task` - Scheduled tasks and cron jobs
+- `wmi` - WMI persistence mechanisms
+- `other` - Other types of indicators
+
+**Key Differences:**
+- **Artifact** (operation-wide): General IOC tracking across the operation, can be manually created or linked to tasks
+- **TaskArtifact** (task-scoped): IOCs automatically created by specific task execution, always linked to a task
+
+Both types track indicators of compromise but at different scopes and granularity.
 
 ---
 
@@ -918,7 +997,7 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 5. ✅ **Processes** - Important for situational awareness
 
 ### Medium Priority (Enhanced Features)
-6. **Artifacts/IOCs** - Useful for tracking indicators
+6. ✅ **Artifacts/IOCs** - Useful for tracking indicators
 7. **Tags** - Organization and categorization
 8. ✅ **Keylogs** - Credential harvesting operations
 9. **MITRE ATT&CK** - Threat intelligence integration
