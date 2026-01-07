@@ -381,7 +381,7 @@ func (c *Client) DownloadFile(ctx context.Context, agentFileID string) ([]byte, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best effort to read error message
 		return nil, WrapError("DownloadFile", ErrInvalidResponse, fmt.Sprintf("download failed with status %d: %s", resp.StatusCode, string(body)))
 	}
 
