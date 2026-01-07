@@ -52,6 +52,12 @@ var (
 
 	// ErrConnectionFailed indicates connection to the server failed
 	ErrConnectionFailed = fmt.Errorf("connection failed")
+
+	// ErrInvalidInput indicates invalid input parameters
+	ErrInvalidInput = fmt.Errorf("invalid input")
+
+	// ErrTaskFailed indicates a task execution failed
+	ErrTaskFailed = fmt.Errorf("task failed")
 )
 
 // WrapError wraps an error with an operation and optional message.

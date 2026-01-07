@@ -90,6 +90,48 @@ def introspect_type(graphql_url, token, type_name):
         sys.exit(1)
 
 
+def introspect_mutations(graphql_url, token, filter_pattern=None):
+    """Introspect available mutations."""
+    query = """
+    query IntrospectMutations {
+        __schema {
+            mutationType {
+                name
+                fields {
+                    name
+                    args {
+                        name
+                        type {
+                            name
+                            kind
+                            ofType {
+                                name
+                                kind
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+
+    payload = {"query": query}
+
+    try:
+        response = requests.post(graphql_url, json=payload, headers=headers, verify=False)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Error: Failed to introspect mutations: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def format_type_info(type_info):
     """Format type information for display."""
     if not type_info:
@@ -129,6 +171,35 @@ def print_type_info(data):
         print(f"  {field_name:<30} {field_type}")
 
 
+def print_mutations(data, filter_pattern=None):
+    """Print formatted mutation information."""
+    if "errors" in data:
+        print("GraphQL Errors:", file=sys.stderr)
+        for error in data["errors"]:
+            print(f"  - {error.get('message')}", file=sys.stderr)
+        sys.exit(1)
+
+    mutation_type = data.get("data", {}).get("__schema", {}).get("mutationType")
+    if not mutation_type:
+        print("Error: No mutation type found in schema", file=sys.stderr)
+        sys.exit(1)
+
+    mutations = mutation_type.get("fields", [])
+
+    if filter_pattern:
+        mutations = [m for m in mutations if filter_pattern.lower() in m["name"].lower()]
+
+    print(f"\nMutations ({len(mutations)}):")
+    print("=" * 80)
+
+    for mutation in sorted(mutations, key=lambda x: x["name"]):
+        print(f"\n{mutation['name']}:")
+        if mutation.get("args"):
+            for arg in mutation["args"]:
+                arg_type = format_type_info(arg["type"])
+                print(f"    {arg['name']}: {arg_type}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Introspect Mythic GraphQL schema",
@@ -137,8 +208,16 @@ def main():
     )
     parser.add_argument(
         "--type", "-t",
-        default="callback",
         help="GraphQL type to introspect (default: callback)"
+    )
+    parser.add_argument(
+        "--mutations", "-m",
+        action="store_true",
+        help="List all mutations instead of introspecting a type"
+    )
+    parser.add_argument(
+        "--filter", "-f",
+        help="Filter mutations by name pattern (only with --mutations)"
     )
     parser.add_argument(
         "--url",
@@ -162,6 +241,9 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.mutations and not args.type:
+        args.type = "callback"  # Default type
+
     if not args.password:
         print("Error: Password required (use --password or set MYTHIC_PASSWORD)", file=sys.stderr)
         sys.exit(1)
@@ -182,9 +264,14 @@ def main():
     token = login(args.url, args.username, args.password)
     print(f"✓ Authentication successful\n")
 
-    # Introspect type
-    data = introspect_type(graphql_url, token, args.type)
-    print_type_info(data)
+    if args.mutations:
+        # Introspect mutations
+        data = introspect_mutations(graphql_url, token, args.filter)
+        print_mutations(data, args.filter)
+    else:
+        # Introspect type
+        data = introspect_type(graphql_url, token, args.type)
+        print_type_info(data)
 
 
 if __name__ == "__main__":
