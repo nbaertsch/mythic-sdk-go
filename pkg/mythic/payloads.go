@@ -556,8 +556,12 @@ func (c *Client) DownloadPayload(ctx context.Context, uuid string) ([]byte, erro
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, WrapError("DownloadPayload", ErrInvalidResponse, fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body)))
+		body, readErr := io.ReadAll(resp.Body)
+		errMsg := fmt.Sprintf("HTTP %d", resp.StatusCode)
+		if readErr == nil && len(body) > 0 {
+			errMsg = fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body))
+		}
+		return nil, WrapError("DownloadPayload", ErrInvalidResponse, errMsg)
 	}
 
 	// Read payload data
