@@ -244,3 +244,91 @@ func TestAuthentication_CurrentOperationID(t *testing.T) {
 		}
 	}
 }
+
+func TestAuthentication_RefreshAccessToken(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := NewTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Login to get initial tokens
+	err := client.Login(ctx)
+	if err != nil {
+		t.Fatalf("Login failed: %v", err)
+	}
+
+	// Verify authenticated
+	if !client.IsAuthenticated() {
+		t.Fatal("Client should be authenticated after login")
+	}
+
+	// Store the original access token (we can't directly access it, but we can verify behavior changes)
+	// Attempt GetMe to verify current token works
+	operator1, err := client.GetMe(ctx)
+	if err != nil {
+		t.Fatalf("GetMe failed before refresh: %v", err)
+	}
+	if operator1 == nil {
+		t.Fatal("GetMe returned nil operator before refresh")
+	}
+
+	t.Logf("Before refresh - Authenticated as: %s", operator1.String())
+
+	// Refresh the access token
+	err = client.RefreshAccessToken(ctx)
+	if err != nil {
+		t.Fatalf("RefreshAccessToken failed: %v", err)
+	}
+
+	t.Log("Access token refreshed successfully")
+
+	// Verify we're still authenticated
+	if !client.IsAuthenticated() {
+		t.Error("Client should still be authenticated after token refresh")
+	}
+
+	// Verify the new token works by making another authenticated call
+	operator2, err := client.GetMe(ctx)
+	if err != nil {
+		t.Fatalf("GetMe failed after refresh: %v", err)
+	}
+	if operator2 == nil {
+		t.Fatal("GetMe returned nil operator after refresh")
+	}
+
+	// Should still be the same user
+	if operator2.Username != operator1.Username {
+		t.Errorf("Username changed after refresh: expected %q, got %q", operator1.Username, operator2.Username)
+	}
+
+	t.Logf("After refresh - Still authenticated as: %s", operator2.String())
+}
+
+func TestAuthentication_RefreshAccessToken_NoRefreshToken(t *testing.T) {
+	cfg := GetTestConfig(t)
+
+	// Create client with only access token (no refresh token)
+	client, err := mythic.NewClient(&mythic.Config{
+		ServerURL:     cfg.ServerURL,
+		AccessToken:   "fake-access-token",
+		SSL:           true,
+		SkipTLSVerify: cfg.SkipTLSVerify,
+		Timeout:       cfg.DefaultTimeout,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// RefreshAccessToken should fail without refresh token
+	err = client.RefreshAccessToken(ctx)
+	if err == nil {
+		t.Fatal("RefreshAccessToken should fail without refresh token")
+	}
+
+	t.Logf("Expected error for missing refresh token: %v", err)
+}
