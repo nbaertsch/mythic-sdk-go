@@ -14,10 +14,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 | Category | Implemented | In Progress | Pending | Total |
 |----------|-------------|-------------|---------|-------|
-| Authentication | 3 | 0 | 1 | 4 |
-| Callbacks | 7 | 0 | 5 | 12 |
-| Tasks | 5 | 0 | 7 | 12 |
-| Files | 6 | 0 | 2 | 8 |
+| Authentication | 4 | 0 | 0 | 4 |
+| Callbacks | 12 | 0 | 0 | 12 |
+| Tasks | 11 | 0 | 1 | 12 |
+| Files | 8 | 0 | 0 | 8 |
 | Operations | 0 | 0 | 11 | 11 |
 | Payloads | 0 | 0 | 10 | 10 |
 | Credentials | 0 | 0 | 3 | 3 |
@@ -34,15 +34,15 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **21** | **0** | **112** | **133** |
+| **TOTAL** | **35** | **0** | **98** | **133** |
 
-**Overall Coverage: 15.8%**
+**Overall Coverage: 26.3%**
 
 ---
 
 ## 1. Authentication & Authorization
 
-### ✅ Tested (3/4)
+### ✅ Tested (4/4 - 100%)
 
 - **Login()** - Authenticate with username/password
   - File: `pkg/mythic/auth.go:36`
@@ -56,17 +56,15 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - File: `pkg/mythic/auth.go:167`
   - Tests: `tests/integration/auth_test.go:30`
 
-### ⏳ Pending (1/4)
-
 - **RefreshAccessToken()** - Refresh JWT access token using refresh token
-  - GraphQL: Custom mutation
-  - Status: Partially implemented in `pkg/mythic/auth.go:242` but not exposed/tested
+  - File: `pkg/mythic/auth.go:242`
+  - Tests: `tests/integration/auth_test.go:248`
 
 ---
 
 ## 2. Callbacks (Agent Sessions)
 
-### ✅ Tested (7/12)
+### ✅ Tested (12/12 - 100%)
 
 - **GetCallbacks()** - List all callbacks with filtering
   - File: `pkg/mythic/callbacks.go:106`
@@ -93,32 +91,36 @@ This document provides a comprehensive overview of all available Mythic APIs and
 - **Callback.String()** - String representation
   - File: `pkg/mythic/callbacks.go:374`
 
-### ⏳ Pending (5/12)
-
 - **CreateCallback()** - Manually register a new callback
+  - File: `pkg/mythic/callbacks.go:396`
+  - Tests: `tests/unit/callbacks_test.go:265`
   - GraphQL: `createCallback` mutation
-  - Input: `newCallbackConfig`
 
 - **DeleteCallback()** - Remove callback and associated tasks
+  - File: `pkg/mythic/callbacks.go:445`
   - GraphQL: `deleteTasksAndCallbacks` mutation
 
-- **CallbackGraphEdge operations**:
-  - **AddCallbackEdge()** - Add P2P connection between callbacks
-    - GraphQL: `callbackgraphedge_add` mutation
-  - **RemoveCallbackEdge()** - Remove P2P connection
-    - GraphQL: `callbackgraphedge_remove` mutation
+- **AddCallbackGraphEdge()** - Add P2P connection between callbacks
+  - File: `pkg/mythic/callbacks.go:501`
+  - GraphQL: `callbackgraphedge_add` mutation
+
+- **RemoveCallbackGraphEdge()** - Remove P2P connection
+  - File: `pkg/mythic/callbacks.go:549`
+  - GraphQL: `callbackgraphedge_remove` mutation
 
 - **ExportCallbackConfig()** - Export callback configuration
+  - File: `pkg/mythic/callbacks.go:588`
   - GraphQL: `exportCallbackConfig` query
 
 - **ImportCallbackConfig()** - Import callback configuration
+  - File: `pkg/mythic/callbacks.go:625`
   - GraphQL: `importCallbackConfig` mutation
 
 ---
 
 ## 3. Tasks (Commands)
 
-### ✅ Tested (5/12)
+### ✅ Tested (11/12 - 91.7%)
 
 - **CreateTask()** - Issue task to callback(s)
   - File: `pkg/mythic/tasks.go:82`
@@ -139,34 +141,42 @@ This document provides a comprehensive overview of all available Mythic APIs and
 - **UpdateTaskComment()** - Add/update task comment
   - File: `pkg/mythic/tasks.go:389`
 
-### ⏳ Pending (7/12)
-
 - **ReissueTask()** - Re-issue a task
+  - File: `pkg/mythic/tasks.go:425`
   - GraphQL: `reissue_task` mutation
 
-- **ReissueTaskHandler()** - Re-issue task with handler
+- **ReissueTaskWithHandler()** - Re-issue task with handler
+  - File: `pkg/mythic/tasks.go:465`
   - GraphQL: `reissue_task_handler` mutation
 
 - **RequestOpsecBypass()** - Request OPSEC bypass for blocked task
+  - File: `pkg/mythic/tasks.go:505`
   - GraphQL: `requestOpsecBypass` mutation
 
 - **AddMITREAttackToTask()** - Tag task with MITRE ATT&CK technique
+  - File: `pkg/mythic/tasks.go:550`
   - GraphQL: `addAttackToTask` mutation
 
 - **GetTasksByStatus()** - Filter tasks by status (preprocessing, submitted, etc.)
+  - File: `pkg/mythic/tasks.go:597`
   - Database: `task` table with status filter
 
 - **GetTaskArtifacts()** - Get artifacts created by task
+  - File: `pkg/mythic/tasks.go:654`
+  - Tests: `tests/unit/tasks_test.go:323`
   - Database: `taskartifact` table
+
+### ⏳ Pending (1/12)
 
 - **SubscribeToTaskOutput()** - Real-time task output subscription
   - GraphQL: Subscription (requires websocket support)
+  - Note: Requires WebSocket transport layer implementation
 
 ---
 
 ## 4. Files
 
-### ✅ Tested (6/8)
+### ✅ Tested (8/8 - 100%)
 
 - **GetFiles()** - List files with metadata
   - File: `pkg/mythic/files.go:102`
@@ -195,13 +205,14 @@ This document provides a comprehensive overview of all available Mythic APIs and
   - Tests: `tests/integration/files_test.go:237`
   - GraphQL: `update_filemeta` mutation
 
-### ⏳ Pending (2/8)
-
 - **BulkDownloadFiles()** - Download multiple files as ZIP
+  - File: `pkg/mythic/files.go:546`
+  - Tests: `tests/integration/files_test.go:384`
   - GraphQL: `download_bulk` mutation
-  - Returns: file_id for bulk download
 
 - **PreviewFile()** - Get file preview/metadata without downloading
+  - File: `pkg/mythic/files.go:596`
+  - Tests: `tests/integration/files_test.go:450`, `tests/unit/files_test.go:322`
   - GraphQL: `previewFile` mutation
 
 ---
