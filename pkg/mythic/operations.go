@@ -552,7 +552,7 @@ func (c *Client) UpdateGlobalSettings(ctx context.Context, settings map[string]i
 		return err
 	}
 
-	if settings == nil || len(settings) == 0 {
+	if len(settings) == 0 {
 		return WrapError("UpdateGlobalSettings", ErrInvalidInput, "settings cannot be empty")
 	}
 
