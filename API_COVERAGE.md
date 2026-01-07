@@ -28,15 +28,15 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Processes | 6 | 0 | 0 | 6 |
 | Keylogs | 3 | 0 | 0 | 3 |
 | Browser Scripts | 0 | 0 | 3 | 3 |
-| MITRE ATT&CK | 0 | 0 | 3 | 3 |
+| MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 0 | 0 | 2 | 2 |
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **107** | **0** | **44** | **151** |
+| **TOTAL** | **113** | **0** | **41** | **154** |
 
-**Overall Coverage: 70.9%**
+**Overall Coverage: 73.4%**
 
 ---
 
@@ -989,16 +989,118 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 
 ## 15. MITRE ATT&CK
 
-### ⏳ Pending (3/3)
+### ✅ Tested (6/6 - 100%)
 
-- **GetAttackTechniques()** - List MITRE ATT&CK mappings
+**Note:** This includes 3 core Client API methods plus 3 additional helper methods for MITRE ATT&CK threat intelligence integration. Mythic uses the MITRE ATT&CK framework to map operations and commands to known adversary tactics and techniques.
+
+**ATT&CK Technique Management:**
+
+- **GetAttackTechniques()** - List all MITRE ATT&CK techniques
+  - File: `pkg/mythic/attack.go:10`
+  - Tests: `tests/integration/attack_test.go:11`
   - Database: `attack` table
+  - Returns techniques sorted by technique number (ascending)
+  - Includes technique number, name, OS, tactic, timestamp
 
-- **GetAttackByTask()** - Get ATT&CK tags for task
+- **GetAttackTechniqueByID()** - Get specific ATT&CK technique by ID
+  - File: `pkg/mythic/attack.go:47`
+  - Tests: `tests/integration/attack_test.go:48`
+  - Database: `attack` table
+  - Input: attack ID
+
+- **GetAttackTechniqueByTNum()** - Get ATT&CK technique by technique number
+  - File: `pkg/mythic/attack.go:92`
+  - Tests: `tests/integration/attack_test.go:82`
+  - Database: `attack` table
+  - Input: technique number (e.g., "T1003", "T1003.001")
+
+**Task and Command Mapping:**
+
+- **GetAttackByTask()** - Get MITRE ATT&CK tags for a task
+  - File: `pkg/mythic/attack.go:137`
+  - Tests: `tests/integration/attack_test.go:118`
   - Database: `attacktask` table
+  - Returns attack tasks sorted by timestamp (newest first)
+  - Links tasks to ATT&CK techniques
 
-- **GetAttackByCommand()** - Get ATT&CK tags for command
+- **GetAttackByCommand()** - Get MITRE ATT&CK tags for a command
+  - File: `pkg/mythic/attack.go:176`
+  - Tests: `tests/integration/attack_test.go:161`
   - Database: `attackcommand` table
+  - Returns attack commands sorted by timestamp (newest first)
+  - Shows default ATT&CK mappings for commands
+
+**Operation Coverage:**
+
+- **GetAttacksByOperation()** - Get all unique ATT&CK techniques used in operation
+  - File: `pkg/mythic/attack.go:213`
+  - Tests: `tests/integration/attack_test.go:191`
+  - Database: `attacktask` joined with `attack` and `task` tables
+  - Returns distinct techniques sorted by technique number
+  - Useful for operation reporting and coverage analysis
+
+**Helper Methods (on Attack type):**
+
+- **Attack.String()** - String representation showing technique number and name
+  - File: `pkg/mythic/types/attack.go:17`
+  - Tests: `tests/unit/attack_test.go:11`
+
+**Helper Methods (on AttackTask type):**
+
+- **AttackTask.String()** - String representation
+  - File: `pkg/mythic/types/attack.go:36`
+  - Tests: `tests/unit/attack_test.go:82`
+
+**Helper Methods (on AttackCommand type):**
+
+- **AttackCommand.String()** - String representation
+  - File: `pkg/mythic/types/attack.go:54`
+  - Tests: `tests/unit/attack_test.go:118`
+
+**MITRE ATT&CK Integration:**
+
+The MITRE ATT&CK framework integration provides:
+1. **Technique Database**: Complete list of ATT&CK techniques (T-numbers) with names, tactics, and OS platforms
+2. **Task Mapping**: Track which techniques were used during specific task executions
+3. **Command Mapping**: Default technique associations for commands (defined in payload types)
+4. **Operation Coverage**: Aggregate view of all techniques used across an operation
+
+**Technique Number Format:**
+- Base techniques: `T1003` (OS Credential Dumping)
+- Sub-techniques: `T1003.001` (LSASS Memory)
+- Both formats are supported for lookups and display
+
+**Common ATT&CK Tactics:**
+- Initial Access
+- Execution
+- Persistence
+- Privilege Escalation
+- Defense Evasion
+- Credential Access
+- Discovery
+- Lateral Movement
+- Collection
+- Command and Control
+- Exfiltration
+- Impact
+
+**Supported Platforms:**
+- Windows
+- Linux
+- macOS
+- Network
+- Containers
+- Cloud (IaaS, SaaS, Office 365, Azure AD, Google Workspace)
+
+**Use Cases:**
+- Map operation activities to ATT&CK framework
+- Generate ATT&CK coverage reports
+- Track adversary TTP usage
+- Identify technique gaps in testing
+- Export operation data for threat intelligence
+- Correlate with defensive detections
+
+**Note:** The AddMITREAttackToTask() method is already implemented in tasks.go:524 and allows tagging tasks with ATT&CK techniques during operations.
 
 ---
 
@@ -1204,7 +1306,7 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 6. ✅ **Artifacts/IOCs** - Useful for tracking indicators
 7. ✅ **Tags** - Organization and categorization
 8. ✅ **Keylogs** - Credential harvesting operations
-9. **MITRE ATT&CK** - Threat intelligence integration
+9. ✅ **MITRE ATT&CK** - Threat intelligence integration
 10. **Reporting** - Operation documentation
 
 ### Low Priority (Advanced Features)
