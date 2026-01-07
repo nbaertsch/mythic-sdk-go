@@ -25,7 +25,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Artifacts | 0 | 0 | 3 | 3 |
 | Tags | 0 | 0 | 3 | 3 |
 | Tokens | 0 | 0 | 4 | 4 |
-| Processes | 0 | 0 | 2 | 2 |
+| Processes | 6 | 0 | 0 | 6 |
 | Keylogs | 0 | 0 | 2 | 2 |
 | Browser Scripts | 0 | 0 | 3 | 3 |
 | MITRE ATT&CK | 0 | 0 | 3 | 3 |
@@ -34,9 +34,9 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **64** | **0** | **69** | **133** |
+| **TOTAL** | **70** | **0** | **63** | **133** |
 
-**Overall Coverage: 48.1%**
+**Overall Coverage: 52.6%**
 
 ---
 
@@ -524,13 +524,69 @@ This document provides a comprehensive overview of all available Mythic APIs and
 
 ## 12. Processes
 
-### ⏳ Pending (2/2)
+### ✅ Tested (6/6 - 100%)
 
-- **GetProcesses()** - List processes from callbacks
+**Note:** This includes 2 core Client API methods plus 4 additional helper methods for filtering and tree building.
+
+**Client API Methods:**
+
+- **GetProcesses()** - List all processes (non-deleted)
+  - File: `pkg/mythic/processes.go:10`
+  - Tests: `tests/integration/processes_test.go:13`
   - Database: `process` table
+  - Returns processes sorted by timestamp (newest first)
 
 - **GetProcessTree()** - Get process tree for callback
+  - File: `pkg/mythic/processes.go:252`
+  - Tests: `tests/integration/processes_test.go:160`
   - Database: `process` table with parent relationships
+  - Returns hierarchical ProcessTree structure
+  - Automatically builds parent-child relationships
+
+**Helper Methods:**
+
+- **GetProcessesByOperation()** - Filter processes by operation
+  - File: `pkg/mythic/processes.go:76`
+  - Tests: `tests/integration/processes_test.go:52`
+  - Database: `process` table with operation filter
+
+- **GetProcessesByCallback()** - Filter processes by callback
+  - File: `pkg/mythic/processes.go:147`
+  - Tests: `tests/integration/processes_test.go:95`
+  - Database: `process` table with callback filter
+  - Returns processes sorted by PID (ascending)
+
+- **GetProcessesByHost()** - Filter processes by host
+  - File: `pkg/mythic/processes.go:297`
+  - Tests: `tests/integration/processes_test.go:234`
+  - Database: `process` table with host filter
+  - Returns processes sorted by PID (ascending)
+
+- **buildProcessTree()** - Internal helper to build hierarchical tree
+  - File: `pkg/mythic/processes.go:263`
+  - Constructs parent-child relationships from flat process list
+
+**Helper Methods (on Process type):**
+
+- **Process.String()** - String representation showing name (PID)
+  - File: `pkg/mythic/types/process.go:39`
+  - Tests: `tests/unit/processes_test.go:12`
+
+- **Process.IsDeleted()** - Check if process is marked as deleted
+  - File: `pkg/mythic/types/process.go:51`
+  - Tests: `tests/unit/processes_test.go:44`
+
+- **Process.HasParent()** - Check if process has a parent process
+  - File: `pkg/mythic/types/process.go:56`
+  - Tests: `tests/unit/processes_test.go:60`
+
+- **Process.GetIntegrityLevelString()** - Get human-readable integrity level
+  - File: `pkg/mythic/types/process.go:61`
+  - Tests: `tests/unit/processes_test.go:77`
+  - Returns: Untrusted, Low, Medium, High, System, or Unknown
+
+**Process Tree Structure:**
+The ProcessTree type provides a hierarchical view of processes with automatic parent-child relationship building based on ProcessID and ParentProcessID fields.
 
 ---
 
@@ -772,7 +828,7 @@ This document provides a comprehensive overview of all available Mythic APIs and
 2. ✅ **Payloads** - Critical for agent deployment
 3. ✅ **Credentials** - Important for tracking compromised accounts
 4. **C2 Profiles** - Needed for agent communication management
-5. **Processes** - Important for situational awareness
+5. ✅ **Processes** - Important for situational awareness
 
 ### Medium Priority (Enhanced Features)
 6. **Artifacts/IOCs** - Useful for tracking indicators
