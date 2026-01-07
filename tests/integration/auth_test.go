@@ -307,22 +307,22 @@ func TestAuthentication_RefreshAccessToken(t *testing.T) {
 }
 
 func TestAuthentication_RefreshAccessToken_NoRefreshToken(t *testing.T) {
-	cfg := GetTestConfig(t)
+	SkipIfNoMythic(t)
 
-	// Create client with only access token (no refresh token)
-	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL:     cfg.ServerURL,
-		AccessToken:   "fake-access-token",
-		SSL:           true,
-		SkipTLSVerify: cfg.SkipTLSVerify,
-		Timeout:       cfg.DefaultTimeout,
-	})
+	client := NewTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Login to get tokens
+	err := client.Login(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
+		t.Fatalf("Login failed: %v", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// Simulate losing the refresh token (direct field access for testing only)
+	// In real scenarios this would happen if token is expired or cleared
+	client.ClearRefreshToken()
 
 	// RefreshAccessToken should fail without refresh token
 	err = client.RefreshAccessToken(ctx)

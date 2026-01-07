@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"sync"
 
 	"github.com/hasura/go-graphql-client"
@@ -42,9 +43,16 @@ func NewClient(config *Config) (*Client, error) {
 		return nil, WrapError("NewClient", err, "invalid configuration")
 	}
 
+	// Create cookie jar for session management
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, WrapError("NewClient", err, "failed to create cookie jar")
+	}
+
 	// Create HTTP client with optional TLS skip verification
 	httpClient := &http.Client{
 		Timeout: config.Timeout,
+		Jar:     jar,
 	}
 
 	if config.SkipTLSVerify {

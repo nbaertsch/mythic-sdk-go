@@ -237,6 +237,15 @@ func (c *Client) Logout() {
 	c.currentOperationID = nil
 }
 
+// ClearRefreshToken clears only the refresh token.
+// This is primarily for testing scenarios where you need to simulate a missing refresh token.
+func (c *Client) ClearRefreshToken() {
+	c.authMutex.Lock()
+	defer c.authMutex.Unlock()
+
+	c.config.RefreshToken = ""
+}
+
 // RefreshAccessToken refreshes the access token using the refresh token.
 // This is called automatically when a request fails with an authentication error.
 func (c *Client) RefreshAccessToken(ctx context.Context) error {
@@ -258,8 +267,9 @@ func (c *Client) RefreshAccessToken(ctx context.Context) error {
 		"refresh_token": c.config.RefreshToken,
 	}
 
-	// Execute without authentication since we're refreshing
-	err := c.graphqlClient.Mutate(ctx, &mutation, variables)
+	// Execute with authentication using current access token
+	// Mythic's GraphQL authentication hook may require authentication even for refresh
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("RefreshAccessToken", err, "failed to refresh token")
 	}
