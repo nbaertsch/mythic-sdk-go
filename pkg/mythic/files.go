@@ -276,7 +276,7 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 	if !c.config.SSL {
 		scheme = "http"
 	}
-	uploadURL := fmt.Sprintf("%s://%s/api/v1.4/files", scheme, stripScheme(c.config.ServerURL))
+	uploadURL := fmt.Sprintf("%s://%s/api/v1.4/task_upload_file_webhook", scheme, stripScheme(c.config.ServerURL))
 
 	// Create multipart form
 	body := &bytes.Buffer{}
