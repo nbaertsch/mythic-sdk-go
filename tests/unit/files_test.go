@@ -318,3 +318,33 @@ func TestFileMeta_LargeFile(t *testing.T) {
 		t.Error("Large file with all chunks should be complete")
 	}
 }
+
+func TestFilePreview_Structure(t *testing.T) {
+	preview := &mythic.FilePreview{
+		Size:           1024,
+		Host:           "workstation01",
+		FullRemotePath: "/tmp/test.txt",
+		Filename:       "test.txt",
+		Contents:       "This is a preview\nLine 2\nLine 3",
+	}
+
+	if preview.Size != 1024 {
+		t.Errorf("Expected Size 1024, got %d", preview.Size)
+	}
+
+	if preview.Host != "workstation01" {
+		t.Errorf("Expected Host 'workstation01', got %q", preview.Host)
+	}
+
+	if preview.FullRemotePath != "/tmp/test.txt" {
+		t.Errorf("Expected FullRemotePath '/tmp/test.txt', got %q", preview.FullRemotePath)
+	}
+
+	if preview.Filename != "test.txt" {
+		t.Errorf("Expected Filename 'test.txt', got %q", preview.Filename)
+	}
+
+	if preview.Contents == "" {
+		t.Error("Expected Contents to be non-empty")
+	}
+}

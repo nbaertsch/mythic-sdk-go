@@ -542,3 +542,95 @@ func (f *FileMeta) IsComplete() bool {
 func (f *FileMeta) IsDeleted() bool {
 	return f.Deleted
 }
+
+// FilePreview represents a preview of a file's contents.
+type FilePreview struct {
+	Size           int    `json:"size"`
+	Host           string `json:"host"`
+	FullRemotePath string `json:"full_remote_path"`
+	Filename       string `json:"filename"`
+	Contents       string `json:"contents"`
+}
+
+// BulkDownloadFiles creates a ZIP archive of multiple files and returns the file ID for download.
+// The returned file_id can be used with DownloadFile() to retrieve the ZIP archive.
+func (c *Client) BulkDownloadFiles(ctx context.Context, agentFileIDs []string) (string, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return "", err
+	}
+
+	if len(agentFileIDs) == 0 {
+		return "", WrapError("BulkDownloadFiles", ErrInvalidInput, "at least one file ID required")
+	}
+
+	var mutation struct {
+		DownloadBulk struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			FileID string `graphql:"file_id"`
+		} `graphql:"download_bulk(files: $files)"`
+	}
+
+	variables := map[string]interface{}{
+		"files": agentFileIDs,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return "", WrapError("BulkDownloadFiles", err, "failed to create bulk download")
+	}
+
+	if mutation.DownloadBulk.Status != "success" {
+		return "", WrapError("BulkDownloadFiles", ErrInvalidResponse, fmt.Sprintf("bulk download failed: %s", mutation.DownloadBulk.Error))
+	}
+
+	if mutation.DownloadBulk.FileID == "" {
+		return "", WrapError("BulkDownloadFiles", ErrInvalidResponse, "no file_id returned")
+	}
+
+	return mutation.DownloadBulk.FileID, nil
+}
+
+// PreviewFile retrieves file metadata and a preview of its contents without downloading the full file.
+func (c *Client) PreviewFile(ctx context.Context, agentFileID string) (*FilePreview, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if agentFileID == "" {
+		return nil, WrapError("PreviewFile", ErrInvalidInput, "agent_file_id is required")
+	}
+
+	var mutation struct {
+		PreviewFile struct {
+			Status         string `graphql:"status"`
+			Error          string `graphql:"error"`
+			Size           int    `graphql:"size"`
+			Host           string `graphql:"host"`
+			FullRemotePath string `graphql:"full_remote_path"`
+			Filename       string `graphql:"filename"`
+			Contents       string `graphql:"contents"`
+		} `graphql:"previewFile(file_id: $file_id)"`
+	}
+
+	variables := map[string]interface{}{
+		"file_id": agentFileID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return nil, WrapError("PreviewFile", err, "failed to preview file")
+	}
+
+	if mutation.PreviewFile.Status != "success" {
+		return nil, WrapError("PreviewFile", ErrInvalidResponse, fmt.Sprintf("preview failed: %s", mutation.PreviewFile.Error))
+	}
+
+	return &FilePreview{
+		Size:           mutation.PreviewFile.Size,
+		Host:           mutation.PreviewFile.Host,
+		FullRemotePath: mutation.PreviewFile.FullRemotePath,
+		Filename:       mutation.PreviewFile.Filename,
+		Contents:       mutation.PreviewFile.Contents,
+	}, nil
+}

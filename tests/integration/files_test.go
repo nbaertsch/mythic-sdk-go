@@ -380,3 +380,144 @@ func TestFiles_FilterByType(t *testing.T) {
 		}
 	}
 }
+
+func TestFiles_BulkDownload(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Upload two test files
+	file1Data := []byte("First test file for bulk download")
+	file1ID, err := client.UploadFile(ctx, "bulk_test1.txt", file1Data)
+	if err != nil {
+		t.Fatalf("Failed to upload first file: %v", err)
+	}
+	t.Logf("Uploaded file 1: %s", file1ID)
+
+	file2Data := []byte("Second test file for bulk download")
+	file2ID, err := client.UploadFile(ctx, "bulk_test2.txt", file2Data)
+	if err != nil {
+		t.Fatalf("Failed to upload second file: %v", err)
+	}
+	t.Logf("Uploaded file 2: %s", file2ID)
+
+	// Create bulk download
+	bulkFileID, err := client.BulkDownloadFiles(ctx, []string{file1ID, file2ID})
+	if err != nil {
+		t.Fatalf("Failed to create bulk download: %v", err)
+	}
+
+	if bulkFileID == "" {
+		t.Fatal("BulkDownloadFiles returned empty file ID")
+	}
+
+	t.Logf("Bulk download created with file ID: %s", bulkFileID)
+
+	// Download the bulk file (should be a ZIP)
+	bulkData, err := client.DownloadFile(ctx, bulkFileID)
+	if err != nil {
+		t.Fatalf("Failed to download bulk file: %v", err)
+	}
+
+	if len(bulkData) == 0 {
+		t.Error("Bulk download data should not be empty")
+	}
+
+	t.Logf("Downloaded bulk file: %d bytes", len(bulkData))
+}
+
+func TestFiles_BulkDownload_EmptyList(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Try bulk download with empty list
+	_, err := client.BulkDownloadFiles(ctx, []string{})
+
+	if err == nil {
+		t.Fatal("Expected error for empty file list, got nil")
+	}
+
+	t.Logf("Expected error for empty list: %v", err)
+}
+
+func TestFiles_PreviewFile(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Upload a test file
+	testData := []byte("This is preview test content\nLine 2\nLine 3")
+	agentFileID, err := client.UploadFile(ctx, "preview_test.txt", testData)
+	if err != nil {
+		t.Fatalf("Failed to upload test file: %v", err)
+	}
+
+	t.Logf("Uploaded file for preview: %s", agentFileID)
+
+	// Preview the file
+	preview, err := client.PreviewFile(ctx, agentFileID)
+	if err != nil {
+		t.Fatalf("Failed to preview file: %v", err)
+	}
+
+	if preview == nil {
+		t.Fatal("Preview should not be nil")
+	}
+
+	// Validate preview structure
+	if preview.Filename == "" {
+		t.Error("Preview should have filename")
+	}
+
+	t.Logf("Preview - Filename: %s, Size: %d, Host: %s",
+		preview.Filename, preview.Size, preview.Host)
+
+	// Contents may or may not be populated depending on file size
+	t.Logf("Preview contents length: %d", len(preview.Contents))
+}
+
+func TestFiles_PreviewFile_NotFound(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Try to preview non-existent file
+	_, err := client.PreviewFile(ctx, "nonexistent-preview-id")
+
+	if err == nil {
+		t.Fatal("Expected error for non-existent file preview, got nil")
+	}
+
+	t.Logf("Expected error for non-existent preview: %v", err)
+}
+
+func TestFiles_PreviewFile_EmptyID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Try to preview with empty ID
+	_, err := client.PreviewFile(ctx, "")
+
+	if err == nil {
+		t.Fatal("Expected error for empty file ID, got nil")
+	}
+
+	t.Logf("Expected error for empty ID: %v", err)
+}
