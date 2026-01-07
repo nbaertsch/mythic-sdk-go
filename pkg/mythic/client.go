@@ -3,6 +3,7 @@ package mythic
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -178,4 +179,9 @@ func stripScheme(url string) string {
 		return url[7:]
 	}
 	return url
+}
+
+// parseJSON parses JSON data into the provided interface.
+func parseJSON(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
 }
