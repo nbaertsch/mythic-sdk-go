@@ -4,12 +4,69 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 )
+
+// MythicTimestamp is a custom type to handle Mythic's timestamp format
+// which may not include timezone information.
+type MythicTimestamp struct {
+	time.Time
+}
+
+// UnmarshalJSON handles timestamp parsing for both RFC3339 and Mythic's format.
+func (mt *MythicTimestamp) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "null" || s == "" {
+		mt.Time = time.Time{}
+		return nil
+	}
+
+	// Try RFC3339 first (standard format with timezone)
+	t, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		mt.Time = t
+		return nil
+	}
+
+	// Try RFC3339 with nanoseconds
+	t, err = time.Parse(time.RFC3339Nano, s)
+	if err == nil {
+		mt.Time = t
+		return nil
+	}
+
+	// Try Mythic's format without timezone (treat as UTC)
+	formats := []string{
+		"2006-01-02T15:04:05.999999",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05.999999",
+		"2006-01-02 15:04:05",
+	}
+
+	for _, format := range formats {
+		t, err = time.Parse(format, s)
+		if err == nil {
+			mt.Time = t.UTC()
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unable to parse timestamp: %s", s)
+}
+
+// MarshalJSON implements json.Marshaler.
+func (mt MythicTimestamp) MarshalJSON() ([]byte, error) {
+	if mt.Time.IsZero() {
+		return []byte("null"), nil
+	}
+	return json.Marshal(mt.Time.Format(time.RFC3339))
+}
 
 // FileMeta represents a file in Mythic.
 type FileMeta struct {
@@ -53,26 +110,26 @@ func (c *Client) GetFiles(ctx context.Context, limit int) ([]*FileMeta, error) {
 
 	var query struct {
 		FileMeta []struct {
-			ID                  int       `graphql:"id"`
-			AgentFileID         string    `graphql:"agent_file_id"`
-			TotalChunks         int       `graphql:"total_chunks"`
-			ChunksReceived      int       `graphql:"chunks_received"`
-			Complete            bool      `graphql:"complete"`
-			Path                string    `graphql:"path"`
-			FullRemotePath      string    `graphql:"full_remote_path"`
-			Host                string    `graphql:"host"`
-			IsPayload           bool      `graphql:"is_payload"`
-			IsScreenshot        bool      `graphql:"is_screenshot"`
-			IsDownloadFromAgent bool      `graphql:"is_download_from_agent"`
-			Filename            string    `graphql:"filename_text"`
-			MD5                 string    `graphql:"md5"`
-			SHA1                string    `graphql:"sha1"`
-			Size                int       `graphql:"size"`
-			Comment             string    `graphql:"comment"`
-			OperatorID          int       `graphql:"operator_id"`
-			Timestamp           time.Time `graphql:"timestamp"`
-			Deleted             bool      `graphql:"deleted"`
-			TaskID              *int      `graphql:"task_id"`
+			ID                  int    `graphql:"id"`
+			AgentFileID         string `graphql:"agent_file_id"`
+			TotalChunks         int    `graphql:"total_chunks"`
+			ChunksReceived      int    `graphql:"chunks_received"`
+			Complete            bool   `graphql:"complete"`
+			Path                string `graphql:"path"`
+			FullRemotePath      string `graphql:"full_remote_path"`
+			Host                string `graphql:"host"`
+			IsPayload           bool   `graphql:"is_payload"`
+			IsScreenshot        bool   `graphql:"is_screenshot"`
+			IsDownloadFromAgent bool   `graphql:"is_download_from_agent"`
+			Filename            string `graphql:"filename_text"`
+			MD5                 string `graphql:"md5"`
+			SHA1                string `graphql:"sha1"`
+			Size                int    `graphql:"size"`
+			Comment             string `graphql:"comment"`
+			OperatorID          int    `graphql:"operator_id"`
+			Timestamp           string `graphql:"timestamp"`
+			Deleted             bool   `graphql:"deleted"`
+			TaskID              *int   `graphql:"task_id"`
 		} `graphql:"filemeta(order_by: {id: desc}, limit: $limit)"`
 	}
 
@@ -87,6 +144,15 @@ func (c *Client) GetFiles(ctx context.Context, limit int) ([]*FileMeta, error) {
 
 	files := make([]*FileMeta, 0, len(query.FileMeta))
 	for _, f := range query.FileMeta {
+		// Parse timestamp
+		var timestamp time.Time
+		if f.Timestamp != "" {
+			var mt MythicTimestamp
+			if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
+				timestamp = mt.Time
+			}
+		}
+
 		files = append(files, &FileMeta{
 			ID:                  f.ID,
 			AgentFileID:         f.AgentFileID,
@@ -105,7 +171,7 @@ func (c *Client) GetFiles(ctx context.Context, limit int) ([]*FileMeta, error) {
 			Size:                int64(f.Size),
 			Comment:             f.Comment,
 			OperatorID:          f.OperatorID,
-			Timestamp:           f.Timestamp,
+			Timestamp:           timestamp,
 			Deleted:             f.Deleted,
 			TaskID:              f.TaskID,
 		})
@@ -122,26 +188,26 @@ func (c *Client) GetFileByID(ctx context.Context, agentFileID string) (*FileMeta
 
 	var query struct {
 		FileMeta []struct {
-			ID                  int       `graphql:"id"`
-			AgentFileID         string    `graphql:"agent_file_id"`
-			TotalChunks         int       `graphql:"total_chunks"`
-			ChunksReceived      int       `graphql:"chunks_received"`
-			Complete            bool      `graphql:"complete"`
-			Path                string    `graphql:"path"`
-			FullRemotePath      string    `graphql:"full_remote_path"`
-			Host                string    `graphql:"host"`
-			IsPayload           bool      `graphql:"is_payload"`
-			IsScreenshot        bool      `graphql:"is_screenshot"`
-			IsDownloadFromAgent bool      `graphql:"is_download_from_agent"`
-			Filename            string    `graphql:"filename_text"`
-			MD5                 string    `graphql:"md5"`
-			SHA1                string    `graphql:"sha1"`
-			Size                int       `graphql:"size"`
-			Comment             string    `graphql:"comment"`
-			OperatorID          int       `graphql:"operator_id"`
-			Timestamp           time.Time `graphql:"timestamp"`
-			Deleted             bool      `graphql:"deleted"`
-			TaskID              *int      `graphql:"task_id"`
+			ID                  int    `graphql:"id"`
+			AgentFileID         string `graphql:"agent_file_id"`
+			TotalChunks         int    `graphql:"total_chunks"`
+			ChunksReceived      int    `graphql:"chunks_received"`
+			Complete            bool   `graphql:"complete"`
+			Path                string `graphql:"path"`
+			FullRemotePath      string `graphql:"full_remote_path"`
+			Host                string `graphql:"host"`
+			IsPayload           bool   `graphql:"is_payload"`
+			IsScreenshot        bool   `graphql:"is_screenshot"`
+			IsDownloadFromAgent bool   `graphql:"is_download_from_agent"`
+			Filename            string `graphql:"filename_text"`
+			MD5                 string `graphql:"md5"`
+			SHA1                string `graphql:"sha1"`
+			Size                int    `graphql:"size"`
+			Comment             string `graphql:"comment"`
+			OperatorID          int    `graphql:"operator_id"`
+			Timestamp           string `graphql:"timestamp"`
+			Deleted             bool   `graphql:"deleted"`
+			TaskID              *int   `graphql:"task_id"`
 		} `graphql:"filemeta(where: {agent_file_id: {_eq: $agent_file_id}}, limit: 1)"`
 	}
 
@@ -159,6 +225,16 @@ func (c *Client) GetFileByID(ctx context.Context, agentFileID string) (*FileMeta
 	}
 
 	f := query.FileMeta[0]
+
+	// Parse timestamp
+	var timestamp time.Time
+	if f.Timestamp != "" {
+		var mt MythicTimestamp
+		if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
+			timestamp = mt.Time
+		}
+	}
+
 	return &FileMeta{
 		ID:                  f.ID,
 		AgentFileID:         f.AgentFileID,
@@ -177,7 +253,7 @@ func (c *Client) GetFileByID(ctx context.Context, agentFileID string) (*FileMeta
 		Size:                int64(f.Size),
 		Comment:             f.Comment,
 		OperatorID:          f.OperatorID,
-		Timestamp:           f.Timestamp,
+		Timestamp:           timestamp,
 		Deleted:             f.Deleted,
 		TaskID:              f.TaskID,
 	}, nil
@@ -195,26 +271,26 @@ func (c *Client) GetDownloadedFiles(ctx context.Context, limit int) ([]*FileMeta
 
 	var query struct {
 		FileMeta []struct {
-			ID                  int       `graphql:"id"`
-			AgentFileID         string    `graphql:"agent_file_id"`
-			TotalChunks         int       `graphql:"total_chunks"`
-			ChunksReceived      int       `graphql:"chunks_received"`
-			Complete            bool      `graphql:"complete"`
-			Path                string    `graphql:"path"`
-			FullRemotePath      string    `graphql:"full_remote_path"`
-			Host                string    `graphql:"host"`
-			IsPayload           bool      `graphql:"is_payload"`
-			IsScreenshot        bool      `graphql:"is_screenshot"`
-			IsDownloadFromAgent bool      `graphql:"is_download_from_agent"`
-			Filename            string    `graphql:"filename_text"`
-			MD5                 string    `graphql:"md5"`
-			SHA1                string    `graphql:"sha1"`
-			Size                int       `graphql:"size"`
-			Comment             string    `graphql:"comment"`
-			OperatorID          int       `graphql:"operator_id"`
-			Timestamp           time.Time `graphql:"timestamp"`
-			Deleted             bool      `graphql:"deleted"`
-			TaskID              *int      `graphql:"task_id"`
+			ID                  int    `graphql:"id"`
+			AgentFileID         string `graphql:"agent_file_id"`
+			TotalChunks         int    `graphql:"total_chunks"`
+			ChunksReceived      int    `graphql:"chunks_received"`
+			Complete            bool   `graphql:"complete"`
+			Path                string `graphql:"path"`
+			FullRemotePath      string `graphql:"full_remote_path"`
+			Host                string `graphql:"host"`
+			IsPayload           bool   `graphql:"is_payload"`
+			IsScreenshot        bool   `graphql:"is_screenshot"`
+			IsDownloadFromAgent bool   `graphql:"is_download_from_agent"`
+			Filename            string `graphql:"filename_text"`
+			MD5                 string `graphql:"md5"`
+			SHA1                string `graphql:"sha1"`
+			Size                int    `graphql:"size"`
+			Comment             string `graphql:"comment"`
+			OperatorID          int    `graphql:"operator_id"`
+			Timestamp           string `graphql:"timestamp"`
+			Deleted             bool   `graphql:"deleted"`
+			TaskID              *int   `graphql:"task_id"`
 		} `graphql:"filemeta(where: {is_download_from_agent: {_eq: true}, deleted: {_eq: false}}, order_by: {id: desc}, limit: $limit)"`
 	}
 
@@ -229,6 +305,15 @@ func (c *Client) GetDownloadedFiles(ctx context.Context, limit int) ([]*FileMeta
 
 	files := make([]*FileMeta, 0, len(query.FileMeta))
 	for _, f := range query.FileMeta {
+		// Parse timestamp
+		var timestamp time.Time
+		if f.Timestamp != "" {
+			var mt MythicTimestamp
+			if err := mt.UnmarshalJSON([]byte(`"` + f.Timestamp + `"`)); err == nil {
+				timestamp = mt.Time
+			}
+		}
+
 		files = append(files, &FileMeta{
 			ID:                  f.ID,
 			AgentFileID:         f.AgentFileID,
@@ -247,7 +332,7 @@ func (c *Client) GetDownloadedFiles(ctx context.Context, limit int) ([]*FileMeta
 			Size:                int64(f.Size),
 			Comment:             f.Comment,
 			OperatorID:          f.OperatorID,
-			Timestamp:           f.Timestamp,
+			Timestamp:           timestamp,
 			Deleted:             f.Deleted,
 			TaskID:              f.TaskID,
 		})
@@ -306,11 +391,10 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	// Add authentication header
-	if c.config.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.config.AccessToken)
-	} else if c.config.APIToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.config.APIToken)
+	// Add authentication headers
+	authHeaders := c.getAuthHeaders()
+	for key, value := range authHeaders {
+		req.Header.Set(key, value)
 	}
 
 	// Execute request
@@ -366,11 +450,10 @@ func (c *Client) DownloadFile(ctx context.Context, agentFileID string) ([]byte, 
 		return nil, WrapError("DownloadFile", err, "failed to create download request")
 	}
 
-	// Add authentication header
-	if c.config.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.config.AccessToken)
-	} else if c.config.APIToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.config.APIToken)
+	// Add authentication headers
+	authHeaders := c.getAuthHeaders()
+	for key, value := range authHeaders {
+		req.Header.Set(key, value)
 	}
 
 	// Execute request
