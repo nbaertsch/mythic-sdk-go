@@ -59,11 +59,11 @@ func (c *Client) GetBrowserScriptsByOperation(ctx context.Context, operationID i
 
 	var query struct {
 		BrowserScriptOperations []struct {
-			ID              int    `graphql:"id"`
-			BrowserScriptID int    `graphql:"browserscript_id"`
-			OperationID     int    `graphql:"operation_id"`
-			OperatorID      *int   `graphql:"operator_id"`
-			Active          bool   `graphql:"active"`
+			ID              int  `graphql:"id"`
+			BrowserScriptID int  `graphql:"browserscript_id"`
+			OperationID     int  `graphql:"operation_id"`
+			OperatorID      *int `graphql:"operator_id"`
+			Active          bool `graphql:"active"`
 			Script          struct {
 				Name string `graphql:"name"`
 			} `graphql:"browserscript"`
@@ -111,7 +111,7 @@ func (c *Client) CustomBrowserExport(ctx context.Context, req *types.CustomBrows
 		"script_name":  req.ScriptName,
 	}
 
-	if req.Parameters != nil && len(req.Parameters) > 0 {
+	if len(req.Parameters) > 0 {
 		input["parameters"] = req.Parameters
 	}
 
