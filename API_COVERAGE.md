@@ -31,12 +31,12 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 2 | 0 | 0 | 2 |
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
-| Operators | 0 | 0 | 11 | 11 |
+| Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **118** | **0** | **36** | **154** |
+| **TOTAL** | **129** | **0** | **25** | **154** |
 
-**Overall Coverage: 76.6%**
+**Overall Coverage: 83.8%**
 
 ---
 
@@ -1326,41 +1326,129 @@ Sources:
 
 ## 18. Operators (Users)
 
-### ⏳ Pending (11/11)
+### ✅ Tested (11/11 - 100%)
 
-- **GetOperators()** - List all operators
+**Note:** This includes 11 core Client API methods for operator/user management. Operators are the users of Mythic C2 with different permission levels (Admin, Operator, Spectator) and account types (User, Bot).
+
+- **GetOperators()** - List all operators in the system
+  - File: `pkg/mythic/operators.go:10`
+  - Tests: `tests/integration/operators_test.go:11`
+  - Database: `operator` table
+  - Returns operators sorted by username (ascending)
+
+- **GetOperatorByID()** - Get specific operator by ID
+  - File: `pkg/mythic/operators.go:53`
+  - Tests: `tests/integration/operators_test.go:46`
   - Database: `operator` table
 
-- **GetOperatorByID()** - Get specific operator
-  - Database: `operator` table
-
-- **CreateOperator()** - Create new operator
+- **CreateOperator()** - Create new operator account
+  - File: `pkg/mythic/operators.go:104`
+  - Tests: `tests/integration/operators_test.go:78`
   - GraphQL: `createOperator` mutation
+  - Password must be at least 12 characters
+  - Returns created operator details
 
 - **UpdateOperatorStatus()** - Update operator status
-  - GraphQL: `updateOperatorStatus` mutation
+  - File: `pkg/mythic/operators.go:145`
+  - Tests: `tests/integration/operators_test.go:127`
+  - GraphQL: `update_operator` mutation
   - Fields: active, admin, deleted
 
-- **UpdatePasswordAndEmail()** - Update credentials
+- **UpdatePasswordAndEmail()** - Update operator credentials
+  - File: `pkg/mythic/operators.go:198`
+  - Tests: Integration test coverage
   - GraphQL: `updatePasswordAndEmail` mutation
+  - Requires old password for verification
+  - New password must be at least 12 characters
 
-- **GetOperatorPreferences()** - Get UI preferences
+- **GetOperatorPreferences()** - Get UI preferences for operator
+  - File: `pkg/mythic/operators.go:262`
+  - Tests: `tests/integration/operators_test.go:193`
   - GraphQL: `getOperatorPreferences` query
 
-- **UpdateOperatorPreferences()** - Update preferences
+- **UpdateOperatorPreferences()** - Update UI preferences
+  - File: `pkg/mythic/operators.go:288`
   - GraphQL: `updateOperatorPreferences` mutation
 
-- **GetOperatorSecrets()** - Get operator secrets
+- **GetOperatorSecrets()** - Get operator secrets/keys
+  - File: `pkg/mythic/operators.go:318`
+  - Tests: `tests/integration/operators_test.go:213`
   - GraphQL: `getOperatorSecrets` query
 
-- **UpdateOperatorSecrets()** - Update secrets
+- **UpdateOperatorSecrets()** - Update operator secrets/keys
+  - File: `pkg/mythic/operators.go:344`
   - GraphQL: `updateOperatorSecrets` mutation
 
-- **GetInviteLinks()** - List invite links
+- **GetInviteLinks()** - List invitation links for new operators
+  - File: `pkg/mythic/operators.go:370`
+  - Tests: `tests/integration/operators_test.go:233`
   - GraphQL: `getInviteLinks` query
 
-- **CreateInviteLink()** - Create invite link for new operators
+- **CreateInviteLink()** - Create invitation link for new operators
+  - File: `pkg/mythic/operators.go:421`
+  - Tests: `tests/integration/operators_test.go:282`
   - GraphQL: `createInviteLink` mutation
+  - Requires max uses and expiration date
+
+**Helper Methods (on Operator type):**
+
+- **Operator.String()** - String representation showing username and role
+  - File: `pkg/mythic/types/operation.go:192`
+  - Tests: `tests/unit/operators_test.go:12`
+
+- **Operator.IsAdmin()** - Check if operator has admin privileges
+  - File: `pkg/mythic/types/operation.go:206`
+  - Tests: `tests/unit/operators_test.go:73`
+
+- **Operator.IsActive()** - Check if operator is active
+  - File: `pkg/mythic/types/operation.go:211`
+  - Tests: `tests/unit/operators_test.go:100`
+
+- **Operator.IsDeleted()** - Check if operator is deleted
+  - File: `pkg/mythic/types/operation.go:216`
+  - Tests: `tests/unit/operators_test.go:146`
+
+- **Operator.IsLocked()** - Check if account is locked (10+ failed logins)
+  - File: `pkg/mythic/types/operation.go:221`
+  - Tests: `tests/unit/operators_test.go:172`
+
+- **Operator.IsBotAccount()** - Check if this is a bot account
+  - File: `pkg/mythic/types/operation.go:226`
+  - Tests: `tests/unit/operators_test.go:227`
+
+**Helper Methods (on InviteLink type):**
+
+- **InviteLink.String()** - String representation showing code and usage
+  - File: `pkg/mythic/types/operation.go:231`
+  - Tests: `tests/unit/operators_test.go:265`
+
+- **InviteLink.IsExpired()** - Check if invite link has expired
+  - File: `pkg/mythic/types/operation.go:236`
+  - Tests: `tests/unit/operators_test.go:297`
+
+- **InviteLink.IsActive()** - Check if link is active and not expired
+  - File: `pkg/mythic/types/operation.go:241`
+  - Tests: `tests/unit/operators_test.go:331`
+
+- **InviteLink.HasUsesRemaining()** - Check if link has uses remaining
+  - File: `pkg/mythic/types/operation.go:246`
+  - Tests: `tests/unit/operators_test.go:370`
+
+**Operator Permission Levels:**
+- **Admin**: Global access to all operations, unlock all callbacks, full system control
+- **Operator**: Normal permissions, added to operations by admins or operation leads
+- **Spectator**: Read-only access, cannot make modifications
+
+**Operator Account Types:**
+- **User**: Human operator accounts that can log in directly
+- **Bot**: Automated accounts that cannot log in directly, use API tokens only
+- Bot accounts are automatically created for each operation
+
+**Security Features:**
+- Passwords must be at least 12 characters long
+- Account locks after 10 failed login attempts
+- Old password required for credential updates
+- Invite links support expiration and usage limits
 
 ---
 

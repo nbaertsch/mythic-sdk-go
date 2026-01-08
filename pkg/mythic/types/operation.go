@@ -48,6 +48,8 @@ type Operator struct {
 	Deleted            bool       `json:"deleted"`
 	ViewMode           string     `json:"view_mode"`
 	CurrentOperation   *Operation `json:"current_operation,omitempty"`
+	AccountType        string     `json:"account_type,omitempty"`
+	FailedLoginCount   int        `json:"failed_login_count"`
 }
 
 // OperationEventLog represents an event log entry for an operation.
@@ -118,3 +120,139 @@ func (o *Operation) IsComplete() bool {
 func (e *OperationEventLog) String() string {
 	return fmt.Sprintf("[%s] %s: %s", e.Level, e.Timestamp.Format("2006-01-02 15:04:05"), e.Message)
 }
+
+// CreateOperatorRequest represents a request to create a new operator.
+type CreateOperatorRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// UpdateOperatorStatusRequest represents a request to update operator status.
+type UpdateOperatorStatusRequest struct {
+	OperatorID int   `json:"operator_id"`
+	Active     *bool `json:"active,omitempty"`
+	Admin      *bool `json:"admin,omitempty"`
+	Deleted    *bool `json:"deleted,omitempty"`
+}
+
+// UpdatePasswordAndEmailRequest represents a request to update operator credentials.
+type UpdatePasswordAndEmailRequest struct {
+	OperatorID  int     `json:"operator_id"`
+	OldPassword string  `json:"old_password"`
+	NewPassword *string `json:"new_password,omitempty"`
+	Email       *string `json:"email,omitempty"`
+}
+
+// OperatorPreferences represents UI preferences for an operator.
+type OperatorPreferences struct {
+	OperatorID       int                    `json:"operator_id"`
+	PreferencesJSON  string                 `json:"preferences_json,omitempty"`
+	Preferences      map[string]interface{} `json:"preferences,omitempty"`
+	InteractType     string                 `json:"interact_type,omitempty"`
+	ConsoleSize      int                    `json:"console_size,omitempty"`
+	FontSize         int                    `json:"font_size,omitempty"`
+}
+
+// UpdateOperatorPreferencesRequest represents a request to update operator preferences.
+type UpdateOperatorPreferencesRequest struct {
+	OperatorID  int                    `json:"operator_id"`
+	Preferences map[string]interface{} `json:"preferences"`
+}
+
+// OperatorSecrets represents secrets/keys associated with an operator.
+type OperatorSecrets struct {
+	OperatorID   int                    `json:"operator_id"`
+	SecretsJSON  string                 `json:"secrets_json,omitempty"`
+	Secrets      map[string]interface{} `json:"secrets,omitempty"`
+}
+
+// UpdateOperatorSecretsRequest represents a request to update operator secrets.
+type UpdateOperatorSecretsRequest struct {
+	OperatorID int                    `json:"operator_id"`
+	Secrets    map[string]interface{} `json:"secrets"`
+}
+
+// InviteLink represents an invitation link for new operators.
+type InviteLink struct {
+	ID           int       `json:"id"`
+	Code         string    `json:"code"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedBy    int       `json:"created_by"`
+	CreatedAt    time.Time `json:"created_at"`
+	MaxUses      int       `json:"max_uses"`
+	CurrentUses  int       `json:"current_uses"`
+	Active       bool      `json:"active"`
+}
+
+// CreateInviteLinkRequest represents a request to create an invite link.
+type CreateInviteLinkRequest struct {
+	MaxUses   int       `json:"max_uses"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// String returns a string representation of an Operator.
+func (o *Operator) String() string {
+	role := "Operator"
+	if o.Admin {
+		role = "Admin"
+	}
+	status := ""
+	if o.Deleted {
+		status = " (deleted)"
+	} else if !o.Active {
+		status = " (inactive)"
+	}
+	return fmt.Sprintf("%s (%s)%s", o.Username, role, status)
+}
+
+// IsAdmin returns true if the operator has admin privileges.
+func (o *Operator) IsAdmin() bool {
+	return o.Admin
+}
+
+
+// IsActive returns true if the operator account is active.
+func (o *Operator) IsActive() bool {
+	return o.Active && !o.Deleted
+}
+
+// IsDeleted returns true if the operator has been deleted.
+func (o *Operator) IsDeleted() bool {
+	return o.Deleted
+}
+
+// IsLocked returns true if the operator account is locked due to failed login attempts.
+func (o *Operator) IsLocked() bool {
+	return o.FailedLoginCount >= 10
+}
+
+// IsBotAccount returns true if this is a bot account.
+func (o *Operator) IsBotAccount() bool {
+	return o.AccountType == AccountTypeBot
+}
+
+// String returns a string representation of an InviteLink.
+func (i *InviteLink) String() string {
+	return fmt.Sprintf("Invite %s (uses: %d/%d)", i.Code, i.CurrentUses, i.MaxUses)
+}
+
+// IsExpired returns true if the invite link has expired.
+func (i *InviteLink) IsExpired() bool {
+	return time.Now().After(i.ExpiresAt)
+}
+
+// IsActive returns true if the invite link is active and not expired.
+func (i *InviteLink) IsActive() bool {
+	return i.Active && !i.IsExpired()
+}
+
+// HasUsesRemaining returns true if the invite link has uses remaining.
+func (i *InviteLink) HasUsesRemaining() bool {
+	return i.CurrentUses < i.MaxUses
+}
+
+// Operator account type constants
+const (
+	AccountTypeUser = "user"
+	AccountTypeBot  = "bot"
+)
