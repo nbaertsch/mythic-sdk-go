@@ -1,6 +1,6 @@
 # Mythic SDK Go - API Coverage Report
 
-Generated: 2026-01-07
+Generated: 2026-01-08
 
 This document provides a comprehensive overview of all available Mythic APIs and their implementation status in the Go SDK.
 
@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **129** | **0** | **25** | **154** |
+| Advanced Features | 3 | 0 | 17 | 20 |
+| **TOTAL** | **132** | **0** | **22** | **154** |
 
-**Overall Coverage: 83.8%**
+**Overall Coverage: 85.7%**
 
 ---
 
@@ -1464,7 +1464,181 @@ Sources:
 
 ## 20. Advanced Features
 
-### ⏳ Pending (20/20)
+### ✅ Tested (3/20 - 15%)
+
+**Commands:**
+
+- **GetCommands()** - List all available commands from all payload types
+  - File: `pkg/mythic/commands.go:10`
+  - Tests: `tests/integration/commands_test.go:13`
+  - Database: `command` table
+  - Returns commands sorted alphabetically by command name
+  - Each command includes: ID, name, payload type, version, support status, script-only flag
+  - Helper methods: `IsSupported()`, `IsScriptOnly()`, `String()`
+
+- **GetCommandParameters()** - Get all parameters for all commands
+  - File: `pkg/mythic/commands.go:57`
+  - Tests: `tests/integration/commands_test.go:73`
+  - Database: `commandparameters` table
+  - Returns parameters sorted by command ID
+  - Parameter types: String, Boolean, Number, ChooseOne, ChooseMultiple, File, Array, Credential, LinkInfo
+  - Supports static choices, dynamic queries, all commands, and loaded commands filtering
+  - Helper methods: `IsRequired()`, `HasChoices()`, `IsDynamic()`, `String()`
+
+- **GetLoadedCommands()** - Get commands loaded in a specific callback
+  - File: `pkg/mythic/commands.go:110`
+  - Tests: `tests/integration/commands_test.go:280`
+  - Database: `loadedcommands` table
+  - Requires callback ID (validates non-zero)
+  - Returns commands loaded in callback, sorted by command name
+  - Includes nested Command details (name, description, version)
+  - Returns empty list for nonexistent callbacks (not an error)
+
+**Command Type System:**
+
+Commands in Mythic represent the available actions that can be executed through agents/payloads. The SDK provides three related types:
+
+1. **Command**: Represents a command definition available in a payload type
+   - Contains metadata: name, version, description, help text, author
+   - Status flags: `Supported` (UI-supported), `ScriptOnly` (scripting-only)
+   - MITRE ATT&CK mappings for threat intelligence correlation
+   - Attributes (JSON) for custom metadata and filtering
+
+2. **CommandParameter**: Defines parameters accepted by commands
+   - Typed parameters with validation rules (required, default values)
+   - Choice systems:
+     - Static choices (JSON array)
+     - All commands (reference other commands)
+     - Loaded commands (only commands in current callback)
+     - Dynamic query functions (runtime-generated choices)
+   - Agent filtering (parameter support varies by agent type)
+   - Build parameter filtering (parameter support varies by build config)
+
+3. **LoadedCommand**: Tracks which commands are available in specific callbacks
+   - Links callbacks to their loaded commands with version tracking
+   - Operator tracking (who loaded the command)
+   - Used for validating task submissions (only loaded commands can execute)
+   - Enables filtered parameter choices (`choices_are_loaded_commands`)
+
+**Command Parameters Design:**
+
+Command parameters support sophisticated choice systems for building command arguments:
+
+- **Static Choices**: Fixed list of values defined in parameter definition
+  - Example: `["read", "write", "execute"]` for permission parameter
+  - Parsed from `choices` field (JSON array)
+
+- **All Commands**: Parameter accepts any command name from payload type
+  - Enabled via `choices_are_all_commands` flag
+  - Useful for command chaining (e.g., "execute this command after X")
+  - Can be filtered by command attributes via `choice_filter_by_command_attributes`
+
+- **Loaded Commands**: Parameter accepts only commands loaded in current callback
+  - Enabled via `choices_are_loaded_commands` flag
+  - Used for callback-specific operations (e.g., "unload command X")
+  - Validates command availability at task submission time
+
+- **Dynamic Queries**: Parameter choices generated at runtime via function
+  - Specified in `dynamic_query_function` field
+  - Examples: file browser (list files), process list, credential selector
+  - Allows context-aware parameter building
+
+**Helper Methods:**
+
+The Commands API includes utility methods for common operations:
+
+- **Command.String()**: Human-readable command representation
+  - Format: "command_name vX (unsupported) (script-only)"
+  - Indicates support status and execution restrictions
+
+- **Command.IsSupported()**: Check if command is UI-supported
+  - Returns `Supported` field value
+  - Non-supported commands may still be usable via API/scripting
+
+- **Command.IsScriptOnly()**: Check if command is script-only
+  - Returns `ScriptOnly` field value
+  - Script-only commands require special handling
+
+- **CommandParameter.String()**: Human-readable parameter representation
+  - Format: "parameter_name (Type) (required)"
+  - Shows type and requirement status
+
+- **CommandParameter.IsRequired()**: Check if parameter is required
+  - Returns `Required` field value
+  - Required parameters must be provided in task submission
+
+- **CommandParameter.HasChoices()**: Check if parameter has predefined choices
+  - Returns true if any choice system is configured
+  - Includes static, all commands, or loaded commands
+
+- **CommandParameter.IsDynamic()**: Check if parameter uses dynamic queries
+  - Returns true if `DynamicQueryFunction` is set
+  - Dynamic parameters fetch choices at runtime
+
+- **LoadedCommand.String()**: Human-readable loaded command representation
+  - Format: "command_name vX (Callback Y)"
+  - Links command to specific callback
+
+**Usage Example:**
+
+```go
+// Get all available commands
+commands, err := client.GetCommands(ctx)
+if err != nil {
+    return err
+}
+
+// Find a specific command
+for _, cmd := range commands {
+    if cmd.Cmd == "download" && cmd.IsSupported() {
+        fmt.Printf("Found: %s\n", cmd.String())
+
+        // Get parameters for all commands
+        params, err := client.GetCommandParameters(ctx)
+        if err != nil {
+            return err
+        }
+
+        // Filter to this command's parameters
+        for _, param := range params {
+            if param.CommandID == cmd.ID {
+                fmt.Printf("  Parameter: %s\n", param.String())
+                if param.IsRequired() {
+                    fmt.Printf("    (required)\n")
+                }
+                if param.HasChoices() {
+                    fmt.Printf("    (has predefined choices)\n")
+                }
+            }
+        }
+        break
+    }
+}
+
+// Check what commands are loaded in a callback
+loadedCmds, err := client.GetLoadedCommands(ctx, callbackID)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Callback %d has %d loaded commands\n", callbackID, len(loadedCmds))
+for _, lc := range loadedCmds {
+    fmt.Printf("  %s\n", lc.String())
+}
+```
+
+**Notes:**
+
+- Commands are payload-type-specific; different payload types have different commands
+- Not all commands are UI-supported; some are script-only or deprecated
+- LoadedCommands validation ensures only available commands can be tasked
+- Parameter choices enable rich command building UIs
+- Dynamic parameters allow context-aware parameter selection
+- Command versioning tracks command evolution across payload updates
+
+---
+
+### ⏳ Pending (17/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -1517,16 +1691,6 @@ Sources:
 
 - **DeleteBlockListEntry()** - Remove block list entries
   - GraphQL: `deleteBlockListEntry` mutation
-
-**Commands:**
-- **GetCommands()** - List available commands
-  - Database: `command` table
-
-- **GetCommandParameters()** - Get command parameters
-  - Database: `commandparameters` table
-
-- **GetLoadedCommands()** - Commands loaded in callback
-  - Database: `loadedcommands` table
 
 **Miscellaneous:**
 - **CreateRandom()** - Generate random string with format
