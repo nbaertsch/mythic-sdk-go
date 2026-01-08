@@ -145,12 +145,12 @@ type UpdatePasswordAndEmailRequest struct {
 
 // OperatorPreferences represents UI preferences for an operator.
 type OperatorPreferences struct {
-	OperatorID       int                    `json:"operator_id"`
-	PreferencesJSON  string                 `json:"preferences_json,omitempty"`
-	Preferences      map[string]interface{} `json:"preferences,omitempty"`
-	InteractType     string                 `json:"interact_type,omitempty"`
-	ConsoleSize      int                    `json:"console_size,omitempty"`
-	FontSize         int                    `json:"font_size,omitempty"`
+	OperatorID      int                    `json:"operator_id"`
+	PreferencesJSON string                 `json:"preferences_json,omitempty"`
+	Preferences     map[string]interface{} `json:"preferences,omitempty"`
+	InteractType    string                 `json:"interact_type,omitempty"`
+	ConsoleSize     int                    `json:"console_size,omitempty"`
+	FontSize        int                    `json:"font_size,omitempty"`
 }
 
 // UpdateOperatorPreferencesRequest represents a request to update operator preferences.
@@ -161,9 +161,9 @@ type UpdateOperatorPreferencesRequest struct {
 
 // OperatorSecrets represents secrets/keys associated with an operator.
 type OperatorSecrets struct {
-	OperatorID   int                    `json:"operator_id"`
-	SecretsJSON  string                 `json:"secrets_json,omitempty"`
-	Secrets      map[string]interface{} `json:"secrets,omitempty"`
+	OperatorID  int                    `json:"operator_id"`
+	SecretsJSON string                 `json:"secrets_json,omitempty"`
+	Secrets     map[string]interface{} `json:"secrets,omitempty"`
 }
 
 // UpdateOperatorSecretsRequest represents a request to update operator secrets.
@@ -174,14 +174,14 @@ type UpdateOperatorSecretsRequest struct {
 
 // InviteLink represents an invitation link for new operators.
 type InviteLink struct {
-	ID           int       `json:"id"`
-	Code         string    `json:"code"`
-	ExpiresAt    time.Time `json:"expires_at"`
-	CreatedBy    int       `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	MaxUses      int       `json:"max_uses"`
-	CurrentUses  int       `json:"current_uses"`
-	Active       bool      `json:"active"`
+	ID          int       `json:"id"`
+	Code        string    `json:"code"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedBy   int       `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+	MaxUses     int       `json:"max_uses"`
+	CurrentUses int       `json:"current_uses"`
+	Active      bool      `json:"active"`
 }
 
 // CreateInviteLinkRequest represents a request to create an invite link.
@@ -209,7 +209,6 @@ func (o *Operator) String() string {
 func (o *Operator) IsAdmin() bool {
 	return o.Admin
 }
-
 
 // IsActive returns true if the operator account is active.
 func (o *Operator) IsActive() bool {
