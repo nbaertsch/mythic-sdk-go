@@ -29,14 +29,14 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Keylogs | 3 | 0 | 0 | 3 |
 | Browser Scripts | 0 | 0 | 3 | 3 |
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
-| Reporting | 0 | 0 | 2 | 2 |
+| Reporting | 2 | 0 | 0 | 2 |
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **113** | **0** | **41** | **154** |
+| **TOTAL** | **115** | **0** | **39** | **154** |
 
-**Overall Coverage: 73.4%**
+**Overall Coverage: 74.7%**
 
 ---
 
@@ -1106,14 +1106,93 @@ The MITRE ATT&CK framework integration provides:
 
 ## 16. Reporting
 
-### ⏳ Pending (2/2)
+### ✅ Tested (2/2 - 100%)
 
-- **GenerateReport()** - Generate operation report
+**Note:** This includes 2 core Client API methods for generating operation reports and retrieving C2 redirect rules. Reporting enables exporting operation data for documentation, compliance, and threat intelligence purposes.
+
+**Report Generation:**
+
+- **GenerateReport()** - Generate comprehensive operation report
+  - File: `pkg/mythic/reporting.go:10`
+  - Tests: `tests/integration/reporting_test.go:11`
   - GraphQL: `generateReport` mutation
-  - Options: MITRE coverage, output format, filters
+  - Input: GenerateReportRequest with operation ID, format, and filters
+  - Output: Report data in specified format (JSON, Markdown, HTML, PDF)
+  - Features:
+    - MITRE ATT&CK coverage analysis
+    - Callback, task, file, credential, and artifact inclusion
+    - Date range filtering (start_date, end_date)
+    - Callback-specific filtering
+    - Multiple output formats
 
-- **GetRedirectRules()** - Get C2 redirect rules
+**C2 Redirect Rules:**
+
+- **GetRedirectRules()** - Get C2 redirect rules for payload
+  - File: `pkg/mythic/reporting.go:88`
+  - Tests: `tests/integration/reporting_test.go:132`
   - GraphQL: `redirect_rules` query
+  - Input: Payload UUID
+  - Output: List of redirect rules (Apache, Nginx, mod_rewrite)
+  - Returns: Redirect rule configurations for deploying payloads with redirectors
+
+**Helper Methods (on GenerateReportRequest type):**
+
+- **GenerateReportRequest.String()** - String representation
+  - File: `pkg/mythic/types/report.go:28`
+  - Tests: `tests/unit/reporting_test.go:11`
+
+**Helper Methods (on RedirectRule type):**
+
+- **RedirectRule.String()** - String representation showing type and configuration
+  - File: `pkg/mythic/types/report.go:44`
+  - Tests: `tests/unit/reporting_test.go:34`
+
+**Report Output Formats:**
+- `json` - JSON format for programmatic processing
+- `markdown` - Markdown format for documentation
+- `html` - HTML format for web viewing
+- `pdf` - PDF format for distribution
+
+**Report Content Options:**
+- `include_mitre` - Include MITRE ATT&CK coverage analysis
+- `include_callbacks` - Include callback session data
+- `include_tasks` - Include task execution data
+- `include_files` - Include file upload/download data
+- `include_credentials` - Include captured credentials
+- `include_artifacts` - Include artifacts/IOCs
+
+**Redirect Rule Types:**
+- `apache` - Apache HTTP server redirect rules
+- `nginx` - Nginx web server redirect rules
+- `mod_rewrite` - Apache mod_rewrite rules
+
+**Use Cases:**
+
+**Report Generation:**
+- Document red team operations for reports
+- Generate MITRE ATT&CK coverage matrices
+- Export data for after-action reviews
+- Create compliance documentation
+- Share findings with stakeholders
+- Archive operation data
+
+**Redirect Rules:**
+- Deploy Apache mod_rewrite rules for traffic redirection
+- Configure Nginx reverse proxy for C2 traffic
+- Set up domain fronting configurations
+- Hide C2 infrastructure behind legitimate domains
+- Filter unwanted traffic (security tools, scanners)
+- Protect payload servers from discovery
+
+**Report Filtering:**
+- Filter by date range to focus on specific time periods
+- Filter by specific callbacks to generate per-host reports
+- Include/exclude data types based on reporting needs
+- Combine filters for targeted report generation
+
+Sources:
+- [Redirect Rules - Mythic](https://docs.mythic-c2.net/customizing/c2-related-development/server-side-coding/redirect-rules)
+- [Reporting | Mythic Documentation](https://docs.mythic-c2.net/reporting)
 
 ---
 
@@ -1307,7 +1386,7 @@ The MITRE ATT&CK framework integration provides:
 7. ✅ **Tags** - Organization and categorization
 8. ✅ **Keylogs** - Credential harvesting operations
 9. ✅ **MITRE ATT&CK** - Threat intelligence integration
-10. **Reporting** - Operation documentation
+10. ✅ **Reporting** - Operation documentation
 
 ### Low Priority (Advanced Features)
 11. **Eventing/Workflows** - Automation for advanced users
