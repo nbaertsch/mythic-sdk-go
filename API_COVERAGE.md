@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 10 | 0 | 10 | 20 |
-| **TOTAL** | **139** | **0** | **15** | **154** |
+| Advanced Features | 14 | 0 | 6 | 20 |
+| **TOTAL** | **143** | **0** | **11** | **154** |
 
-**Overall Coverage: 90.3%**
+**Overall Coverage: 92.9%**
 
 ---
 
@@ -1956,7 +1956,110 @@ for _, lc := range loadedCmds {
 
 ---
 
-### ⏳ Pending (10/20)
+**Container Management:**
+
+- **ContainerListFiles(containerName, path)** - List files in a Docker container directory
+  - File: `pkg/mythic/containers.go:27`
+  - Tests: `tests/integration/containers_test.go:105`
+  - GraphQL: `containerListFiles` query
+  - Input: Container name (e.g., "mythic_athena", "http"), directory path
+  - Returns: List of ContainerFileInfo with name, size, type (file/dir), permissions, mod time
+  - Validates container name and path are non-empty
+  - Useful for browsing payload type and C2 profile container filesystems during development
+
+- **ContainerDownloadFile(containerName, path)** - Download a file from a Docker container
+  - File: `pkg/mythic/containers.go:89`
+  - Tests: `tests/integration/containers_test.go:54`
+  - GraphQL: `containerDownloadFile` query
+  - Input: Container name, file path within container
+  - Returns: File content as bytes (base64 decoded)
+  - Allows retrieving files from payload type and C2 profile containers for backup or analysis
+
+- **ContainerWriteFile(containerName, path, content)** - Write a file to a Docker container
+  - File: `pkg/mythic/containers.go:138`
+  - Tests: `tests/integration/containers_test.go:121`
+  - GraphQL: `containerWriteFile` mutation
+  - Input: Container name, destination path, file content (base64 encoded)
+  - Allows updating configuration files, adding scripts, or modifying containers during development
+  - Content is automatically base64 encoded for transmission
+
+- **ContainerRemoveFile(containerName, path)** - Remove a file from a Docker container
+  - File: `pkg/mythic/containers.go:183`
+  - Tests: `tests/integration/containers_test.go:121`
+  - GraphQL: `containerRemoveFile` mutation
+  - Input: Container name, file path to remove
+  - Allows cleaning up temporary files or removing old configurations from containers
+
+**Container Management System:**
+
+The container management APIs provide direct file system access to Docker containers running payload types and C2 profiles. This is primarily useful for:
+- **Development**: Modifying agent source code, build scripts, or configuration files
+- **Debugging**: Retrieving log files or examining container state
+- **Backup**: Downloading important files before container updates
+- **Configuration**: Updating C2 profile settings or payload type parameters
+
+**ContainerFileInfo Structure:**
+- Name: File or directory name
+- Size: File size in bytes (0 for directories)
+- IsDir: Boolean indicating if entry is a directory
+- ModTime: Last modification timestamp
+- Permission: Unix-style permissions (e.g., "rwxr-xr-x")
+
+**Helper Methods:**
+- **ContainerFileInfo.String()**: Human-readable representation showing name, type, and size
+- **ContainerFileInfo.IsDirectory()**: Returns true if entry is a directory
+- **ContainerListFilesRequest.String()**: Display list request details
+- **ContainerDownloadFileRequest.String()**: Display download request details
+- **ContainerWriteFileRequest.String()**: Display write request with content size
+- **ContainerRemoveFileRequest.String()**: Display remove request details
+
+**Common Container Names:**
+- `mythic_server`: Main Mythic server container
+- `mythic_postgres`: PostgreSQL database container
+- `mythic_rabbitmq`: RabbitMQ message broker container
+- Payload type containers: `mythic_athena`, `poseidon`, `apfell`, etc.
+- C2 profile containers: `http`, `websocket`, `smb`, `tcp`, etc.
+
+**Common Use Cases:**
+```go
+// List files in a payload type container
+files, err := client.ContainerListFiles(ctx, "mythic_athena", "/Mythic/agent_code")
+for _, file := range files {
+    if !file.IsDirectory() {
+        fmt.Printf("Found source file: %s (%d bytes)\n", file.Name, file.Size)
+    }
+}
+
+// Download a configuration file for backup
+config, err := client.ContainerDownloadFile(ctx, "http", "/srv/config.json")
+err = os.WriteFile("backup_config.json", config, 0644)
+
+// Update a configuration file
+newConfig, err := os.ReadFile("new_config.json")
+err = client.ContainerWriteFile(ctx, "http", "/srv/config.json", newConfig)
+
+// Clean up temporary files
+err = client.ContainerRemoveFile(ctx, "mythic_athena", "/tmp/build_cache")
+```
+
+**Security Considerations:**
+- Container operations require authenticated admin access to Mythic
+- File operations execute with container user permissions
+- Modifying container files can affect stability - use with caution
+- Changes to containers may be lost on container restart unless persisted in volumes
+- Downloading files may expose sensitive data - handle securely
+
+**Notes:**
+- File content is transferred using base64 encoding for binary safety
+- Directory listing is not recursive - only immediate children are returned
+- Path separators are Unix-style (/) regardless of host OS
+- Empty files can be created by writing zero-length content
+- Permissions format follows Unix conventions (rwxr-xr-x)
+- ModTime format is ISO 8601 timestamp from container's perspective
+
+---
+
+### ⏳ Pending (6/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -1967,19 +2070,6 @@ for _, lc := range loadedCmds {
 
 - **TypedarrayParseFunction()** - Parse typed arrays
   - GraphQL: `typedarray_parse_function` mutation
-
-**Container Management:**
-- **ContainerListFiles()** - List files in container
-  - GraphQL: `containerListFiles` query
-
-- **ContainerDownloadFile()** - Download from container
-  - GraphQL: `containerDownloadFile` query
-
-- **ContainerWriteFile()** - Write file to container
-  - GraphQL: `containerWriteFile` mutation
-
-- **ContainerRemoveFile()** - Remove container file
-  - GraphQL: `containerRemoveFile` mutation
 
 **Proxy Operations:**
 - **ToggleProxy()** - Enable/disable SOCKS proxy
@@ -2027,7 +2117,7 @@ for _, lc := range loadedCmds {
 ### Low Priority (Advanced Features)
 11. **Eventing/Workflows** - Automation for advanced users
 12. ✅ **Browser Scripts** - Custom UI functionality
-13. **Container Management** - Development/debugging
+13. ✅ **Container Management** - Development/debugging
 14. **Dynamic Queries** - Advanced parameter handling
 15. **Proxy Operations** - Specialized networking
 
@@ -2048,6 +2138,6 @@ for _, lc := range loadedCmds {
 
 ---
 
-*Last updated: 2026-01-07*
+*Last updated: 2026-01-08*
 *SDK Version: In Development*
 *Mythic API Version: v3.4.x*
