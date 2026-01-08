@@ -27,16 +27,16 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Tokens | 7 | 0 | 0 | 7 |
 | Processes | 6 | 0 | 0 | 6 |
 | Keylogs | 3 | 0 | 0 | 3 |
-| Browser Scripts | 0 | 0 | 3 | 3 |
+| Browser Scripts | 3 | 0 | 0 | 3 |
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 2 | 0 | 0 | 2 |
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 0 | 0 | 11 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
 | Advanced Features | 0 | 0 | 20 | 20 |
-| **TOTAL** | **115** | **0** | **39** | **154** |
+| **TOTAL** | **118** | **0** | **36** | **154** |
 
-**Overall Coverage: 74.7%**
+**Overall Coverage: 76.6%**
 
 ---
 
@@ -974,16 +974,93 @@ The ProcessTree type provides a hierarchical view of processes with automatic pa
 
 ## 14. Browser Scripts
 
-### ⏳ Pending (3/3)
+### ✅ Tested (3/3 - 100%)
 
-- **GetBrowserScripts()** - List browser scripts
+**Note:** This includes 3 core Client API methods for browser script management. Browser scripts are JavaScript files used for custom UI rendering in the Mythic web interface, allowing operators to add custom download buttons, screenshot renderers, graphs, tables, and task buttons.
+
+- **GetBrowserScripts()** - List all browser scripts available in the system
+  - File: `pkg/mythic/browserscripts.go:10`
+  - Tests: `tests/integration/browserscripts_test.go:11`
   - Database: `browserscript` table
+  - Returns all scripts with name, content, author, active status, and UI version (new/old)
+  - Each script includes JavaScript content for custom rendering
 
-- **GetBrowserScriptsByOperation()** - Filter by operation
-  - Database: `browserscriptoperation` table
+- **GetBrowserScriptsByOperation()** - Retrieve browser scripts associated with a specific operation
+  - File: `pkg/mythic/browserscripts.go:47`
+  - Tests: `tests/integration/browserscripts_test.go:49`
+  - Database: `browserscriptoperation` table (join with `browserscript`)
+  - Filters scripts enabled or customized for a particular operation
+  - Supports operator-specific script assignments
+  - Returns script associations with active status
 
-- **CustomBrowserExport()** - Export browser data
+- **CustomBrowserExport()** - Execute a custom browser export function to generate specialized data exports
+  - File: `pkg/mythic/browserscripts.go:97`
+  - Tests: `tests/integration/browserscripts_test.go:95`
   - GraphQL: `custombrowserExportFunction` mutation
+  - Input: CustomBrowserExportRequest (operation_id, script_name, parameters)
+  - Allows browser scripts to provide custom export functionality for operation data
+  - Returns status, error message (if any), and exported data
+
+**Helper Methods (on BrowserScript type):**
+
+- **BrowserScript.String()** - String representation showing script name and description
+  - File: `pkg/mythic/types/browserscript.go:47`
+  - Tests: `tests/unit/browserscripts_test.go:12`
+
+- **BrowserScript.IsActive()** - Check if the browser script is active
+  - File: `pkg/mythic/types/browserscript.go:55`
+  - Tests: `tests/unit/browserscripts_test.go:38`
+
+- **BrowserScript.IsForNewUI()** - Check if the script is for the new UI
+  - File: `pkg/mythic/types/browserscript.go:60`
+  - Tests: `tests/unit/browserscripts_test.go:59`
+
+**Helper Methods (on BrowserScriptOperation type):**
+
+- **BrowserScriptOperation.String()** - String representation showing script and operation
+  - File: `pkg/mythic/types/browserscript.go:65`
+  - Tests: `tests/unit/browserscripts_test.go:80`
+
+- **BrowserScriptOperation.IsActive()** - Check if script is active for the operation
+  - File: `pkg/mythic/types/browserscript.go:73`
+  - Tests: `tests/unit/browserscripts_test.go:130`
+
+- **BrowserScriptOperation.IsOperatorSpecific()** - Check if script is operator-specific
+  - File: `pkg/mythic/types/browserscript.go:78`
+  - Tests: `tests/unit/browserscripts_test.go:152`
+
+**Helper Methods (on CustomBrowserExportRequest type):**
+
+- **CustomBrowserExportRequest.String()** - String representation of export request
+  - File: `pkg/mythic/types/browserscript.go:83`
+  - Tests: `tests/unit/browserscripts_test.go:174`
+
+**Browser Script System Architecture:**
+
+Browser scripts enable extensive customization of the Mythic web interface:
+
+1. **Script Storage**: JavaScript files stored in `browserscript` table
+   - Each script has: ID, name, script content, author, UI version, active status
+   - Scripts can be for old UI or new UI (ForNewUI flag)
+   - Description field for documentation
+
+2. **Operation Association**: Scripts can be enabled per operation via `browserscriptoperation` table
+   - Links browser scripts to specific operations
+   - Supports operator-specific customization (optional operator_id)
+   - Active/inactive status per operation
+
+3. **Custom UI Capabilities**:
+   - Download buttons for files with custom formatting
+   - Screenshot viewers with specialized rendering
+   - Graph generators for data visualization
+   - Custom table formatters
+   - Task buttons for quick actions
+   - Data export functions with custom formats
+
+4. **Export Functionality**: CustomBrowserExport allows scripts to export operation data
+   - Scripts can define custom export functions
+   - Parameters passed as key-value map for flexibility
+   - Returns formatted data (JSON, CSV, etc.) based on script logic
 
 ---
 
@@ -1390,7 +1467,7 @@ Sources:
 
 ### Low Priority (Advanced Features)
 11. **Eventing/Workflows** - Automation for advanced users
-12. **Browser Scripts** - Custom UI functionality
+12. ✅ **Browser Scripts** - Custom UI functionality
 13. **Container Management** - Development/debugging
 14. **Dynamic Queries** - Advanced parameter handling
 15. **Proxy Operations** - Specialized networking
