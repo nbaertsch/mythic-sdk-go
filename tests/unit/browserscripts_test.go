@@ -469,8 +469,8 @@ func TestCustomBrowserExportRequestWithoutParameters(t *testing.T) {
 		ScriptName:  "simple_export",
 	}
 
-	if req.Parameters != nil && len(req.Parameters) > 0 {
-		t.Error("Parameters should be nil or empty")
+	if len(req.Parameters) > 0 {
+		t.Error("Parameters should be empty")
 	}
 
 	str := req.String()
