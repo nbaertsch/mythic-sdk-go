@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 14 | 0 | 6 | 20 |
-| **TOTAL** | **143** | **0** | **11** | **154** |
+| Advanced Features | 16 | 0 | 4 | 20 |
+| **TOTAL** | **145** | **0** | **9** | **154** |
 
-**Overall Coverage: 92.9%**
+**Overall Coverage: 94.2%**
 
 ---
 
@@ -2059,7 +2059,137 @@ err = client.ContainerRemoveFile(ctx, "mythic_athena", "/tmp/build_cache")
 
 ---
 
-### ⏳ Pending (6/20)
+**Proxy Operations:**
+
+- **ToggleProxy(taskID, port, enable)** - Enable or disable a SOCKS proxy on a callback
+  - File: `pkg/mythic/proxy.go:31`
+  - Tests: `tests/integration/proxy_test.go:7`
+  - GraphQL: `toggleProxy` mutation
+  - Input: Task ID that started/will stop the proxy, port number (1-65535), enable flag (true/false)
+  - Returns: ProxyInfo with proxy state details (ID, callback, port, active status, remote endpoint)
+  - Validates task ID is positive and port is in valid range (1-65535)
+  - Enables routing network traffic through compromised systems for lateral movement
+  - Returns nil ProxyInfo when disabling (no active proxy state)
+
+- **TestProxy(callbackID, port, targetURL)** - Test a SOCKS proxy connection
+  - File: `pkg/mythic/proxy.go:111`
+  - Tests: `tests/integration/proxy_test.go:58`
+  - GraphQL: `testProxy` mutation
+  - Input: Callback ID hosting the proxy, SOCKS port, target URL to test connectivity
+  - Returns: TestProxyResponse with status, message, and error details
+  - Validates callback ID, port range, and non-empty target URL
+  - Tests connectivity by attempting to reach target URL through the proxy
+  - Useful for validating proxy functionality before operational use
+
+**Proxy System:**
+
+SOCKS proxies in Mythic enable operators to route network traffic through compromised systems, providing access to internal networks and bypassing network segmentation. The proxy operations support:
+- **Lateral Movement**: Access internal systems not directly reachable from the operator's network
+- **Pivoting**: Chain proxies through multiple compromised systems
+- **Network Reconnaissance**: Scan and interact with internal network resources
+- **Operational Security**: Hide operator traffic by routing through victim infrastructure
+
+**ProxyInfo Structure:**
+- ID: Unique proxy identifier
+- CallbackID: Callback hosting the SOCKS proxy
+- Port: SOCKS proxy port number
+- PortType: Proxy type (typically "socks")
+- Active: Boolean indicating if proxy is currently running
+- LocalPort: Local port on the Mythic server for proxy forwarding
+- RemoteIP: Remote IP address being proxied to
+- RemotePort: Remote port being proxied to
+- OperationID: Associated operation
+- Deleted: Soft delete flag
+- ProxyCallback: Optional callback ID that provides the proxy (for chained proxies)
+
+**Helper Methods:**
+- **ProxyInfo.String()**: Human-readable representation showing type, port, and status
+- **ProxyInfo.IsActive()**: Returns true if proxy is active and not deleted
+- **ProxyInfo.IsDeleted()**: Returns true if proxy has been marked as deleted
+- **ToggleProxyRequest.String()**: Display toggle request details
+- **TestProxyRequest.String()**: Display test request details
+- **TestProxyResponse.String()**: Display test result
+- **TestProxyResponse.IsSuccessful()**: Returns true if proxy test succeeded
+
+**Common Use Cases:**
+```go
+// Start a SOCKS proxy on callback
+taskID := 123 // Task that starts the proxy
+proxy, err := client.ToggleProxy(ctx, taskID, 1080, true)
+if err != nil {
+    return err
+}
+fmt.Printf("Proxy started: %s\n", proxy.String())
+fmt.Printf("Forward to: %s:%d\n", proxy.RemoteIP, proxy.RemotePort)
+
+// Test the proxy connection
+result, err := client.TestProxy(ctx, proxy.CallbackID, 1080, "https://www.google.com")
+if err != nil {
+    return err
+}
+if result.IsSuccessful() {
+    fmt.Printf("Proxy is working: %s\n", result.Message)
+} else {
+    fmt.Printf("Proxy test failed: %s\n", result.Error)
+}
+
+// Test internal network connectivity through proxy
+internalResult, err := client.TestProxy(ctx, proxy.CallbackID, 1080, "http://10.0.0.1")
+if internalResult.IsSuccessful() {
+    fmt.Println("Can reach internal network through proxy")
+}
+
+// Stop the proxy when done
+proxy, err = client.ToggleProxy(ctx, taskID, 1080, false)
+if err != nil {
+    return err
+}
+fmt.Println("Proxy stopped")
+```
+
+**Proxy Workflow:**
+1. **Issue SOCKS command**: Task callback to start SOCKS proxy listener
+2. **Wait for task completion**: Proxy starts on specified port
+3. **Toggle proxy**: Call ToggleProxy to register the proxy with Mythic
+4. **Test connectivity**: Use TestProxy to validate proxy is working
+5. **Configure tools**: Set SOCKS proxy settings in tools (proxychains, browsers, etc.)
+6. **Operational use**: Route traffic through the proxy for lateral movement
+7. **Stop proxy**: Toggle proxy off when finished or callback dies
+
+**Port Selection:**
+- **Common SOCKS ports**: 1080, 9050, 8080
+- **Avoid conflicts**: Check for existing services on target system
+- **Privileged ports**: Ports 1-1023 may require elevated privileges on target
+- **Firewall considerations**: Choose ports allowed by target's firewall rules
+
+**Security Considerations:**
+- SOCKS proxies expose compromised systems to network traffic routing
+- Test proxies before operational use to avoid alerting defenders
+- Monitor proxy performance - slow proxies may indicate detection or issues
+- Clean up proxies when finished to reduce detection surface
+- Consider network flow impact - heavy proxy traffic may trigger alerts
+- Proxy chains may be logged by intermediate systems
+
+**Limitations:**
+- Proxies require active callback to function
+- If callback dies, proxy stops working
+- Network latency increases with proxy hops
+- Some protocols may not work well through SOCKS proxies
+- Target system must have network access to desired destinations
+- Firewall rules on target may block proxy traffic
+
+**Notes:**
+- ToggleProxy requires a task ID from a command that starts/stops the proxy
+- The task must complete successfully before proxy becomes active
+- TestProxy performs actual connectivity test - not just a status check
+- Proxy port must not conflict with existing services on target system
+- LocalPort is assigned by Mythic for server-side proxy forwarding
+- ProxyCallback field supports chained proxies (proxy through another proxy)
+- Active proxies are automatically cleaned up when callbacks exit
+
+---
+
+### ⏳ Pending (4/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -2070,13 +2200,6 @@ err = client.ContainerRemoveFile(ctx, "mythic_athena", "/tmp/build_cache")
 
 - **TypedarrayParseFunction()** - Parse typed arrays
   - GraphQL: `typedarray_parse_function` mutation
-
-**Proxy Operations:**
-- **ToggleProxy()** - Enable/disable SOCKS proxy
-  - GraphQL: `toggleProxy` mutation
-
-- **TestProxy()** - Test proxy connection
-  - GraphQL: `testProxy` mutation
 
 **Staging:**
 - **GetStagingInfo()** - Get payload staging info
@@ -2119,7 +2242,7 @@ err = client.ContainerRemoveFile(ctx, "mythic_athena", "/tmp/build_cache")
 12. ✅ **Browser Scripts** - Custom UI functionality
 13. ✅ **Container Management** - Development/debugging
 14. **Dynamic Queries** - Advanced parameter handling
-15. **Proxy Operations** - Specialized networking
+15. ✅ **Proxy Operations** - Specialized networking
 
 ---
 
