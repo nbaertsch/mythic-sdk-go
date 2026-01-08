@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 6 | 0 | 14 | 20 |
-| **TOTAL** | **135** | **0** | **19** | **154** |
+| Advanced Features | 10 | 0 | 10 | 20 |
+| **TOTAL** | **139** | **0** | **15** | **154** |
 
-**Overall Coverage: 87.7%**
+**Overall Coverage: 90.3%**
 
 ---
 
@@ -1464,7 +1464,193 @@ Sources:
 
 ## 20. Advanced Features
 
-### ✅ Tested (6/20 - 30%)
+### ✅ Tested (10/20 - 50%)
+
+**Build Parameters:**
+
+- **GetBuildParameters()** - List all build parameter type definitions
+  - File: `pkg/mythic/buildparameters.go:9`
+  - Tests: `tests/integration/buildparameters_test.go:9`
+  - Database: `buildparameter` table
+  - Returns non-deleted parameter definitions sorted by payload type, then name
+  - Defines what parameters are available when building payloads
+  - Includes parameter schema, type, validation, default values
+
+- **GetBuildParametersByPayloadType(payloadTypeID)** - Get build parameters for specific payload type
+  - File: `pkg/mythic/buildparameters.go:68`
+  - Tests: `tests/integration/buildparameters_test.go:78`
+  - Database: `buildparameter` table with payload type filter
+  - Validates payload type ID (non-zero)
+  - Returns empty list for nonexistent payload types (not an error)
+  - Sorted alphabetically by parameter name
+
+- **GetBuildParameterInstances()** - Get all build parameter instances for current operation
+  - File: `pkg/mythic/buildparameters.go:133`
+  - Tests: `tests/integration/buildparameters_test.go:162`
+  - Database: `buildparameterinstance` table
+  - Returns actual parameter values used when creating payloads
+  - Operation-scoped (only payloads in current operation)
+  - Sorted by payload ID, then build parameter ID
+
+- **GetBuildParameterInstancesByPayload(payloadID)** - Get parameter instances for specific payload
+  - File: `pkg/mythic/buildparameters.go:179`
+  - Tests: `tests/integration/buildparameters_test.go:212`
+  - Database: `buildparameterinstance` table with payload filter
+  - Validates payload ID (non-zero)
+  - Includes nested BuildParameter details (name, type, description)
+  - Returns empty list for nonexistent payloads (not an error)
+
+**Build Parameter System:**
+
+Build parameters define the configuration options available when building agent payloads. The system consists of two components:
+
+1. **BuildParameterType** (definitions): Defines what parameters are available
+   - Schema and validation rules for each parameter
+   - Type information (String, Boolean, Number, ChooseOne, etc.)
+   - Default values and randomization options
+   - Requirement status and description
+
+2. **BuildParameterInstance** (values): Stores actual values used in specific payloads
+   - Links parameter definitions to specific payloads
+   - Supports encrypted storage for sensitive parameters
+   - Tracks when parameters were set
+
+**BuildParameterType Fields:**
+
+- **Identity**: ID, Name, PayloadTypeID
+- **Type System**: ParameterType (String, Boolean, Number, ChooseOne, ChooseMultiple, File, Array, Date)
+- **Validation**: VerifierRegex, Required, Parameter (JSON schema)
+- **Defaults**: DefaultValue, Randomize, FormatString
+- **Security**: IsCryptoType (for encryption keys, etc.)
+- **Organization**: ParameterGroupName, Description
+- **Status**: Deleted, CreationTime
+
+**BuildParameterInstance Fields:**
+
+- **Links**: ID, PayloadID, BuildParameterID
+- **Values**: Value (plaintext), EncValue (encrypted value for sensitive params)
+- **Metadata**: CreationTime
+- **Relationships**: BuildParameter (nested definition), Payload (nested payload)
+
+**Helper Methods - BuildParameterType:**
+
+- **String()**: Human-readable representation
+  - Format: "parameter_name (Type) (required)"
+  - Indicates type and requirement status
+
+- **IsRequired()**: Check if parameter is required
+  - Returns Required field value
+  - Required parameters must be provided when building payloads
+
+- **IsCrypto()**: Check if parameter is a cryptographic type
+  - Returns IsCryptoType field value
+  - Crypto parameters (keys, secrets) should be handled securely
+
+- **ShouldRandomize()**: Check if parameter should be auto-randomized
+  - Returns Randomize field value
+  - Randomized parameters get automatic values during build
+
+- **IsDeleted()**: Check if parameter definition has been deleted
+  - Returns Deleted field value
+  - Deleted parameters no longer available for new payloads
+
+**Helper Methods - BuildParameterInstance:**
+
+- **String()**: Human-readable representation
+  - Format: "parameter_name = value"
+  - Shows parameter assignment for payload
+
+- **IsEncrypted()**: Check if parameter value is encrypted
+  - Returns true if EncValue is set and non-empty
+  - Encrypted values stored separately for security
+
+- **GetValue()**: Get the parameter value
+  - Returns EncValue if encrypted, otherwise Value
+  - Provides unified access to parameter value
+
+**Usage Example:**
+
+```go
+// Get all build parameter definitions
+parameters, err := client.GetBuildParameters(ctx)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Found %d build parameter definitions\n", len(parameters))
+
+// Group by payload type
+paramsByType := make(map[int][]*types.BuildParameterType)
+for _, param := range parameters {
+    paramsByType[param.PayloadTypeID] = append(paramsByType[param.PayloadTypeID], param)
+}
+
+// Get parameters for a specific payload type
+payloadTypeID := 1
+typeParams, err := client.GetBuildParametersByPayloadType(ctx, payloadTypeID)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Payload type %d has %d parameters:\n", payloadTypeID, len(typeParams))
+for _, param := range typeParams {
+    fmt.Printf("  %s\n", param.String())
+    if param.IsRequired() {
+        fmt.Printf("    Required\n")
+    }
+    if param.IsCrypto() {
+        fmt.Printf("    Cryptographic parameter\n")
+    }
+    if param.ShouldRandomize() {
+        fmt.Printf("    Will be randomized\n")
+    }
+    if param.DefaultValue != "" {
+        fmt.Printf("    Default: %s\n", param.DefaultValue)
+    }
+}
+
+// Get parameter instances for all payloads
+instances, err := client.GetBuildParameterInstances(ctx)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Found %d parameter instances across all payloads\n", len(instances))
+
+// Get instances for a specific payload
+payloadID := 5
+payloadInstances, err := client.GetBuildParameterInstancesByPayload(ctx, payloadID)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Payload %d has %d parameters configured:\n", payloadID, len(payloadInstances))
+for _, inst := range payloadInstances {
+    if inst.BuildParameter != nil {
+        fmt.Printf("  %s = ", inst.BuildParameter.Name)
+    }
+
+    if inst.IsEncrypted() {
+        fmt.Printf("[ENCRYPTED]\n")
+    } else {
+        fmt.Printf("%s\n", inst.GetValue())
+    }
+}
+```
+
+**Notes:**
+
+- Build parameters are payload-type-specific; each payload type has its own parameters
+- Parameter definitions are versioned with payload types
+- Sensitive parameters (crypto keys, passwords) can be encrypted in storage
+- Randomization allows automatic generation of unique identifiers
+- Parameter groups organize related parameters (e.g., "C2 Configuration", "Obfuscation")
+- VerifierRegex validates parameter values before payload build
+- Parameter schema (in Parameter field) defines structure for complex parameters
+- Default values used when parameter not explicitly set
+- Deleted parameters remain in database but are filtered from queries
+
+---
 
 **File Browser:**
 
@@ -1770,7 +1956,7 @@ for _, lc := range loadedCmds {
 
 ---
 
-### ⏳ Pending (14/20)
+### ⏳ Pending (10/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -1801,13 +1987,6 @@ for _, lc := range loadedCmds {
 
 - **TestProxy()** - Test proxy connection
   - GraphQL: `testProxy` mutation
-
-**Build Parameters:**
-- **GetBuildParameters()** - List build parameters
-  - Database: `buildparameter` table
-
-- **GetBuildParameterInstances()** - Get parameter instances
-  - Database: `buildparameterinstance` table
 
 **Staging:**
 - **GetStagingInfo()** - Get payload staging info
