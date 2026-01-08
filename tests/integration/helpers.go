@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -115,4 +116,14 @@ func SkipIfNoMythic(t *testing.T) {
 func RequireMythicVersion(t *testing.T, minVersion string) {
 	t.Helper()
 	// TODO: Implement version checking when API supports it
+}
+
+// getTestClient is an alias for AuthenticateTestClient for consistency with newer tests.
+func getTestClient(t *testing.T) *mythic.Client {
+	return AuthenticateTestClient(t)
+}
+
+// contains is a helper function to check if a string contains a substring.
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }

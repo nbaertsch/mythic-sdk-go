@@ -1,8 +1,12 @@
+//go:build integration
+
 package integration
 
 import (
 	"context"
 	"testing"
+
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // TestBuildParameters_GetBuildParameters tests retrieving all build parameter definitions.
