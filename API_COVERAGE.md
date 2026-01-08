@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 3 | 0 | 17 | 20 |
-| **TOTAL** | **132** | **0** | **22** | **154** |
+| Advanced Features | 6 | 0 | 14 | 20 |
+| **TOTAL** | **135** | **0** | **19** | **154** |
 
-**Overall Coverage: 85.7%**
+**Overall Coverage: 87.7%**
 
 ---
 
@@ -1464,7 +1464,139 @@ Sources:
 
 ## 20. Advanced Features
 
-### ✅ Tested (3/20 - 15%)
+### ✅ Tested (6/20 - 30%)
+
+**File Browser:**
+
+- **GetFileBrowserObjects()** - List all file browser objects for current operation
+  - File: `pkg/mythic/filebrowser.go:10`
+  - Tests: `tests/integration/filebrowser_test.go:11`
+  - Database: `filebrowserobj` table
+  - Returns non-deleted file/directory objects sorted by full path
+  - Filters by current operation automatically
+  - Includes files and directories from all callbacks in operation
+
+- **GetFileBrowserObjectsByHost(host)** - Get file browser objects filtered by host
+  - File: `pkg/mythic/filebrowser.go:83`
+  - Tests: `tests/integration/filebrowser_test.go:83`
+  - Database: `filebrowserobj` table with host filter
+  - Validates host parameter (non-empty)
+  - Returns empty list for nonexistent hosts (not an error)
+  - Sorted by full path
+
+- **GetFileBrowserObjectsByCallback(callbackID)** - Get file browser objects for specific callback
+  - File: `pkg/mythic/filebrowser.go:164`
+  - Tests: `tests/integration/filebrowser_test.go:132`
+  - Database: `filebrowserobj` table with callback filter
+  - Validates callback ID (non-zero)
+  - Returns empty list for nonexistent callbacks (not an error)
+  - Sorted by full path
+
+**File Browser System:**
+
+The file browser provides a unified, persistent interface for viewing and tracking files discovered through file browsing commands across all callbacks. Files are tracked with metadata including permissions, timestamps, and deletion status.
+
+Key features:
+- **Persistent tracking**: Files remain visible even after callbacks disconnect
+- **Deletion tracking**: Files can be marked as deleted without removing history
+- **Host-based organization**: Files grouped by hostname for multi-target operations
+- **Callback association**: Track which callback discovered each file
+- **Path normalization**: Full path construction from parent path and name
+
+**FileBrowserObject Fields:**
+
+- **Identity**: ID, Host, Name, ParentPath, FullPathText
+- **Type**: IsFile (true for files, false for directories)
+- **Metadata**: Permissions, Size, AccessTime, ModifyTime
+- **Status**: Success (listing succeeded), Deleted (marked as deleted)
+- **Context**: TaskID (command that discovered it), CallbackID, OperatorID, OperationID
+- **Tracking**: Timestamp (when discovered), Comment, UpdateDeleted flag
+
+**Helper Methods:**
+
+- **FileBrowserObject.String()**: Human-readable representation
+  - Format: "[file/dir] /full/path (deleted)"
+  - Indicates type and deletion status
+
+- **FileBrowserObject.IsDirectory()**: Check if object is a directory
+  - Returns true if IsFile is false
+  - Directories typically have Size=0
+
+- **FileBrowserObject.IsDeleted()**: Check if object has been deleted
+  - Returns Deleted field value
+  - Deleted objects can still be queried (not removed from database)
+
+- **FileBrowserObject.GetFullPath()**: Get the complete file path
+  - Returns FullPathText if available
+  - Otherwise constructs from ParentPath + "/" + Name
+  - Handles root path and empty parent path correctly
+
+**Usage Example:**
+
+```go
+// Get all file browser objects for current operation
+objects, err := client.GetFileBrowserObjects(ctx)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Found %d files and directories\n", len(objects))
+
+// Organize by host
+hostMap := make(map[string][]*types.FileBrowserObject)
+for _, obj := range objects {
+    hostMap[obj.Host] = append(hostMap[obj.Host], obj)
+}
+
+for host, hostObjects := range hostMap {
+    fmt.Printf("\nHost: %s (%d items)\n", host, len(hostObjects))
+
+    // Get objects for specific host using filter method
+    hostObjs, err := client.GetFileBrowserObjectsByHost(ctx, host)
+    if err != nil {
+        return err
+    }
+
+    for _, obj := range hostObjs {
+        fmt.Printf("  %s\n", obj.String())
+
+        if obj.IsDirectory() {
+            fmt.Printf("    Directory\n")
+        } else {
+            fmt.Printf("    File (%d bytes)\n", obj.Size)
+        }
+
+        if obj.IsDeleted() {
+            fmt.Printf("    [DELETED]\n")
+        }
+    }
+}
+
+// Get file browser objects for a specific callback
+callbackObjs, err := client.GetFileBrowserObjectsByCallback(ctx, callbackID)
+if err != nil {
+    return err
+}
+
+fmt.Printf("Callback %d has discovered %d files/directories\n",
+    callbackID, len(callbackObjs))
+```
+
+**Notes:**
+
+- File browser objects persist after callback disconnection for historical reference
+- Objects are marked as deleted rather than removed, preserving operation history
+- The Success field indicates whether the file listing command succeeded
+- Permissions format is OS-specific (e.g., "rwxr-xr-x" on Unix, ACLs on Windows)
+- AccessTime and ModifyTime are sourced from the target system
+- File browser data is populated by file listing commands (ls, dir, etc.)
+- Empty parent path is treated as root ("/")
+
+Sources:
+- [File Browser - Mythic](https://docs.mythic-c2.net/customizing/hooking-features/file-browser)
+- [Mythic v3.2 Highlights: Interactive Tasking, Push C2, and Dynamic File Browser](https://specterops.io/blog/2023/11/29/mythic-v3-2-highlights-interactive-tasking-push-c2-and-dynamic-file-browser/)
+
+---
 
 **Commands:**
 
@@ -1638,7 +1770,7 @@ for _, lc := range loadedCmds {
 
 ---
 
-### ⏳ Pending (17/20)
+### ⏳ Pending (14/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -1669,10 +1801,6 @@ for _, lc := range loadedCmds {
 
 - **TestProxy()** - Test proxy connection
   - GraphQL: `testProxy` mutation
-
-**File Browser:**
-- **GetFileBrowserObjects()** - Browse file system
-  - Database: `filebrowserobj` table
 
 **Build Parameters:**
 - **GetBuildParameters()** - List build parameters
