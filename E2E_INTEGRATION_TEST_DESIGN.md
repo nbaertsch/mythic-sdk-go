@@ -8,15 +8,74 @@
 ---
 
 ## Table of Contents
-1. [Executive Summary](#executive-summary)
-2. [Current State Analysis](#current-state-analysis)
-3. [E2E Test Philosophy](#e2e-test-philosophy)
-4. [Agent Selection](#agent-selection)
-5. [Test Infrastructure](#test-infrastructure)
-6. [E2E Test Workflows](#e2e-test-workflows)
-7. [Implementation Plan](#implementation-plan)
-8. [Tests to Remove](#tests-to-remove)
-9. [Success Criteria](#success-criteria)
+1. [Implementation Progress](#implementation-progress)
+2. [Executive Summary](#executive-summary)
+3. [Current State Analysis](#current-state-analysis)
+4. [E2E Test Philosophy](#e2e-test-philosophy)
+5. [Agent Selection](#agent-selection)
+6. [Test Infrastructure](#test-infrastructure)
+7. [E2E Test Workflows](#e2e-test-workflows)
+8. [Implementation Plan](#implementation-plan)
+9. [Tests to Remove](#tests-to-remove)
+10. [Success Criteria](#success-criteria)
+
+---
+
+## Implementation Progress
+
+**Status:** IN PROGRESS
+**Started:** 2026-01-09
+**Current Phase:** Phase 2 - Core Workflows
+**Completion:** 1/16 workflows (6.25%)
+
+### Completed Workflows
+
+#### Phase 1: Infrastructure ✅ COMPLETE
+- [CI Run #20867791754](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20867791754)
+- **File:** `tests/integration/e2e_helpers.go`
+- **E2ETestSetup struct** with agent management, callback waiting, task execution helpers
+- **Cleanup functions** for full resource teardown
+- **Status:** All infrastructure ready for E2E tests
+
+#### ✅ Workflow 1: Authentication & Session Management - COMPLETE
+- [CI Run #20867791754](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20867791754)
+- **File:** `tests/integration/e2e_auth_test.go`
+- **Tests:**
+  * `TestE2E_AuthenticationLifecycle` - Complete auth workflow (15 sub-tests)
+  * `TestE2E_AuthenticationErrorHandling` - Error scenarios (3 sub-tests)
+- **APIs Covered (7/204):**
+  * Login ✓
+  * Logout ✓
+  * IsAuthenticated ✓
+  * GetMe ✓
+  * CreateAPIToken ✓
+  * DeleteAPIToken ✓
+  * RefreshAccessToken ✓
+- **Duration:** ~45 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+
+### In Progress
+
+None
+
+### Pending Workflows
+
+- ⏳ Workflow 2: Operations & Global Settings
+- ⏳ Workflow 3: File Management
+- ⏳ Workflow 4: Credentials & Artifacts
+- ⏳ Workflow 5: Tags & Categorization
+- ⏳ Workflow 6: Operator & User Management
+- ⏳ Workflow 7: C2 Profile Management
+- ⏳ Workflow 8: MITRE ATT&CK Framework
+- ⏳ Workflow 9: Payload Build & Deployment (Requires Poseidon)
+- ⏳ Workflow 10: Callback & Task Execution (Requires Workflow 9)
+- ⏳ Workflow 11: Advanced Features (Requires Workflow 10)
+- ⏳ Workflow 12: Real-time Monitoring (Requires Workflow 10)
+- ⏳ Workflow 13: P2P Networking (Optional, 2 agents)
+- ⏳ Workflow 14: Eventing & Workflows
+- ⏳ Workflow 15: Container Operations
+- ⏳ Workflow 16: Utility Functions
 
 ---
 
