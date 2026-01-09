@@ -26,8 +26,8 @@
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
 **Current Phase:** Phase 2 - Core Workflows
-**Completion:** 4/16 workflows (25%)
-**API Coverage:** 38/204 methods (18.6%)
+**Completion:** 5/16 workflows (31.25%)
+**API Coverage:** 47/204 methods (23%)
 
 ### Completed Workflows
 
@@ -121,12 +121,29 @@
   * Filtering by operation, host, and type
   * Update verification
 
+#### ✅ Workflow 5: Tags & Categorization - COMPLETE
+- [CI Run #20868518186](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868518186)
+- **File:** `tests/integration/e2e_tags_test.go`
+- **Tests:**
+  * `TestE2E_TagManagement` - Complete tag/tag type lifecycle (13 sub-tests)
+  * `TestE2E_TagsErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (9/204):**
+  * **Tag Types (5):** CreateTagType ✓, GetTagTypes ✓, GetTagTypesByOperation ✓, UpdateTagType ✓, DeleteTagType ✓
+  * **Tags (4):** CreateTag ✓, GetTags ✓, GetTagsByOperation ✓, DeleteTag ✓
+- **Duration:** ~30 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+- **Features:**
+  * Multiple tag types (Priority, Target Type) with colors
+  * Tags assigned to resources (artifacts)
+  * Filtering by operation
+  * Update and delete operations
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-- ⏳ Workflow 5: Tags & Categorization
 - ⏳ Workflow 6: Operator & User Management
 - ⏳ Workflow 7: C2 Profile Management
 - ⏳ Workflow 8: MITRE ATT&CK Framework
