@@ -25,9 +25,9 @@
 
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
-**Current Phase:** Phase 3 - Agent-Dependent Workflows (1/4 complete - 25%)
-**Completion:** 9/16 workflows (56.25%)
-**API Coverage:** 89/204 methods (43.6%)
+**Current Phase:** Phase 3 - Agent-Dependent Workflows (2/4 complete - 50%)
+**Completion:** 10/16 workflows (62.5%)
+**API Coverage:** 114/204 methods (55.9%)
 
 ### Completed Workflows
 
@@ -232,6 +232,33 @@
   * Comprehensive build parameter testing
   * Proper cleanup of created payloads
 
+#### ✅ Workflow 10: Callback & Task Execution - COMPLETE
+- [CI Run #20869045328](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20869045328)
+- **File:** `tests/integration/e2e_callback_task_test.go`
+- **Tests:**
+  * `TestE2E_CallbackTaskLifecycle` - Complete agent deployment and task execution (30 sub-tests across 7 parts)
+  * `TestE2E_CallbackTaskErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (25+/204):**
+  * **Payload:** GetPayloadTypes, CreatePayload, WaitForPayloadComplete, DownloadPayload
+  * **Callback:** GetAllCallbacks ✓, GetAllActiveCallbacks ✓, GetCallbackByID ✓, UpdateCallback ✓, DeleteCallback ✓, GetCallbacksForHost ✓, GetLoadedCommands ✓
+  * **Task:** IssueTask ✓, GetTask ✓, WaitForTaskComplete ✓, GetTaskOutput ✓, GetTasksForCallback ✓, GetTasksByStatus ✓, UpdateTask ✓, GetResponsesByTask ✓
+  * **Process:** GetProcessesByCallback ✓, GetProcessTree ✓
+  * **Host:** GetHosts ✓, GetHostByID ✓
+  * **Token:** GetCallbackTokensByCallback ✓
+- **Duration:** ~3 minutes (includes Mythic startup, payload build, agent deployment)
+- **Skip Rate:** Test skips if SKIP_AGENT_TESTS set or Poseidon unavailable
+- **Status:** All tests passing in CI
+- **Features:**
+  * Full agent deployment with Poseidon payload
+  * Waits up to 60 seconds for callback establishment
+  * Executes shell commands (whoami) and process listing (ps)
+  * Tests task lifecycle: issue → wait → get output → verify responses
+  * Process enumeration and tree visualization
+  * Host discovery and callback-to-host mapping
+  * Task management (update comments, filter by status)
+  * Comprehensive cleanup (kill agent, delete callback, remove files)
+  * Uses fixed e2e_helpers.go for agent orchestration
+
 ---
 
 ## 🎉 Phase 2 Complete! 🎉
@@ -254,10 +281,10 @@
 
 ---
 
-## Phase 3: Agent-Dependent Workflows (1/4 complete - 25%)
+## Phase 3: Agent-Dependent Workflows (2/4 complete - 50%)
 
 - ✅ Workflow 9: Payload Build & Deployment
-- ⏳ Workflow 10: Callback & Task Execution
+- ✅ Workflow 10: Callback & Task Execution
 - ⏳ Workflow 11: Advanced Features
 - ⏳ Workflow 12: Real-time Monitoring
 
@@ -268,7 +295,6 @@
 None
 
 ### Pending Workflows
-- ⏳ Workflow 10: Callback & Task Execution (Requires Workflow 9)
 - ⏳ Workflow 11: Advanced Features (Requires Workflow 10)
 - ⏳ Workflow 12: Real-time Monitoring (Requires Workflow 10)
 - ⏳ Workflow 13: P2P Networking (Optional, 2 agents)
