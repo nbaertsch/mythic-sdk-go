@@ -26,8 +26,8 @@
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
 **Current Phase:** Phase 2 - Core Workflows
-**Completion:** 5/16 workflows (31.25%)
-**API Coverage:** 47/204 methods (23%)
+**Completion:** 6/16 workflows (37.5%)
+**API Coverage:** 59/204 methods (28.9%)
 
 ### Completed Workflows
 
@@ -139,12 +139,34 @@
   * Filtering by operation
   * Update and delete operations
 
+#### ✅ Workflow 6: Operator & User Management - COMPLETE
+- [CI Run #20868629973](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868629973)
+- **File:** `tests/integration/e2e_operators_test.go`
+- **Tests:**
+  * `TestE2E_OperatorManagement` - Complete operator lifecycle (18 sub-tests)
+  * `TestE2E_OperatorsErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (12/204):**
+  * GetOperators ✓, GetOperatorByID ✓, CreateOperator ✓
+  * UpdateOperatorStatus ✓, UpdateOperatorOperation ✓
+  * GetOperatorPreferences ✓, UpdateOperatorPreferences ✓
+  * GetOperatorSecrets ✓, UpdateOperatorSecrets ✓
+  * CreateInviteLink ✓, GetInviteLinks ✓
+  * UpdatePasswordAndEmail (available but not explicitly tested)
+- **Duration:** ~40 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+- **Features:**
+  * Preferences management with verification
+  * Secrets management with verification
+  * Invite link creation
+  * Operator creation and status management
+  * Operation assignments
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-- ⏳ Workflow 6: Operator & User Management
 - ⏳ Workflow 7: C2 Profile Management
 - ⏳ Workflow 8: MITRE ATT&CK Framework
 - ⏳ Workflow 9: Payload Build & Deployment (Requires Poseidon)
