@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 20 | 0 | 0 | 20 |
-| **TOTAL** | **149** | **0** | **5** | **154** |
+| Advanced Features | 23 | 0 | 0 | 23 |
+| **TOTAL** | **152** | **0** | **2** | **154** |
 
-**Overall Coverage: 96.8%**
+**Overall Coverage: 98.7%**
 
 ---
 
@@ -1464,7 +1464,7 @@ Sources:
 
 ## 20. Advanced Features
 
-### ✅ Tested (10/20 - 50%)
+### ✅ Tested (23/23 - 100%)
 
 **Build Parameters:**
 
@@ -2502,17 +2502,234 @@ if result.IsSuccessful() {
 
 ---
 
-### ⏳ Pending (0/20)
-
 **Dynamic Queries:**
-- **DynamicQueryFunction()** - Dynamic parameter queries
-  - GraphQL: `dynamic_query_function` mutation
 
-- **DynamicQueryBuildParameter()** - Build parameter queries
-  - GraphQL: `dynamicQueryBuildParameterFunction` mutation
+- **DynamicQueryFunction(command, parameters, callbackID)** - Execute dynamic query for command parameter
+  - File: `pkg/mythic/dynamicquery.go:38`
+  - Tests: `tests/integration/dynamicquery_test.go:11`
+  - GraphQL: `dynamicQueryFunction` query
+  - Input: Command name, current parameters, optional callback ID for context
+  - Returns: DynamicQueryResponse with status, choices array, and error
+  - Validates command name is non-empty
+  - Generates parameter choices dynamically at runtime
+  - Allows context-aware parameter building (e.g., file browser lists current directory)
+  - Used for parameters that need current data from database or callback state
 
-- **TypedarrayParseFunction()** - Parse typed arrays
-  - GraphQL: `typedarray_parse_function` mutation
+- **DynamicBuildParameter(payloadType, parameter, parameters)** - Query dynamic build parameter choices
+  - File: `pkg/mythic/dynamicquery.go:103`
+  - Tests: `tests/integration/dynamicquery_test.go:85`
+  - GraphQL: `dynamicBuildParameter` query
+  - Input: Payload type name, parameter name, optional context parameters
+  - Returns: DynamicBuildParameterResponse with status, choices array, and error
+  - Validates payload type and parameter name are non-empty
+  - Populates build parameter choices based on current configuration
+  - Useful for C2 profile selection, encryption key choice, configuration templates
+  - Choices can depend on other build parameter values
+
+- **TypedArrayParseFunction(inputArray, parameterType)** - Parse typed array string into structured elements
+  - File: `pkg/mythic/dynamicquery.go:170`
+  - Tests: `tests/integration/dynamicquery_test.go:164`
+  - GraphQL: `typedArrayParseFunction` query
+  - Input: String representation of typed array, parameter type defining parse rules
+  - Returns: TypedArrayParseResponse with status, parsed array, and error
+  - Validates input array and parameter type are non-empty
+  - Parses compact string formats into structured data (JSON, key-value pairs, paths)
+  - Parsing behavior depends on parameter type definition
+  - Examples: file paths with permissions, JSON arrays, CSV data
+
+**Dynamic Query System:**
+
+Dynamic queries enable runtime parameter population and structured data parsing in Mythic. The system consists of three components:
+
+1. **Command Parameter Queries** (DynamicQueryFunction): Generate choices for command parameters
+   - Pull data from Mythic database (callbacks, files, credentials)
+   - Context-aware based on callback state
+   - Enable interactive parameter building (file browsers, process selectors)
+   - Examples: list directory contents, show running processes, available credentials
+
+2. **Build Parameter Queries** (DynamicBuildParameter): Generate choices for payload build parameters
+   - Configuration-driven choice generation
+   - Depend on operation settings and other parameters
+   - Enable smart defaults and validated options
+   - Examples: C2 profiles for operation, compatible encryption algorithms, valid ports
+
+3. **Typed Array Parsing** (TypedArrayParseFunction): Parse structured string input
+   - Convert compact string formats to proper data structures
+   - Type-specific parsing rules defined in parameter definitions
+   - Enable efficient multi-value parameter input
+   - Examples: CSV lists, JSON arrays, path:permission pairs
+
+**DynamicQueryRequest Structure:**
+- Command: Command name to query
+- Parameters: Current parameter values (provide context to query function)
+- CallbackID: Optional callback ID for callback-specific queries
+
+**DynamicQueryResponse Structure:**
+- Status: Operation status ("success" or "error")
+- Choices: Array of choice values (strings, objects, or mixed types)
+- Error: Error message if query failed
+
+**DynamicBuildParameterRequest Structure:**
+- PayloadType: Payload type name (e.g., "apollo", "poseidon")
+- Parameter: Build parameter name to query
+- Parameters: Optional map of current build parameter values
+
+**DynamicBuildParameterResponse Structure:**
+- Status: Operation status ("success" or "error")
+- Choices: Array of available choices for the parameter
+- Error: Error message if query failed
+
+**TypedArrayParseRequest Structure:**
+- InputArray: String representation of the array to parse
+- ParameterType: Parameter type that defines parsing rules
+
+**TypedArrayParseResponse Structure:**
+- Status: Operation status ("success" or "error")
+- ParsedArray: Array of parsed elements (structure depends on parameter type)
+- Error: Error message if parsing failed
+
+**Helper Methods:**
+- **DynamicQueryRequest.String()**: Display request details (includes callback if set)
+- **DynamicQueryResponse.String()**: Display choices count or error
+- **DynamicQueryResponse.IsSuccessful()**: Returns true if query succeeded
+- **DynamicQueryResponse.HasChoices()**: Returns true if choices array is non-empty
+- **DynamicBuildParameterRequest.String()**: Display build parameter query details
+- **DynamicBuildParameterResponse.String()**: Display choices count or error
+- **DynamicBuildParameterResponse.IsSuccessful()**: Returns true if query succeeded
+- **DynamicBuildParameterResponse.HasChoices()**: Returns true if choices available
+- **TypedArrayParseRequest.String()**: Display parse request details
+- **TypedArrayParseResponse.String()**: Display parsed element count or error
+- **TypedArrayParseResponse.IsSuccessful()**: Returns true if parsing succeeded
+- **TypedArrayParseResponse.HasElements()**: Returns true if parsed array has elements
+
+**Common Use Cases:**
+```go
+// Execute dynamic query for file browser parameter
+params := map[string]interface{}{
+    "path": "/home/user",
+}
+result, err := client.DynamicQueryFunction(ctx, "ls", params, callbackID)
+if err != nil {
+    return err
+}
+if result.IsSuccessful() && result.HasChoices() {
+    fmt.Printf("Available files: %v\n", result.Choices)
+}
+
+// Query available C2 profiles for payload build
+result, err := client.DynamicBuildParameter(ctx, "apollo", "c2_profile", nil)
+if err != nil {
+    return err
+}
+if result.HasChoices() {
+    fmt.Printf("Available C2 profiles: %v\n", result.Choices)
+}
+
+// Parse typed array of file paths with permissions
+input := "/etc/passwd:read,/etc/shadow:read,/var/log/auth.log:write"
+result, err := client.TypedArrayParseFunction(ctx, input, "file_list")
+if err != nil {
+    return err
+}
+if result.IsSuccessful() && result.HasElements() {
+    for i, elem := range result.ParsedArray {
+        fmt.Printf("File %d: %v\n", i, elem)
+    }
+}
+
+// Dynamic query with callback context
+// Get processes running on specific callback
+params := map[string]interface{}{
+    "filter": "explorer",
+}
+result, err := client.DynamicQueryFunction(ctx, "ps", params, callbackID)
+if result.IsSuccessful() {
+    fmt.Printf("Found %d matching processes\n", len(result.Choices))
+}
+
+// Build parameter query with dependencies
+// Get valid ports based on C2 profile selection
+contextParams := map[string]interface{}{
+    "c2_profile": "http",
+}
+result, err = client.DynamicBuildParameter(ctx, "apollo", "callback_port", contextParams)
+if result.HasChoices() {
+    fmt.Printf("Valid ports for HTTP profile: %v\n", result.Choices)
+}
+
+// Parse JSON array format
+jsonInput := `[{"name": "file1.txt", "size": 1024}, {"name": "file2.txt", "size": 2048}]`
+result, err = client.TypedArrayParseFunction(ctx, jsonInput, "json_file_list")
+if result.IsSuccessful() {
+    fmt.Printf("Parsed %d file entries\n", len(result.ParsedArray))
+}
+```
+
+**Dynamic Query Function Examples:**
+- **File Browser** (`ls`): List directory contents from callback filesystem
+- **Process List** (`ps`): Show running processes on target system
+- **Credential Selector**: Display available credentials from database
+- **Callback Selector**: List active callbacks for pivoting/delegation
+- **Service List**: Show Windows services or systemd units
+- **Network Connections**: Display active network connections
+- **Registry Keys**: Enumerate Windows registry paths
+- **User List**: Show local users on target system
+
+**Build Parameter Query Examples:**
+- **C2 Profiles**: List available C2 profiles for operation
+- **Encryption Algorithms**: Show compatible encryption options
+- **Callback Intervals**: Provide validated jitter/sleep values
+- **Architecture Options**: List supported target architectures (x64, x86, ARM)
+- **Obfuscation Methods**: Display available obfuscation techniques
+- **Output Formats**: Show supported output encodings
+- **Key Stores**: List encryption keys from key management
+
+**Typed Array Format Examples:**
+- **Comma-separated**: `value1,value2,value3`
+- **Key-value pairs**: `key1=value1,key2=value2`
+- **Path with attributes**: `/path/file:read,/other/path:write`
+- **JSON arrays**: `[{"key": "val1"}, {"key": "val2"}]`
+- **Colon-separated**: `host1:port1,host2:port2`
+- **Complex structures**: Custom parsing per parameter type
+
+**Dynamic Query Workflow:**
+1. **User selects command** or **builds payload**
+2. **Parameter needs choices** (marked as dynamic in definition)
+3. **SDK calls dynamic query function** with current context
+4. **Mythic executes query function** (Python code in payload type)
+5. **Function returns choices array** based on current state
+6. **Choices presented to user** for selection
+7. **User selects value** and continues
+
+**Security Considerations:**
+- Dynamic queries execute Python code defined in payload types/commands
+- Query functions have access to Mythic database and callback information
+- Limit query function complexity to avoid performance issues
+- Validate query results before presenting to users
+- Query functions run in Mythic server context with full permissions
+- Typed array parsing can fail with malformed input - handle errors gracefully
+- Don't trust user-provided input in query parameters without validation
+
+**Performance Notes:**
+- Dynamic queries may be slow for large datasets (many callbacks, files, etc.)
+- Consider caching query results when appropriate
+- Typed array parsing performance depends on input size and complexity
+- Query functions should implement pagination for large result sets
+- Callback-specific queries require callback to be active and responsive
+
+**Notes:**
+- DynamicQueryFunction requires command name to be non-empty
+- CallbackID parameter is optional (use 0 for operation-level queries)
+- DynamicBuildParameter requires both payload type and parameter name
+- TypedArrayParseFunction parsing behavior defined by parameter type schema
+- Empty choices arrays are valid (indicates no options available)
+- Query functions defined in payload type/command Python code
+- Not all commands/parameters support dynamic queries
+- Dynamic query support indicated in parameter definitions
+
+---
+
+### ⏳ Pending (0/23)
 
 **Staging:**
 - **GetStagingInfo()** - Get payload staging info
@@ -2540,7 +2757,7 @@ if result.IsSuccessful() {
 11. **Eventing/Workflows** - Automation for advanced users
 12. ✅ **Browser Scripts** - Custom UI functionality
 13. ✅ **Container Management** - Development/debugging
-14. **Dynamic Queries** - Advanced parameter handling
+14. ✅ **Dynamic Queries** - Advanced parameter handling
 15. ✅ **Proxy Operations** - Specialized networking
 
 ---
