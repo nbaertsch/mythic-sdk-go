@@ -1,0 +1,425 @@
+package mythic
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
+)
+
+// GetHosts retrieves all hosts tracked in an operation.
+//
+// Hosts represent compromised or discovered systems across the network.
+// This is distinct from callbacks - a host may have multiple callbacks
+// or be discovered through reconnaissance before compromise.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout
+//   - operationID: ID of the operation (0 for current operation)
+//
+// Returns:
+//   - []*types.HostInfo: List of hosts in the operation
+//   - error: Error if operation ID is invalid or query fails
+//
+// Example:
+//
+//	hosts, err := client.GetHosts(ctx, 0)
+//	if err != nil {
+//	    return err
+//	}
+//	for _, host := range hosts {
+//	    fmt.Printf("Host: %s (%s) - %d active callbacks\n",
+//	        host.Hostname, host.IP, host.GetCallbackCount())
+//	}
+func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostInfo, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	// Use current operation if not specified
+	if operationID == 0 {
+		currentOp := c.GetCurrentOperation()
+		if currentOp == nil {
+			return nil, WrapError("GetHosts", ErrNotAuthenticated, "no current operation set")
+		}
+		operationID = *currentOp
+	}
+
+	var query struct {
+		Host []struct {
+			ID          int       `graphql:"id"`
+			Host        string    `graphql:"host"`
+			IP          string    `graphql:"ip"`
+			Domain      string    `graphql:"domain"`
+			OS          string    `graphql:"os"`
+			Architecture string   `graphql:"architecture"`
+			OperationID int       `graphql:"operation_id"`
+			Timestamp   time.Time `graphql:"timestamp"`
+		} `graphql:"host(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id": operationID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetHosts", err, "failed to query hosts")
+	}
+
+	hosts := make([]*types.HostInfo, len(query.Host))
+	for i, hostData := range query.Host {
+		hosts[i] = &types.HostInfo{
+			ID:          hostData.ID,
+			Hostname:    hostData.Host,
+			IP:          hostData.IP,
+			Domain:      hostData.Domain,
+			OS:          hostData.OS,
+			Architecture: hostData.Architecture,
+			OperationID: hostData.OperationID,
+			Timestamp:   hostData.Timestamp,
+		}
+	}
+
+	return hosts, nil
+}
+
+// GetHostByID retrieves a specific host by its database ID.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout
+//   - hostID: Database ID of the host
+//
+// Returns:
+//   - *types.HostInfo: Host information
+//   - error: Error if host ID is invalid or not found
+//
+// Example:
+//
+//	host, err := client.GetHostByID(ctx, 42)
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Host: %s\nOS: %s\nArchitecture: %s\n",
+//	    host.Hostname, host.OS, host.Architecture)
+func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if hostID == 0 {
+		return nil, WrapError("GetHostByID", ErrInvalidInput, "host ID is required")
+	}
+
+	var query struct {
+		Host []struct {
+			ID          int       `graphql:"id"`
+			Host        string    `graphql:"host"`
+			IP          string    `graphql:"ip"`
+			Domain      string    `graphql:"domain"`
+			OS          string    `graphql:"os"`
+			Architecture string   `graphql:"architecture"`
+			OperationID int       `graphql:"operation_id"`
+			Timestamp   time.Time `graphql:"timestamp"`
+		} `graphql:"host(where: {id: {_eq: $host_id}})"`
+	}
+
+	variables := map[string]interface{}{
+		"host_id": hostID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetHostByID", err, "failed to query host")
+	}
+
+	if len(query.Host) == 0 {
+		return nil, WrapError("GetHostByID", ErrNotFound, fmt.Sprintf("host %d not found", hostID))
+	}
+
+	hostData := query.Host[0]
+	return &types.HostInfo{
+		ID:          hostData.ID,
+		Hostname:    hostData.Host,
+		IP:          hostData.IP,
+		Domain:      hostData.Domain,
+		OS:          hostData.OS,
+		Architecture: hostData.Architecture,
+		OperationID: hostData.OperationID,
+		Timestamp:   hostData.Timestamp,
+	}, nil
+}
+
+// GetHostByHostname finds a host by its hostname.
+//
+// This performs a case-insensitive search for the hostname.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout
+//   - hostname: Hostname to search for
+//
+// Returns:
+//   - *types.HostInfo: Host information (first match if multiple)
+//   - error: Error if hostname is empty or not found
+//
+// Example:
+//
+//	host, err := client.GetHostByHostname(ctx, "WORKSTATION-01")
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Found host: %s (%s)\n", host.Hostname, host.IP)
+func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types.HostInfo, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if hostname == "" {
+		return nil, WrapError("GetHostByHostname", ErrInvalidInput, "hostname is required")
+	}
+
+	var query struct {
+		Host []struct {
+			ID          int       `graphql:"id"`
+			Host        string    `graphql:"host"`
+			IP          string    `graphql:"ip"`
+			Domain      string    `graphql:"domain"`
+			OS          string    `graphql:"os"`
+			Architecture string   `graphql:"architecture"`
+			OperationID int       `graphql:"operation_id"`
+			Timestamp   time.Time `graphql:"timestamp"`
+		} `graphql:"host(where: {host: {_ilike: $hostname}}, limit: 1)"`
+	}
+
+	variables := map[string]interface{}{
+		"hostname": hostname,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetHostByHostname", err, "failed to query host")
+	}
+
+	if len(query.Host) == 0 {
+		return nil, WrapError("GetHostByHostname", ErrNotFound, fmt.Sprintf("host '%s' not found", hostname))
+	}
+
+	hostData := query.Host[0]
+	return &types.HostInfo{
+		ID:          hostData.ID,
+		Hostname:    hostData.Host,
+		IP:          hostData.IP,
+		Domain:      hostData.Domain,
+		OS:          hostData.OS,
+		Architecture: hostData.Architecture,
+		OperationID: hostData.OperationID,
+		Timestamp:   hostData.Timestamp,
+	}, nil
+}
+
+// GetCallbacksForHost retrieves all callbacks associated with a specific host.
+//
+// This shows which agents are currently running on the host and their status.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout
+//   - hostID: Database ID of the host
+//
+// Returns:
+//   - []*types.Callback: List of callbacks on the host
+//   - error: Error if host ID is invalid or query fails
+//
+// Example:
+//
+//	callbacks, err := client.GetCallbacksForHost(ctx, 42)
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Host has %d callbacks:\n", len(callbacks))
+//	for _, cb := range callbacks {
+//	    status := "Inactive"
+//	    if cb.Active {
+//	        status = "Active"
+//	    }
+//	    fmt.Printf("  - Callback %d: %s@%s (%s)\n",
+//	        cb.ID, cb.User, cb.Host, status)
+//	}
+func (c *Client) GetCallbacksForHost(ctx context.Context, hostID int) ([]*types.Callback, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if hostID == 0 {
+		return nil, WrapError("GetCallbacksForHost", ErrInvalidInput, "host ID is required")
+	}
+
+	// First get the host to find its hostname
+	host, err := c.GetHostByID(ctx, hostID)
+	if err != nil {
+		return nil, WrapError("GetCallbacksForHost", err, "failed to get host")
+	}
+
+	// Query callbacks by matching hostname
+	var query struct {
+		Callback []struct {
+			ID                  int       `graphql:"id"`
+			DisplayID           int       `graphql:"display_id"`
+			AgentCallbackID     string    `graphql:"agent_callback_id"`
+			InitCallback        time.Time `graphql:"init_callback"`
+			LastCheckin         time.Time `graphql:"last_checkin"`
+			User                string    `graphql:"user"`
+			Host                string    `graphql:"host"`
+			PID                 int       `graphql:"pid"`
+			IP                  string    `graphql:"ip"`
+			ExternalIP          string    `graphql:"external_ip"`
+			ProcessName         string    `graphql:"process_name"`
+			Description         string    `graphql:"description"`
+			OperatorID          int       `graphql:"operator_id"`
+			Active              bool      `graphql:"active"`
+			RegisteredPayloadID string    `graphql:"registered_payload_id"`
+			IntegrityLevel      int       `graphql:"integrity_level"`
+			Locked              bool      `graphql:"locked"`
+			OperationID         int       `graphql:"operation_id"`
+			SleepInfo           string    `graphql:"sleep_info"`
+			Architecture        string    `graphql:"architecture"`
+			Domain              string    `graphql:"domain"`
+			Os                  string    `graphql:"os"`
+		} `graphql:"callback(where: {host: {_ilike: $hostname}}, order_by: {last_checkin: desc})"`
+	}
+
+	variables := map[string]interface{}{
+		"hostname": host.Hostname,
+	}
+
+	err = c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetCallbacksForHost", err, "failed to query callbacks")
+	}
+
+	callbacks := make([]*types.Callback, len(query.Callback))
+	for i, cbData := range query.Callback {
+		// Convert IP string to []string for types.Callback
+		ips := []string{}
+		if cbData.IP != "" {
+			ips = []string{cbData.IP}
+		}
+
+		callbacks[i] = &types.Callback{
+			ID:                  cbData.ID,
+			DisplayID:           cbData.DisplayID,
+			AgentCallbackID:     cbData.AgentCallbackID,
+			InitCallback:        cbData.InitCallback,
+			LastCheckin:         cbData.LastCheckin,
+			User:                cbData.User,
+			Host:                cbData.Host,
+			PID:                 cbData.PID,
+			IP:                  ips,
+			ExternalIP:          cbData.ExternalIP,
+			ProcessName:         cbData.ProcessName,
+			Description:         cbData.Description,
+			OperatorID:          cbData.OperatorID,
+			Active:              cbData.Active,
+			RegisteredPayloadID: cbData.RegisteredPayloadID,
+			IntegrityLevel:      types.CallbackIntegrityLevel(cbData.IntegrityLevel),
+			Locked:              cbData.Locked,
+			OperationID:         cbData.OperationID,
+			SleepInfo:           cbData.SleepInfo,
+			Architecture:        cbData.Architecture,
+			Domain:              cbData.Domain,
+			OS:                  cbData.Os,
+		}
+	}
+
+	return callbacks, nil
+}
+
+// GetHostNetworkMap builds a network topology map for an operation.
+//
+// This provides an overview of all discovered hosts and their relationships,
+// useful for lateral movement planning and pivot path identification.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout
+//   - operationID: ID of the operation (0 for current operation)
+//
+// Returns:
+//   - *types.HostNetworkMap: Network topology information
+//   - error: Error if operation ID is invalid or query fails
+//
+// Example:
+//
+//	networkMap, err := client.GetHostNetworkMap(ctx, 0)
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Network topology: %d hosts\n", len(networkMap.Hosts))
+//	for _, host := range networkMap.Hosts {
+//	    callbackCount := 0
+//	    if host.Callbacks != nil {
+//	        for _, cb := range host.Callbacks {
+//	            if cb.Active {
+//	                callbackCount++
+//	            }
+//	        }
+//	    }
+//	    fmt.Printf("  - %s: %d active callbacks\n", host.Hostname, callbackCount)
+//	}
+func (c *Client) GetHostNetworkMap(ctx context.Context, operationID int) (*types.HostNetworkMap, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	// Use current operation if not specified
+	if operationID == 0 {
+		currentOp := c.GetCurrentOperation()
+		if currentOp == nil {
+			return nil, WrapError("GetHostNetworkMap", ErrNotAuthenticated, "no current operation set")
+		}
+		operationID = *currentOp
+	}
+
+	// Get all hosts in the operation
+	hosts, err := c.GetHosts(ctx, operationID)
+	if err != nil {
+		return nil, WrapError("GetHostNetworkMap", err, "failed to get hosts")
+	}
+
+	// Enrich each host with callback information
+	for _, host := range hosts {
+		callbacks, err := c.GetCallbacksForHost(ctx, host.ID)
+		if err != nil {
+			// Log error but continue with other hosts
+			continue
+		}
+
+		// Callbacks are already types.Callback, just assign directly
+		host.Callbacks = callbacks
+	}
+
+	// Build network map
+	networkMap := &types.HostNetworkMap{
+		Hosts:       hosts,
+		Connections: []types.HostConnection{}, // TODO: Could be enhanced with actual network connections
+		Metadata: map[string]interface{}{
+			"operation_id": operationID,
+			"host_count":   len(hosts),
+			"timestamp":    time.Now().Format(time.RFC3339),
+		},
+	}
+
+	// Calculate total active callbacks across all hosts
+	totalCallbacks := 0
+	for _, host := range hosts {
+		if host.Callbacks != nil {
+			for _, cb := range host.Callbacks {
+				if cb.Active {
+					totalCallbacks++
+				}
+			}
+		}
+	}
+	networkMap.Metadata["total_active_callbacks"] = totalCallbacks
+
+	return networkMap, nil
+}
