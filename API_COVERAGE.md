@@ -30,15 +30,21 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Browser Scripts | 3 | 0 | 0 | 3 |
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 2 | 0 | 0 | 2 |
-| Eventing/Workflows | 15 | 0 | 0 | 15 |
+| Eventing/Workflows | 15 | 0 | 7 | 22 |
 | Operators | 11 | 0 | 0 | 11 |
 | Advanced Features | 23 | 0 | 0 | 23 |
 | Staging | 1 | 0 | 0 | 1 |
-| GraphQL Subscriptions | 2 | 2 | 0 | 2 |
-| **TOTAL** | **169** | **0** | **0** | **169** |
+| GraphQL Subscriptions | 2 | 2 | 8 | 12 |
+| Responses | 0 | 0 | 6 | 6 |
+| Screenshots | 0 | 0 | 6 | 6 |
+| Alerts | 0 | 0 | 7 | 7 |
+| Hosts | 0 | 0 | 5 | 5 |
+| RPFWD | 0 | 0 | 4 | 4 |
+| **TOTAL** | **169** | **2** | **43** | **214** |
 
-**Overall Coverage: 100% 🎉🎊**
-**All Core + Advanced APIs: COMPLETE!**
+**Overall Coverage: 79% (169/214 APIs)**
+**Core APIs: 100% COMPLETE ✅**
+**Advanced APIs Identified: 43 additional methods available**
 
 ---
 
@@ -3296,6 +3302,503 @@ if result.IsSuccessful() {
 
 ---
 
+## 20. Response Management (Task Output Processing)
+
+### ⏳ Pending (0/6 - 0%)
+
+**Status:** High priority - Critical for automation workflows
+
+Mythic has a dedicated `response` table separate from the task table for storing task output. While tasks track command execution status, responses contain the actual output data. This separation allows for efficient output streaming and processing.
+
+**Database Table:** `response`
+
+**Key Fields:**
+- **response_text**: The actual output content
+- **task_id**: Associated task ID
+- **timestamp**: When output was generated
+- **sequence_number**: For ordering multi-part responses
+
+**Use Cases:**
+- Automated response parsing and processing
+- Building command output aggregations
+- Response-based workflow triggers
+- Output filtering and search
+- Historical output analysis
+
+**Planned Methods:**
+- `GetResponsesByTask(taskID)` - Retrieve all responses for a specific task
+- `GetResponseByID(responseID)` - Get specific response by ID
+- `GetResponsesByCallback(callbackID, limit)` - Get recent responses from a callback
+- `SearchResponses(query, filters)` - Full-text search across responses
+- `GetLatestResponses(operationID, limit)` - Stream recent outputs across operation
+- `GetResponseStatistics(taskID)` - Get response count/size statistics
+
+**GraphQL Example:**
+```graphql
+query GetResponsesByTask($task_id: Int!) {
+  response(where: {task_id: {_eq: $task_id}}, order_by: {id: asc}) {
+    id
+    response_text
+    timestamp
+    task_id
+    task {
+      command
+      params
+      callback {
+        host
+        user
+      }
+    }
+  }
+}
+```
+
+**Difference from Task Output Subscription:**
+- Subscriptions provide real-time streaming
+- Response APIs provide historical querying and search
+- Both are essential for complete automation coverage
+
+---
+
+## 21. Screenshot Management
+
+### ⏳ Pending (0/6 - 0%)
+
+**Status:** High priority - Specialized file handling for screen captures
+
+Screenshots in Mythic are stored in the `filemeta` table with `is_screenshot=true`. They require specialized handling for display, thumbnailing, and batch operations distinct from regular file management.
+
+**Database Table:** `filemeta` (filtered by `is_screenshot=true`)
+
+**Key Fields:**
+- **is_screenshot**: Boolean flag
+- **filename_text**: Screenshot filename
+- **timestamp**: When captured
+- **host**: Source host
+- **callback_id**: Source callback
+
+**Use Cases:**
+- Surveillance operations requiring visual monitoring
+- User activity tracking
+- Desktop reconnaissance
+- Evidence collection for reporting
+- Timeline visualization of user actions
+
+**Planned Methods:**
+- `GetScreenshots(callbackID, filters)` - List screenshots from callback
+- `GetScreenshotByID(screenshotID)` - Get specific screenshot metadata
+- `DownloadScreenshot(screenshotID, outputPath)` - Download screenshot file
+- `GetScreenshotThumbnail(screenshotID)` - Get thumbnail version
+- `DeleteScreenshot(screenshotID)` - Remove screenshot
+- `GetScreenshotTimeline(callbackID, startTime, endTime)` - Time-ordered screenshot list
+
+**GraphQL Example:**
+```graphql
+query GetScreenshots($callback_id: Int!) {
+  filemeta(
+    where: {
+      callback_id: {_eq: $callback_id}
+      is_screenshot: {_eq: true}
+      deleted: {_eq: false}
+    }
+    order_by: {timestamp: desc}
+  ) {
+    id
+    filename_text
+    timestamp
+    complete
+    host
+    full_remote_path
+  }
+}
+```
+
+**UI Integration:**
+- Screenshots displayed in gallery view in Mythic UI
+- Thumbnails generated automatically
+- Click to view full size
+- Timeline visualization available
+
+---
+
+## 22. Alert System (Operational Monitoring)
+
+### ⏳ Pending (0/7 - 0%)
+
+**Status:** High priority - Critical for OPSEC and security monitoring
+
+Mythic's alert system (`operationalert` table) provides automated security monitoring and OPSEC notifications. Alerts trigger on suspicious activities, policy violations, or security events during operations.
+
+**Database Table:** `operationalert`
+
+**Key Fields:**
+- **alert_type**: Category of alert (opsec, error, warning, info)
+- **message**: Alert description
+- **source**: Component that triggered alert
+- **callback_id**: Associated callback (if applicable)
+- **resolved**: Whether alert has been acknowledged
+- **severity**: Alert severity level
+
+**Alert Types:**
+- **OPSEC Violations**: Suspicious command patterns, risky operations
+- **Detection Events**: Potential EDR/AV alerts
+- **Policy Violations**: Commands violating operation rules
+- **Error Conditions**: Agent errors, connection failures
+- **Workflow Triggers**: Event-based automation alerts
+
+**Use Cases:**
+- Real-time OPSEC monitoring
+- Automated incident response
+- Security event correlation
+- Operation health monitoring
+- Compliance and policy enforcement
+
+**Planned Methods:**
+- `GetAlerts(operationID, filters)` - List alerts for operation
+- `GetAlertByID(alertID)` - Get specific alert details
+- `GetUnresolvedAlerts(operationID)` - Get active/unacknowledged alerts
+- `ResolveAlert(alertID, notes)` - Mark alert as resolved
+- `CreateCustomAlert(operationID, message, severity)` - Create manual alert
+- `GetAlertStatistics(operationID)` - Get alert counts by type/severity
+- `SubscribeToAlerts(operationID)` - Real-time alert subscription (WebSocket)
+
+**GraphQL Example:**
+```graphql
+query GetUnresolvedAlerts($operation_id: Int!) {
+  operationalert(
+    where: {
+      operation_id: {_eq: $operation_id}
+      resolved: {_eq: false}
+    }
+    order_by: {timestamp: desc}
+  ) {
+    id
+    alert_type
+    message
+    source
+    severity
+    timestamp
+    callback_id
+    callback {
+      host
+      user
+    }
+  }
+}
+```
+
+**Alert Subscription (WebSocket):**
+```go
+config := &types.SubscriptionConfig{
+    Type: types.SubscriptionTypeAlert,
+    Handler: func(event *types.SubscriptionEvent) error {
+        alertType, _ := event.GetDataField("alert_type")
+        message, _ := event.GetDataField("message")
+        log.Printf("[ALERT] %s: %s", alertType, message)
+        return nil
+    },
+}
+sub, err := client.Subscribe(ctx, config)
+```
+
+---
+
+## 23. Host Management
+
+### ⏳ Pending (0/5 - 0%)
+
+**Status:** Medium priority - Asset tracking for large operations
+
+The `host` table tracks compromised or discovered hosts across the network. This is distinct from callbacks - a single host may have multiple callbacks or be discovered through network reconnaissance before compromise.
+
+**Database Table:** `host`
+
+**Key Fields:**
+- **hostname**: Host identifier
+- **ip**: IP address(es)
+- **domain**: Active Directory domain
+- **os**: Operating system details
+- **architecture**: x64, x86, ARM, etc.
+- **operation_id**: Associated operation
+
+**Use Cases:**
+- Network topology mapping
+- Asset inventory management
+- Lateral movement planning
+- Pivot path identification
+- Operation scope tracking
+
+**Planned Methods:**
+- `GetHosts(operationID)` - List all hosts in operation
+- `GetHostByID(hostID)` - Get specific host details
+- `GetHostByHostname(hostname)` - Find host by name
+- `GetCallbacksForHost(hostID)` - List callbacks on specific host
+- `GetHostNetworkMap(operationID)` - Build network topology
+
+**GraphQL Example:**
+```graphql
+query GetHosts($operation_id: Int!) {
+  host(where: {operation_id: {_eq: $operation_id}}) {
+    id
+    hostname
+    ip
+    domain
+    os
+    architecture
+    callbacks {
+      id
+      user
+      active
+      last_checkin
+    }
+  }
+}
+```
+
+---
+
+## 24. Reverse Port Forward (RPFWD)
+
+### ⏳ Pending (0/4 - 0%)
+
+**Status:** Medium priority - Network pivoting (distinct from SOCKS proxies)
+
+The `rpfwd` table manages reverse port forwarding tunnels, which are distinct from SOCKS proxies. RPFWD exposes internal network services to the operator, while SOCKS proxies operator traffic into the target network.
+
+**Database Table:** `rpfwd`
+
+**Key Fields:**
+- **callback_id**: Callback providing the tunnel
+- **local_port**: Port on Mythic server
+- **remote_host**: Target host in victim network
+- **remote_port**: Target port
+- **active**: Tunnel status
+
+**Use Cases:**
+- Accessing internal web services (RDP, VNC, HTTP)
+- Database connections through compromised hosts
+- Internal service enumeration
+- Bypassing network segmentation
+- Accessing non-routable services
+
+**Planned Methods:**
+- `GetRPFWDs(callbackID)` - List port forwards for callback
+- `CreateRPFWD(callbackID, localPort, remoteHost, remotePort)` - Create tunnel
+- `DeleteRPFWD(rpfwdID)` - Close tunnel
+- `GetRPFWDStatus(rpfwdID)` - Check tunnel health
+
+**Difference from SOCKS:**
+- **SOCKS**: Operator tools → Mythic → Callback → Target (outbound from operator)
+- **RPFWD**: Target Service → Callback → Mythic → Operator (inbound to operator)
+
+**Example:**
+```go
+// Create reverse port forward to access internal RDP
+rpfwd, err := client.CreateRPFWD(ctx, callbackID, 13389, "10.10.10.50", 3389)
+// Now connect to localhost:13389 to access 10.10.10.50:3389
+```
+
+---
+
+## 25. Event Group Management (Workflows & Automation)
+
+### ⏳ Pending (0/7 - 0%)
+
+**Status:** Low priority - Advanced automation (Mythic 3.3+)
+
+Mythic 3.3 introduced an eventing/workflow system for automation and orchestration. Event groups define automated responses to Mythic events like new callbacks, task completions, or file uploads.
+
+**Database Tables:** `eventgroup`, `eventstep`
+
+**Key Concepts:**
+- **Event Group**: Container for related automation steps
+- **Event Step**: Individual action in workflow
+- **Trigger**: Event that starts workflow (new callback, task complete, etc.)
+- **Consuming Services**: External services that process events
+
+**Use Cases:**
+- Automated initial access triage (run `whoami`, `hostname`, etc. on new callbacks)
+- File processing workflows (scan uploads with AV, parse logs, etc.)
+- Alert response automation
+- Credential harvesting pipelines
+- Evidence collection automation
+
+**Planned Methods:**
+- `GetEventGroups(operationID)` - List automation workflows
+- `GetEventGroupByID(groupID)` - Get workflow details
+- `CreateEventGroup(name, trigger, steps)` - Create new workflow
+- `UpdateEventGroup(groupID, updates)` - Modify workflow
+- `DeleteEventGroup(groupID)` - Remove workflow
+- `GetEventGroupLogs(groupID)` - View execution history
+- `TriggerEventGroup(groupID, context)` - Manually execute workflow
+
+**Example Workflow:**
+```
+Trigger: New Callback
+Steps:
+  1. Run command "whoami"
+  2. Run command "hostname"
+  3. Run command "ipconfig" (Windows) or "ifconfig" (Linux)
+  4. Create alert with system info
+  5. Tag callback based on domain/host
+```
+
+**GraphQL Example:**
+```graphql
+query GetEventGroups($operation_id: Int!) {
+  eventgroup(where: {operation_id: {_eq: $operation_id}}) {
+    id
+    name
+    description
+    trigger_type
+    active
+    eventsteps(order_by: {order: asc}) {
+      id
+      order
+      action_type
+      action_data
+    }
+  }
+}
+```
+
+---
+
+## 26. Enhanced Subscription Types
+
+### ⏳ Partial (4/12 - 33%)
+
+**Status:** Medium priority - Additional real-time event types
+
+The SDK currently implements 4 core subscription types (task_output, callback, file, all). Mythic supports 8 additional subscription types for specialized real-time monitoring.
+
+**Implemented (4/12):**
+- ✅ `task_output` - Task output streaming
+- ✅ `callback` - Callback status updates
+- ✅ `file` - File upload/download events
+- ✅ `all` - Combined event stream
+
+**Pending (8/12):**
+- ⏳ `screenshot` - Real-time screenshot notifications
+- ⏳ `keylog` - Keystroke capture events
+- ⏳ `process` - Process list updates
+- ⏳ `credential` - New credential discoveries
+- ⏳ `alert` - Security/OPSEC alerts
+- ⏳ `artifact` - IOC generation events
+- ⏳ `token` - Token/handle tracking
+- ⏳ `event` - Workflow execution events
+
+**Implementation Status:**
+The WebSocket infrastructure is fully implemented and supports all subscription types. Only need to add query builders for each new type in `buildSubscriptionQuery()` function.
+
+**Example - Screenshot Subscription:**
+```go
+config := &types.SubscriptionConfig{
+    Type: types.SubscriptionTypeScreenshot,
+    Handler: func(event *types.SubscriptionEvent) error {
+        filename, _ := event.GetDataField("filename")
+        host, _ := event.GetDataField("host")
+        log.Printf("New screenshot from %s: %s", host, filename)
+        return nil
+    },
+}
+sub, err := client.Subscribe(ctx, config)
+```
+
+**GraphQL Query Pattern (Screenshot):**
+```graphql
+subscription ScreenshotEvents($operation_id: Int!) {
+  filemeta(
+    where: {
+      operation_id: {_eq: $operation_id}
+      is_screenshot: {_eq: true}
+    }
+    order_by: {id: desc}
+  ) {
+    id
+    filename_text
+    timestamp
+    host
+    callback_id
+    complete
+  }
+}
+```
+
+---
+
+## 27. Priority Implementation Roadmap
+
+### Phase 1: Critical Gaps (Weeks 1-2)
+**Goal:** Address highest-priority missing APIs for automation and monitoring
+
+1. **Response Management** (Week 1)
+   - 6 methods for task output querying
+   - Enables automated response parsing
+   - Critical for scripting and automation
+   - Estimated effort: 8-12 hours
+
+2. **Screenshot Management** (Week 1)
+   - 6 methods for screenshot operations
+   - Specialized file handling for screen captures
+   - Important for surveillance operations
+   - Estimated effort: 6-10 hours
+
+3. **Alert System** (Week 2)
+   - 7 methods + 1 subscription type
+   - Real-time OPSEC monitoring
+   - Critical for security operations
+   - Estimated effort: 10-14 hours
+
+### Phase 2: Advanced Features (Weeks 3-4)
+**Goal:** Complete operational capabilities
+
+4. **Host Management** (Week 3)
+   - 5 methods for asset tracking
+   - Network topology and pivot planning
+   - Estimated effort: 6-8 hours
+
+5. **RPFWD Management** (Week 3)
+   - 4 methods for reverse port forwarding
+   - Distinct from existing SOCKS proxy support
+   - Estimated effort: 6-8 hours
+
+6. **Enhanced Subscriptions** (Week 4)
+   - 8 additional subscription types
+   - Infrastructure already in place
+   - Just need query builders
+   - Estimated effort: 8-12 hours
+
+### Phase 3: Automation Framework (Weeks 5-6)
+**Goal:** Complete advanced automation capabilities
+
+7. **Event Group Management** (Weeks 5-6)
+   - 7 methods for workflow automation
+   - Mythic 3.3+ feature
+   - Lower priority (advanced users only)
+   - Estimated effort: 12-16 hours
+
+### Testing & Documentation (Throughout)
+- Integration tests for each new API category
+- Update API_COVERAGE.md as features are completed
+- Example applications demonstrating new capabilities
+- Performance testing for subscription scalability
+
+### Estimated Total Effort
+- **Phase 1:** 28-36 hours (2 weeks)
+- **Phase 2:** 20-28 hours (2 weeks)
+- **Phase 3:** 12-16 hours (2 weeks)
+- **Total:** 60-80 hours (6 weeks)
+
+### Success Metrics
+- **Coverage:** 100% (214/214 APIs implemented)
+- **Tests:** All new APIs have integration tests
+- **Documentation:** Complete API coverage documentation
+- **Examples:** Working examples for each major feature set
+- **Performance:** Subscriptions handle high-volume event streams
+
+---
+
 ## Notes
 
 - REST API endpoints are used for file upload/download operations
@@ -3311,6 +3814,7 @@ if result.IsSuccessful() {
 
 ---
 
-*Last updated: 2026-01-08*
+*Last updated: 2026-01-09*
 *SDK Version: In Development*
+*Total API Coverage: 79% (169/214 APIs)*
 *Mythic API Version: v3.4.x*
