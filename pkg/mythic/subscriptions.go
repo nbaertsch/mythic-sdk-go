@@ -376,6 +376,125 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 		}
 		return &query, variables
 
+	case types.SubscriptionTypeScreenshot:
+		// Subscribe to screenshot uploads (filemeta with is_screenshot=true)
+		var query struct {
+			FileMeta []struct {
+				ID                  int    `graphql:"id"`
+				AgentFileID         string `graphql:"agent_file_id"`
+				Filename            string `graphql:"filename_text"`
+				Path                string `graphql:"full_remote_path"`
+				Host                string `graphql:"host"`
+				Timestamp           string `graphql:"timestamp"`
+				Complete            bool   `graphql:"complete"`
+				TaskID              *int   `graphql:"task_id"`
+				CallbackID          *int   `graphql:"callback_id"`
+				OperationID         int    `graphql:"operation_id"`
+			} `graphql:"filemeta(where: {operation_id: {_eq: $operation_id}, is_screenshot: {_eq: true}, deleted: {_eq: false}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeKeylog:
+		// Subscribe to keylog entries
+		var query struct {
+			Keylog []struct {
+				ID          int    `graphql:"id"`
+				TaskID      int    `graphql:"task_id"`
+				Keystrokes  string `graphql:"keystrokes"`
+				Window      string `graphql:"window"`
+				Timestamp   string `graphql:"timestamp"`
+				OperationID int    `graphql:"operation_id"`
+				User        string `graphql:"user"`
+				CallbackID  int    `graphql:"callback_id"`
+			} `graphql:"keylog(where: {operation_id: {_eq: $operation_id}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeProcess:
+		// Subscribe to process tracking updates
+		var query struct {
+			Process []struct {
+				ID              int    `graphql:"id"`
+				Name            string `graphql:"name"`
+				ProcessID       int    `graphql:"process_id"`
+				ParentProcessID int    `graphql:"parent_process_id"`
+				Architecture    string `graphql:"architecture"`
+				BinPath         string `graphql:"bin_path"`
+				User            string `graphql:"user"`
+				CommandLine     string `graphql:"command_line"`
+				IntegrityLevel  int    `graphql:"integrity_level"`
+				OperationID     int    `graphql:"operation_id"`
+				HostID          int    `graphql:"host_id"`
+				CallbackID      *int   `graphql:"callback_id"`
+				Timestamp       string `graphql:"timestamp"`
+				Deleted         bool   `graphql:"deleted"`
+			} `graphql:"process(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeCredential:
+		// Subscribe to credential discoveries
+		var query struct {
+			Credential []struct {
+				ID          int    `graphql:"id"`
+				Type        string `graphql:"type"`
+				Account     string `graphql:"account"`
+				Realm       string `graphql:"realm"`
+				Credential  string `graphql:"credential"`
+				Comment     string `graphql:"comment"`
+				OperationID int    `graphql:"operation_id"`
+				OperatorID  int    `graphql:"operator_id"`
+				TaskID      *int   `graphql:"task_id"`
+				Timestamp   string `graphql:"timestamp"`
+				Deleted     bool   `graphql:"deleted"`
+				Metadata    string `graphql:"metadata"`
+			} `graphql:"credential(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeArtifact:
+		// Subscribe to artifact/IOC tracking
+		var query struct {
+			Artifact []struct {
+				ID           int    `graphql:"id"`
+				Artifact     string `graphql:"artifact"`
+				BaseArtifact string `graphql:"base_artifact"`
+				Host         string `graphql:"host"`
+				ArtifactType string `graphql:"artifact_type"`
+				OperationID  int    `graphql:"operation_id"`
+				OperatorID   int    `graphql:"operator_id"`
+				TaskID       *int   `graphql:"task_id"`
+				Timestamp    string `graphql:"timestamp"`
+				Deleted      bool   `graphql:"deleted"`
+				Metadata     string `graphql:"metadata"`
+			} `graphql:"artifact(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeToken:
+		// Subscribe to token discoveries
+		var query struct {
+			Token []struct {
+				ID              int    `graphql:"id"`
+				TokenID         string `graphql:"token_id"`
+				User            string `graphql:"user"`
+				Groups          string `graphql:"groups"`
+				Privileges      string `graphql:"privileges"`
+				ThreadID        int    `graphql:"thread_id"`
+				ProcessID       int    `graphql:"process_id"`
+				SessionID       int    `graphql:"session_id"`
+				LogonSID        string `graphql:"logon_sid"`
+				IntegrityLevel  int    `graphql:"integrity_level_int"`
+				Restricted      bool   `graphql:"restricted"`
+				TaskID          *int   `graphql:"task_id"`
+				OperationID     int    `graphql:"operation_id"`
+				Timestamp       string `graphql:"timestamp"`
+				Host            string `graphql:"host"`
+				Deleted         bool   `graphql:"deleted"`
+			} `graphql:"token(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
 	case types.SubscriptionTypeAll:
 		// Subscribe to all events (task output, callbacks, files)
 		// Note: This would require multiple subscriptions or a complex query

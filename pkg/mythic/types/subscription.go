@@ -14,6 +14,18 @@ const (
 	SubscriptionTypeFile SubscriptionType = "file"
 	// SubscriptionTypeAlert subscribes to operational alerts
 	SubscriptionTypeAlert SubscriptionType = "alert"
+	// SubscriptionTypeScreenshot subscribes to screenshot uploads (filemeta with is_screenshot=true)
+	SubscriptionTypeScreenshot SubscriptionType = "screenshot"
+	// SubscriptionTypeKeylog subscribes to keylog entries
+	SubscriptionTypeKeylog SubscriptionType = "keylog"
+	// SubscriptionTypeProcess subscribes to process tracking updates
+	SubscriptionTypeProcess SubscriptionType = "process"
+	// SubscriptionTypeCredential subscribes to credential discoveries
+	SubscriptionTypeCredential SubscriptionType = "credential"
+	// SubscriptionTypeArtifact subscribes to artifact/IOC tracking
+	SubscriptionTypeArtifact SubscriptionType = "artifact"
+	// SubscriptionTypeToken subscribes to token discoveries
+	SubscriptionTypeToken SubscriptionType = "token"
 	// SubscriptionTypeAll subscribes to all events
 	SubscriptionTypeAll SubscriptionType = "all"
 )

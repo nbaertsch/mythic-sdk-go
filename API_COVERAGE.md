@@ -30,21 +30,21 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Browser Scripts | 3 | 0 | 0 | 3 |
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 2 | 0 | 0 | 2 |
-| Eventing/Workflows | 15 | 0 | 7 | 22 |
+| Eventing/Workflows | 22 | 0 | 0 | 22 |
 | Operators | 11 | 0 | 0 | 11 |
 | Advanced Features | 23 | 0 | 0 | 23 |
 | Staging | 1 | 0 | 0 | 1 |
-| GraphQL Subscriptions | 2 | 2 | 8 | 12 |
+| GraphQL Subscriptions | 11 | 0 | 1 | 12 |
 | Responses | 6 | 0 | 0 | 6 |
 | Screenshots | 6 | 0 | 0 | 6 |
 | Alerts | 7 | 0 | 0 | 7 |
 | Hosts | 5 | 0 | 0 | 5 |
 | RPFWD | 4 | 0 | 0 | 4 |
-| **TOTAL** | **197** | **2** | **15** | **214** |
+| **TOTAL** | **213** | **0** | **1** | **214** |
 
-**Overall Coverage: 92% (197/214 APIs)**
+**Overall Coverage: 99.5% (213/214 APIs)**
 **Core APIs: 100% COMPLETE ✅**
-**Advanced APIs Identified: 15 additional methods available**
+**Advanced APIs: Only 1 remaining**
 
 ---
 
