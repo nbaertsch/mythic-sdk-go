@@ -28,14 +28,14 @@ type BuildParameterType struct {
 // BuildParameterInstance represents an actual value set for a build parameter in a specific payload.
 // This stores the concrete values used when building a payload.
 type BuildParameterInstance struct {
-	ID                 int       `json:"id"`
-	PayloadID          int       `json:"payload_id"`
-	BuildParameterID   int       `json:"build_parameter_id"`
-	Value              string    `json:"value"`
-	EncValue           *string   `json:"enc_value,omitempty"` // Encrypted value for sensitive parameters
-	CreationTime       time.Time `json:"creation_time"`
-	BuildParameter     *BuildParameterType `json:"buildparameter,omitempty"`
-	Payload            *Payload            `json:"payload,omitempty"`
+	ID               int                 `json:"id"`
+	PayloadID        int                 `json:"payload_id"`
+	BuildParameterID int                 `json:"build_parameter_id"`
+	Value            string              `json:"value"`
+	EncValue         *string             `json:"enc_value,omitempty"` // Encrypted value for sensitive parameters
+	CreationTime     time.Time           `json:"creation_time"`
+	BuildParameter   *BuildParameterType `json:"buildparameter,omitempty"`
+	Payload          *Payload            `json:"payload,omitempty"`
 }
 
 // String returns a string representation of a BuildParameterType.

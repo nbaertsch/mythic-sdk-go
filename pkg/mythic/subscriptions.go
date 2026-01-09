@@ -3,7 +3,9 @@ package mythic
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
@@ -63,9 +65,10 @@ import (
 //	    }
 //	}
 //
-// Note: WebSocket subscriptions require special server configuration and are not
-// available in all Mythic deployments. This implementation provides the client-side
-// interface, but server support may vary.
+// WebSocket Connection:
+// Subscriptions use the graphql-transport-ws protocol over WebSocket connections.
+// The connection is automatically established on first subscription and reused
+// for subsequent subscriptions. Authentication is handled via connection parameters.
 func (c *Client) Subscribe(ctx context.Context, config *types.SubscriptionConfig) (*types.Subscription, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -94,21 +97,118 @@ func (c *Client) Subscribe(ctx context.Context, config *types.SubscriptionConfig
 		operationID = *opID
 	}
 
-	// Note: Full WebSocket implementation would go here
-	// For now, we return an error indicating WebSocket support is not yet implemented
-	// This provides the API interface for future WebSocket implementation
-	//
-	// When implemented, would create subscription like:
-	// sub := &types.Subscription{
-	//     ID:     generateSubscriptionID(),
-	//     Type:   config.Type,
-	//     Active: true,
-	//     Events: make(chan *types.SubscriptionEvent, bufferSize),
-	//     Errors: make(chan error, 10),
-	//     Done:   make(chan struct{}),
-	// }
-	_ = operationID // Suppress unused variable warning until WebSocket implementation
-	return nil, WrapError("Subscribe", ErrNotImplemented, "GraphQL subscriptions require WebSocket support which is not yet implemented in this SDK version")
+	// Generate unique subscription ID
+	subID := generateSubscriptionID()
+
+	// Create subscription object
+	sub := &types.Subscription{
+		ID:     subID,
+		Type:   config.Type,
+		Active: true,
+		Events: make(chan *types.SubscriptionEvent, bufferSize),
+		Errors: make(chan error, 10),
+		Done:   make(chan struct{}),
+	}
+
+	// Create context for subscription lifecycle
+	subCtx, cancel := context.WithCancel(context.Background())
+
+	// Get subscription client (establishes WebSocket connection if needed)
+	subscriptionClient := c.getSubscriptionClient()
+
+	// Build GraphQL subscription query based on type
+	query, variables := buildSubscriptionQuery(config.Type, operationID, config.Filter)
+
+	// Start subscription in background goroutine
+	go func() {
+		defer func() {
+			// Clean up on exit
+			sub.Close()
+			cancel()
+
+			// Remove from active subscriptions
+			c.subscriptionsMutex.Lock()
+			delete(c.activeSubscriptions, subID)
+			c.subscriptionsMutex.Unlock()
+		}()
+
+		// Subscribe using WebSocket client
+		graphqlSubID, err := subscriptionClient.Subscribe(query, variables, func(dataValue []byte, errValue error) error {
+			// Handle errors from subscription
+			if errValue != nil {
+				select {
+				case sub.Errors <- WrapError("Subscribe", ErrOperationFailed, errValue.Error()):
+				case <-subCtx.Done():
+					return subCtx.Err()
+				}
+				return errValue
+			}
+
+			// Parse event data
+			event := &types.SubscriptionEvent{
+				Type:      config.Type,
+				Data:      make(map[string]interface{}),
+				Timestamp: time.Now().Format(time.RFC3339),
+			}
+
+			// Parse JSON data into event
+			if err := parseJSON(dataValue, &event.Data); err != nil {
+				select {
+				case sub.Errors <- WrapError("Subscribe", ErrOperationFailed, fmt.Sprintf("failed to parse event data: %v", err)):
+				case <-subCtx.Done():
+					return subCtx.Err()
+				}
+				return err
+			}
+
+			// Call user handler
+			if config.Handler != nil {
+				if err := config.Handler(event); err != nil {
+					select {
+					case sub.Errors <- WrapError("Subscribe", ErrOperationFailed, fmt.Sprintf("handler error: %v", err)):
+					case <-subCtx.Done():
+						return subCtx.Err()
+					}
+					// Continue processing even if handler returns error
+				}
+			}
+
+			// Send event to channel
+			select {
+			case sub.Events <- event:
+			case <-subCtx.Done():
+				return subCtx.Err()
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			select {
+			case sub.Errors <- WrapError("Subscribe", ErrOperationFailed, fmt.Sprintf("subscription failed: %v", err)):
+			case <-subCtx.Done():
+			}
+			return
+		}
+
+		// Wait for cancellation
+		<-subCtx.Done()
+
+		// Unsubscribe using the graphqlSubID
+		if graphqlSubID != "" {
+			_ = subscriptionClient.Unsubscribe(graphqlSubID)
+		}
+	}()
+
+	// Track active subscription
+	c.subscriptionsMutex.Lock()
+	c.activeSubscriptions[subID] = &subscriptionContext{
+		cancel:  cancel,
+		closeFn: nil, // unsubscribe function is handled in goroutine
+	}
+	c.subscriptionsMutex.Unlock()
+
+	return sub, nil
 }
 
 // Unsubscribe closes an active subscription and cleans up resources.
@@ -135,7 +235,23 @@ func (c *Client) Unsubscribe(ctx context.Context, subscription *types.Subscripti
 		return WrapError("Unsubscribe", ErrInvalidInput, "subscription is not active")
 	}
 
-	// Close the subscription
+	// Get subscription context
+	c.subscriptionsMutex.RLock()
+	subCtx, exists := c.activeSubscriptions[subscription.ID]
+	c.subscriptionsMutex.RUnlock()
+
+	if !exists {
+		// Already unsubscribed or never existed
+		subscription.Close()
+		return nil
+	}
+
+	// Cancel subscription context (triggers cleanup in goroutine)
+	if subCtx.cancel != nil {
+		subCtx.cancel()
+	}
+
+	// Close subscription object
 	subscription.Close()
 
 	return nil
@@ -143,17 +259,122 @@ func (c *Client) Unsubscribe(ctx context.Context, subscription *types.Subscripti
 
 // generateSubscriptionID generates a unique subscription identifier.
 func generateSubscriptionID() string {
-	// In a full implementation, this would generate a UUID
-	// For now, return a placeholder
-	return fmt.Sprintf("sub-%d", getCurrentTimestampMillis())
+	return uuid.New().String()
 }
 
-// getCurrentTimestampMillis returns the current timestamp in milliseconds.
-func getCurrentTimestampMillis() int64 {
-	// This would use time.Now().UnixNano() / 1000000 in real implementation
-	// Placeholder for now
-	return 0
-}
+// buildSubscriptionQuery constructs a GraphQL subscription query based on type.
+func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, filter map[string]interface{}) (interface{}, map[string]interface{}) {
+	variables := map[string]interface{}{
+		"operation_id": operationID,
+	}
 
-// ErrNotImplemented indicates a feature is not yet implemented.
-var ErrNotImplemented = fmt.Errorf("feature not implemented")
+	// Add filter parameters if provided
+	if filter != nil {
+		for k, v := range filter {
+			variables[k] = v
+		}
+	}
+
+	// Build query based on subscription type
+	switch subType {
+	case types.SubscriptionTypeTaskOutput:
+		// Subscribe to task output updates
+		var query struct {
+			TaskOutput []struct {
+				ID        int    `graphql:"id"`
+				Output    string `graphql:"output"`
+				Timestamp string `graphql:"timestamp"`
+				TaskID    int    `graphql:"task_id"`
+				Task      struct {
+					ID              int    `graphql:"id"`
+					Command         string `graphql:"command"`
+					Params          string `graphql:"params"`
+					OriginalParams  string `graphql:"original_params"`
+					DisplayParams   string `graphql:"display_params"`
+					Status          string `graphql:"status"`
+					Timestamp       string `graphql:"timestamp"`
+					CompletedTime   string `graphql:"completed_time"`
+					CallbackID      int    `graphql:"callback_id"`
+					OperatorID      int    `graphql:"operator_id"`
+					CommentOperator string `graphql:"comment_operator"`
+				} `graphql:"task"`
+			} `graphql:"task_output(where: {task: {callback: {operation_id: {_eq: $operation_id}}}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeCallback:
+		// Subscribe to callback updates
+		var query struct {
+			Callback []struct {
+				ID                  int    `graphql:"id"`
+				DisplayID           int    `graphql:"display_id"`
+				AgentCallbackID     string `graphql:"agent_callback_id"`
+				InitCallback        string `graphql:"init_callback"`
+				LastCheckin         string `graphql:"last_checkin"`
+				User                string `graphql:"user"`
+				Host                string `graphql:"host"`
+				PID                 int    `graphql:"pid"`
+				IP                  string `graphql:"ip"`
+				ExternalIP          string `graphql:"external_ip"`
+				ProcessName         string `graphql:"process_name"`
+				Description         string `graphql:"description"`
+				OperatorID          int    `graphql:"operator_id"`
+				Active              bool   `graphql:"active"`
+				RegisteredPayloadID int    `graphql:"registered_payload_id"`
+				IntegrityLevel      int    `graphql:"integrity_level"`
+				Locked              bool   `graphql:"locked"`
+				OperationID         int    `graphql:"operation_id"`
+				SleepInfo           string `graphql:"sleep_info"`
+				Architecture        string `graphql:"architecture"`
+				Domain              string `graphql:"domain"`
+				Os                  string `graphql:"os"`
+			} `graphql:"callback(where: {operation_id: {_eq: $operation_id}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeFile:
+		// Subscribe to file updates
+		var query struct {
+			FileMeta []struct {
+				ID                  int    `graphql:"id"`
+				AgentFileID         string `graphql:"agent_file_id"`
+				TotalChunks         int    `graphql:"total_chunks"`
+				ChunksReceived      int    `graphql:"chunks_received"`
+				ChunkSize           int    `graphql:"chunk_size"`
+				Path                string `graphql:"full_remote_path"`
+				Host                string `graphql:"host"`
+				IsDownloadFromAgent bool   `graphql:"is_download_from_agent"`
+				IsScreenshot        bool   `graphql:"is_screenshot"`
+				IsPayload           bool   `graphql:"is_payload"`
+				Timestamp           string `graphql:"timestamp"`
+				Complete            bool   `graphql:"complete"`
+				Deleted             bool   `graphql:"deleted"`
+				OperatorID          int    `graphql:"operator_id"`
+				OperationID         int    `graphql:"operation_id"`
+				TaskID              *int   `graphql:"task_id"`
+				Filename            string `graphql:"filename_text"`
+				Md5                 string `graphql:"md5"`
+				Sha1                string `graphql:"sha1"`
+			} `graphql:"filemeta(where: {operation_id: {_eq: $operation_id}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
+	case types.SubscriptionTypeAll:
+		// Subscribe to all events (task output, callbacks, files)
+		// Note: This would require multiple subscriptions or a complex query
+		// For now, default to task output as primary event type
+		fallthrough
+
+	default:
+		// Default to task output subscription
+		var query struct {
+			TaskOutput []struct {
+				ID        int    `graphql:"id"`
+				Output    string `graphql:"output"`
+				Timestamp string `graphql:"timestamp"`
+				TaskID    int    `graphql:"task_id"`
+			} `graphql:"task_output(where: {task: {callback: {operation_id: {_eq: $operation_id}}}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+	}
+}

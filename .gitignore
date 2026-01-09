@@ -56,3 +56,4 @@ htmlcov/
 # Documentation build
 docs/_build/
 site/
+examples/subscriptions/subscriptions

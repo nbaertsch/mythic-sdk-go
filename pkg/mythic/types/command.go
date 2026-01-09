@@ -107,13 +107,13 @@ func (lc *LoadedCommand) String() string {
 
 // Command parameter type constants
 const (
-	ParameterTypeString        = "String"
-	ParameterTypeBoolean       = "Boolean"
-	ParameterTypeNumber        = "Number"
-	ParameterTypeChooseOne     = "ChooseOne"
+	ParameterTypeString         = "String"
+	ParameterTypeBoolean        = "Boolean"
+	ParameterTypeNumber         = "Number"
+	ParameterTypeChooseOne      = "ChooseOne"
 	ParameterTypeChooseMultiple = "ChooseMultiple"
-	ParameterTypeFile          = "File"
-	ParameterTypeArray         = "Array"
-	ParameterTypeCredential    = "Credential"
-	ParameterTypeLinkInfo      = "LinkInfo"
+	ParameterTypeFile           = "File"
+	ParameterTypeArray          = "Array"
+	ParameterTypeCredential     = "Credential"
+	ParameterTypeLinkInfo       = "LinkInfo"
 )

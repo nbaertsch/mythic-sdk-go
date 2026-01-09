@@ -14,17 +14,17 @@ func (c *Client) GetCommands(ctx context.Context) ([]*types.Command, error) {
 
 	var query struct {
 		Commands []struct {
-			ID              int    `graphql:"id"`
-			Cmd             string `graphql:"cmd"`
-			PayloadTypeID   int    `graphql:"payloadtype_id"`
-			Description     string `graphql:"description"`
-			Help            string `graphql:"help_cmd"`
-			Version         int    `graphql:"version"`
-			Supported       bool   `graphql:"supported_ui_features"`
-			Author          string `graphql:"author"`
-			Attributes      string `graphql:"attributes"`
-			ScriptOnly      bool   `graphql:"script_only"`
-			AttackMappings  string `graphql:"attack"`
+			ID             int    `graphql:"id"`
+			Cmd            string `graphql:"cmd"`
+			PayloadTypeID  int    `graphql:"payloadtype_id"`
+			Description    string `graphql:"description"`
+			Help           string `graphql:"help_cmd"`
+			Version        int    `graphql:"version"`
+			Supported      bool   `graphql:"supported_ui_features"`
+			Author         string `graphql:"author"`
+			Attributes     string `graphql:"attributes"`
+			ScriptOnly     bool   `graphql:"script_only"`
+			AttackMappings string `graphql:"attack"`
 		} `graphql:"command(order_by: {cmd: asc})"`
 	}
 

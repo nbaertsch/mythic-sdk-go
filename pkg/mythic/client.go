@@ -31,6 +31,24 @@ type Client struct {
 
 	// currentOperationID is the currently selected operation ID
 	currentOperationID *int
+
+	// subscriptionClient is the WebSocket subscription client
+	subscriptionClient *graphql.SubscriptionClient
+
+	// subscriptionMutex protects subscription client initialization
+	subscriptionMutex sync.Mutex
+
+	// activeSubscriptions tracks active subscriptions by ID
+	activeSubscriptions map[string]*subscriptionContext
+
+	// subscriptionsMutex protects the activeSubscriptions map
+	subscriptionsMutex sync.RWMutex
+}
+
+// subscriptionContext holds the context for an active subscription
+type subscriptionContext struct {
+	cancel  context.CancelFunc
+	closeFn func() error
 }
 
 // NewClient creates a new Mythic client with the provided configuration.
@@ -74,10 +92,11 @@ func NewClient(config *Config) (*Client, error) {
 	gqlClient := graphql.NewClient(graphqlURL, httpClient)
 
 	client := &Client{
-		config:        config,
-		graphqlClient: gqlClient,
-		httpClient:    httpClient,
-		authenticated: false,
+		config:              config,
+		graphqlClient:       gqlClient,
+		httpClient:          httpClient,
+		authenticated:       false,
+		activeSubscriptions: make(map[string]*subscriptionContext),
 	}
 
 	// If we have an API token or access token, consider authenticated
@@ -102,6 +121,27 @@ func (c *Client) GetConfig() Config {
 
 // Close closes the client and releases resources.
 func (c *Client) Close() error {
+	// Close all active subscriptions
+	c.subscriptionsMutex.Lock()
+	for _, subCtx := range c.activeSubscriptions {
+		if subCtx.cancel != nil {
+			subCtx.cancel()
+		}
+		if subCtx.closeFn != nil {
+			_ = subCtx.closeFn()
+		}
+	}
+	c.activeSubscriptions = make(map[string]*subscriptionContext)
+	c.subscriptionsMutex.Unlock()
+
+	// Close subscription client if initialized
+	c.subscriptionMutex.Lock()
+	if c.subscriptionClient != nil {
+		_ = c.subscriptionClient.Close()
+		c.subscriptionClient = nil
+	}
+	c.subscriptionMutex.Unlock()
+
 	// Close any open connections
 	c.httpClient.CloseIdleConnections()
 	return nil
@@ -192,4 +232,65 @@ func stripScheme(url string) string {
 // parseJSON parses JSON data into the provided interface.
 func parseJSON(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
+}
+
+// getSubscriptionClient returns or creates a WebSocket subscription client.
+// The subscription client is lazily initialized on first subscription request.
+func (c *Client) getSubscriptionClient() *graphql.SubscriptionClient {
+	c.subscriptionMutex.Lock()
+	defer c.subscriptionMutex.Unlock()
+
+	// Return existing client if already initialized and running
+	if c.subscriptionClient != nil {
+		return c.subscriptionClient
+	}
+
+	// Construct WebSocket URL
+	scheme := "wss"
+	if !c.config.SSL {
+		scheme = "ws"
+	}
+	wsURL := fmt.Sprintf("%s://%s/graphql/", scheme, stripScheme(c.config.ServerURL))
+
+	// Get authentication headers for connection parameters
+	authHeaders := c.getAuthHeaders()
+
+	// Create subscription client with authentication and configuration
+	client := graphql.NewSubscriptionClient(wsURL).
+		WithConnectionParams(map[string]interface{}{
+			"headers": authHeaders,
+		}).
+		WithProtocol(graphql.GraphQLWS). // Use modern graphql-transport-ws protocol
+		WithTimeout(c.config.Timeout).
+		WithLog(func(args ...interface{}) {
+			// TODO: Add optional logging callback via config
+		})
+
+	// Apply TLS configuration if needed
+	if c.config.SkipTLSVerify {
+		client = client.WithWebSocketOptions(graphql.WebsocketOptions{
+			HTTPClient: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true,
+					},
+				},
+			},
+		})
+	}
+
+	// Set error handler
+	client = client.OnError(func(sc *graphql.SubscriptionClient, err error) error {
+		// Log error but allow reconnection
+		return nil
+	})
+
+	c.subscriptionClient = client
+
+	// Start the subscription client in background
+	go func() {
+		_ = c.subscriptionClient.Run()
+	}()
+
+	return c.subscriptionClient
 }

@@ -7,25 +7,25 @@ import (
 
 // FileBrowserObject represents a file or directory in the file browser.
 type FileBrowserObject struct {
-	ID               int       `json:"id"`
-	Host             string    `json:"host"`
-	IsFile           bool      `json:"is_file"`
-	Permissions      string    `json:"permissions"`
-	Name             string    `json:"name"`
-	ParentPath       string    `json:"parent_path"`
-	Success          bool      `json:"success"`
-	AccessTime       time.Time `json:"access_time"`
-	ModifyTime       time.Time `json:"modify_time"`
-	Size             int64     `json:"size"`
-	UpdateDeleted    bool      `json:"update_deleted"`
-	TaskID           int       `json:"task_id"`
-	OperationID      int       `json:"operation_id"`
-	Timestamp        time.Time `json:"timestamp"`
-	Comment          string    `json:"comment"`
-	Deleted          bool      `json:"deleted"`
-	FullPathText     string    `json:"full_path_text"`
-	CallbackID       int       `json:"callback_id"`
-	OperatorID       int       `json:"operator_id"`
+	ID            int       `json:"id"`
+	Host          string    `json:"host"`
+	IsFile        bool      `json:"is_file"`
+	Permissions   string    `json:"permissions"`
+	Name          string    `json:"name"`
+	ParentPath    string    `json:"parent_path"`
+	Success       bool      `json:"success"`
+	AccessTime    time.Time `json:"access_time"`
+	ModifyTime    time.Time `json:"modify_time"`
+	Size          int64     `json:"size"`
+	UpdateDeleted bool      `json:"update_deleted"`
+	TaskID        int       `json:"task_id"`
+	OperationID   int       `json:"operation_id"`
+	Timestamp     time.Time `json:"timestamp"`
+	Comment       string    `json:"comment"`
+	Deleted       bool      `json:"deleted"`
+	FullPathText  string    `json:"full_path_text"`
+	CallbackID    int       `json:"callback_id"`
+	OperatorID    int       `json:"operator_id"`
 }
 
 // String returns a string representation of a FileBrowserObject.
