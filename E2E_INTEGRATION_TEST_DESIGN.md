@@ -26,8 +26,8 @@
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
 **Current Phase:** Phase 2 - Core Workflows
-**Completion:** 3/16 workflows (18.75%)
-**API Coverage:** 26/204 methods (12.7%)
+**Completion:** 4/16 workflows (25%)
+**API Coverage:** 38/204 methods (18.6%)
 
 ### Completed Workflows
 
@@ -102,12 +102,30 @@
   * Bulk operations (ZIP download)
   * Comprehensive cleanup
 
+#### ✅ Workflow 4: Credentials & Artifacts - COMPLETE
+- [CI Run #20868419104](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868419104)
+- **File:** `tests/integration/e2e_credentials_artifacts_test.go`
+- **Tests:**
+  * `TestE2E_CredentialManagement` - Complete credential lifecycle (10 sub-tests)
+  * `TestE2E_ArtifactManagement` - Complete artifact lifecycle (12 sub-tests)
+  * `TestE2E_CredentialsArtifactsErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (12/204):**
+  * **Credentials (5):** GetCredentials ✓, GetCredentialsByOperation ✓, CreateCredential ✓, UpdateCredential ✓, DeleteCredential ✓
+  * **Artifacts (7):** GetArtifacts ✓, GetArtifactsByOperation ✓, GetArtifactsByHost ✓, GetArtifactsByType ✓, CreateArtifact ✓, UpdateArtifact ✓, DeleteArtifact ✓
+- **Duration:** ~35 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+- **Features:**
+  * Multiple credential types (password, SSH key, API token)
+  * Multiple artifact types (file, registry, process)
+  * Filtering by operation, host, and type
+  * Update verification
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-- ⏳ Workflow 4: Credentials & Artifacts
 - ⏳ Workflow 5: Tags & Categorization
 - ⏳ Workflow 6: Operator & User Management
 - ⏳ Workflow 7: C2 Profile Management
