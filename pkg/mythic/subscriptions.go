@@ -359,6 +359,23 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 		}
 		return &query, variables
 
+	case types.SubscriptionTypeAlert:
+		// Subscribe to operational alerts
+		var query struct {
+			OperationalAlert []struct {
+				ID          int    `graphql:"id"`
+				Message     string `graphql:"message"`
+				Alert       string `graphql:"alert"`
+				Source      string `graphql:"source"`
+				Severity    int    `graphql:"severity"`
+				Resolved    bool   `graphql:"resolved"`
+				OperationID int    `graphql:"operation_id"`
+				CallbackID  *int   `graphql:"callback_id"`
+				Timestamp   string `graphql:"timestamp"`
+			} `graphql:"operationalert(where: {operation_id: {_eq: $operation_id}}, order_by: {id: desc})"`
+		}
+		return &query, variables
+
 	case types.SubscriptionTypeAll:
 		// Subscribe to all events (task output, callbacks, files)
 		// Note: This would require multiple subscriptions or a complex query

@@ -12,6 +12,8 @@ const (
 	SubscriptionTypeCallback SubscriptionType = "callback"
 	// SubscriptionTypeFile subscribes to new file uploads
 	SubscriptionTypeFile SubscriptionType = "file"
+	// SubscriptionTypeAlert subscribes to operational alerts
+	SubscriptionTypeAlert SubscriptionType = "alert"
 	// SubscriptionTypeAll subscribes to all events
 	SubscriptionTypeAll SubscriptionType = "all"
 )
