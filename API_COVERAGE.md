@@ -30,14 +30,15 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Browser Scripts | 3 | 0 | 0 | 3 |
 | MITRE ATT&CK | 6 | 0 | 0 | 6 |
 | Reporting | 2 | 0 | 0 | 2 |
-| Eventing/Workflows | 0 | 0 | 15 | 15 |
+| Eventing/Workflows | 15 | 0 | 0 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | Advanced Features | 23 | 0 | 0 | 23 |
 | Staging | 1 | 0 | 0 | 1 |
 | GraphQL Subscriptions | 1 | 0 | 0 | 1 |
-| **TOTAL** | **154** | **0** | **0** | **154** |
+| **TOTAL** | **169** | **0** | **0** | **169** |
 
-**Overall Coverage: 100% 🎉**
+**Overall Coverage: 100% 🎉🎊**
+**All Core + Advanced APIs: COMPLETE!**
 
 ---
 
@@ -1276,52 +1277,360 @@ Sources:
 
 ## 17. Eventing & Workflows
 
-### ⏳ Pending (15/15)
+### ✅ Tested (15/15 - 100%)
 
-- **EventingTriggerManual()** - Manually trigger event group
+**Note:** Eventing and Workflows enable advanced automation in Mythic. Event groups define automated responses to triggers (new callbacks, task outputs, keywords, etc.), and workflows define multi-step automation processes.
+
+**Event Triggering:**
+
+- **EventingTriggerManual(eventGroupID, objectID, parameters)** - Manually trigger an event group
+  - File: `pkg/mythic/eventing.go:40`
+  - Tests: `tests/integration/eventing_test.go:11`
   - GraphQL: `eventingTriggerManual` mutation
+  - Input: Event group ID, optional object ID, optional parameters
+  - Returns: EventTriggerResponse with execution ID and status
+  - Validates event group ID is positive
+  - Useful for testing workflows, one-time automation, debugging
+  - Passes parameters to workflow execution context
 
-- **EventingTriggerManualBulk()** - Bulk trigger on multiple objects
+- **EventingTriggerManualBulk(eventGroupID, objectIDs, parameters)** - Trigger event on multiple objects
+  - File: `pkg/mythic/eventing.go:112`
+  - Tests: `tests/integration/eventing_test.go:37`
   - GraphQL: `eventingTriggerManualBulk` mutation
+  - Input: Event group ID, list of object IDs, optional parameters
+  - Returns: EventTriggerResponse with execution status
+  - Validates event group ID positive, object IDs list non-empty
+  - More efficient than triggering events individually
+  - Executes same workflow on multiple targets simultaneously
 
-- **EventingTriggerKeyword()** - Trigger by keyword
+- **EventingTriggerKeyword(keyword, objectID, parameters)** - Trigger events by keyword match
+  - File: `pkg/mythic/eventing.go:175`
+  - Tests: `tests/integration/eventing_test.go:52`
   - GraphQL: `eventingTriggerKeyword` mutation
+  - Input: Keyword string, optional object ID, optional parameters
+  - Returns: EventTriggerResponse for matched events
+  - Validates keyword is non-empty
+  - Triggers all event groups tagged with the keyword
+  - Useful for grouped automation (e.g., "scan", "cleanup", "alert")
 
-- **EventingTriggerCancel()** - Cancel running event
+**Event Control:**
+
+- **EventingTriggerCancel(executionID)** - Cancel a running event execution
+  - File: `pkg/mythic/eventing.go:221`
+  - Tests: `tests/integration/eventing_test.go:72`
   - GraphQL: `eventingTriggerCancel` mutation
+  - Input: Execution ID to cancel
+  - Returns: EventTriggerResponse with cancellation status
+  - Validates execution ID is positive
+  - Stops workflow execution immediately
+  - Use for runaway workflows or changed requirements
 
-- **EventingTriggerRetry()** - Retry failed event
+- **EventingTriggerRetry(executionID)** - Retry a failed event from the beginning
+  - File: `pkg/mythic/eventing.go:256`
+  - Tests: `tests/integration/eventing_test.go:89`
   - GraphQL: `eventingTriggerRetry` mutation
+  - Input: Execution ID to retry
+  - Returns: EventTriggerResponse with new execution ID
+  - Validates execution ID is positive
+  - Creates new execution with same parameters
+  - Use after fixing issues that caused failure
 
-- **EventingTriggerRetryFromStep()** - Retry from specific step
+- **EventingTriggerRetryFromStep(executionID, stepNumber)** - Retry from specific step
+  - File: `pkg/mythic/eventing.go:293`
+  - Tests: `tests/integration/eventing_test.go:104`
   - GraphQL: `eventingTriggerRetryFromStep` mutation
+  - Input: Execution ID, step number (1-based)
+  - Returns: EventTriggerResponse with new execution ID
+  - Validates execution ID and step number are positive
+  - Skips successfully completed earlier steps
+  - Efficient for long workflows with mid-execution failures
 
-- **EventingTriggerRunAgain()** - Re-run completed event
+- **EventingTriggerRunAgain(executionID)** - Re-run a completed event
+  - File: `pkg/mythic/eventing.go:335`
+  - Tests: `tests/integration/eventing_test.go:127`
   - GraphQL: `eventingTriggerRunAgain` mutation
+  - Input: Execution ID to run again
+  - Returns: EventTriggerResponse with new execution ID
+  - Validates execution ID is positive
+  - Uses same parameters as original execution
+  - Useful for recurring automated tasks
 
-- **EventingTriggerUpdate()** - Update event group config
+**Event Configuration:**
+
+- **EventingTriggerUpdate(eventGroupID, name, description, active, requiresApproval, conditions, actions, keywords)** - Update event group configuration
+  - File: `pkg/mythic/eventing.go:370`
+  - Tests: `tests/integration/eventing_test.go:142`
   - GraphQL: `eventingTriggerUpdate` mutation
+  - Input: Event group ID, optional update fields
+  - Returns: EventTriggerResponse with update status
+  - Validates event group ID is positive
+  - Null/empty fields are not updated (partial update)
+  - Active controls whether event group can trigger
+  - RequiresApproval adds approval step before execution
 
-- **EventingExportWorkflow()** - Export workflow definition
+**Workflow Management:**
+
+- **EventingExportWorkflow(workflowID)** - Export workflow definition
+  - File: `pkg/mythic/eventing.go:417`
+  - Tests: `tests/integration/eventing_test.go:157`
   - GraphQL: `eventingExportWorkflow` query
+  - Input: Workflow ID to export
+  - Returns: WorkflowExportResponse with definition JSON
+  - Validates workflow ID is positive
+  - Use for backup, sharing, or version control
+  - Definition can be imported to other Mythic instances
 
-- **EventingImportContainerWorkflow()** - Import workflow
+- **EventingImportContainerWorkflow(containerName, workflowFile, operationID)** - Import workflow from container
+  - File: `pkg/mythic/eventing.go:465`
+  - Tests: `tests/integration/eventing_test.go:178`
   - GraphQL: `eventingImportContainerWorkflow` mutation
+  - Input: Container name (payload type/C2 profile), workflow file path, optional operation ID
+  - Returns: WorkflowImportResponse with new workflow ID
+  - Validates container name and workflow file are non-empty
+  - Uses current operation if not specified
+  - Containers can bundle workflows with payload types
 
-- **EventingTestFile()** - Test workflow file
+- **EventingTestFile(workflowFile, testData)** - Test workflow file validity
+  - File: `pkg/mythic/eventing.go:521`
+  - Tests: `tests/integration/eventing_test.go:199`
   - GraphQL: `eventingTestFile` query
+  - Input: Workflow file path, optional test data
+  - Returns: WorkflowTestResponse with validation results and errors
+  - Validates workflow file is non-empty
+  - Tests without importing or activating
+  - Returns detailed validation errors for fixing
 
-- **UpdateEventGroupApproval()** - Approve/reject event execution
+**Approval & External Services:**
+
+- **UpdateEventGroupApproval(eventGroupID, approved, reason)** - Approve or reject event execution
+  - File: `pkg/mythic/eventing.go:567`
+  - Tests: `tests/integration/eventing_test.go:223`
   - GraphQL: `updateEventGroupApproval` mutation
+  - Input: Event group ID, approved boolean, optional reason
+  - Returns: EventTriggerResponse with approval status
+  - Validates event group ID is positive
+  - Required for events with RequiresApproval=true
+  - Approval can be revoked by setting approved=false
 
-- **SendExternalWebhook()** - Send webhook notification
+- **SendExternalWebhook(webhookURL, method, headers, body)** - Send webhook to external service
+  - File: `pkg/mythic/eventing.go:609`
+  - Tests: `tests/integration/eventing_test.go:244`
   - GraphQL: `sendExternalWebhook` mutation
+  - Input: Webhook URL, HTTP method, optional headers/body
+  - Returns: WebhookResponse with HTTP status code
+  - Validates webhook URL is non-empty
+  - Defaults to POST if method not specified
+  - Use for integrations (Slack, PagerDuty, custom APIs)
 
-- **ConsumingServicesTestWebhook()** - Test webhook service
+- **ConsumingServicesTestWebhook(serviceName, testData)** - Test webhook consuming service
+  - File: `pkg/mythic/eventing.go:650`
+  - Tests: `tests/integration/eventing_test.go:261`
   - GraphQL: `consumingServicesTestWebhook` mutation
+  - Input: Service name, optional test data
+  - Returns: ConsumingServiceTestResponse with test results
+  - Validates service name is non-empty
+  - Tests configured webhook services (Slack, Teams, etc.)
+  - Verifies connectivity and credential validity
 
-- **ConsumingServicesTestLog()** - Test logging service
+- **ConsumingServicesTestLog(serviceName, testData)** - Test logging consuming service
+  - File: `pkg/mythic/eventing.go:686`
+  - Tests: `tests/integration/eventing_test.go:282`
   - GraphQL: `consumingServicesTestLog` mutation
+  - Input: Service name, optional test data
+  - Returns: ConsumingServiceTestResponse with test results
+  - Validates service name is non-empty
+  - Tests configured logging services (Elasticsearch, Splunk, etc.)
+  - Ensures logs are being forwarded correctly
+
+**Eventing & Workflow System:**
+
+Mythic's eventing system enables sophisticated automation through event-driven workflows. Key concepts:
+
+**Event Groups:**
+- Collection of conditions and actions forming a workflow
+- Triggered by specific events (callback created, task completed, keyword match, etc.)
+- Can require approval before execution for high-risk actions
+- Support manual triggering for testing and ad-hoc automation
+
+**Triggers:**
+- **Manual**: Triggered explicitly via API or UI
+- **Automatic**: Triggered by system events (callbacks, tasks, files)
+- **Keyword**: Triggered by keyword matching in task output or other text
+- **Scheduled**: Triggered on a schedule (time-based)
+
+**Workflow Steps:**
+- Sequences of actions executed in order
+- Conditions control flow (if/then/else logic)
+- Actions include: issue tasks, create files, send webhooks, call APIs
+- Support error handling and retry logic
+
+**Helper Methods:**
+- **EventGroup.String()**: Human-readable event group representation
+- **EventGroup.IsActive()**: Check if active and not deleted
+- **EventGroup.NeedsApproval()**: Check if approval is required
+- **EventTriggerResponse.String()**: Display trigger result
+- **EventTriggerResponse.IsSuccessful()**: Check if trigger succeeded
+- **WorkflowExportResponse.IsSuccessful()**: Check if export succeeded
+- **WorkflowImportResponse.IsSuccessful()**: Check if import succeeded
+- **WorkflowTestResponse.IsValid()**: Check if workflow passed validation
+- **WorkflowTestResponse.HasErrors()**: Check if validation found errors
+- **WebhookResponse.IsSuccessful()**: Check if webhook was sent
+- **ConsumingServiceTestResponse.IsSuccessful()**: Check if service test passed
+
+**Common Use Cases:**
+
+```go
+// Manually trigger an event group on a specific callback
+params := map[string]interface{}{
+    "scan_type": "full",
+    "target":    "10.0.0.0/24",
+}
+response, err := client.EventingTriggerManual(ctx, autoScanEventGroupID, callbackID, params)
+if err != nil {
+    return err
+}
+if response.IsSuccessful() {
+    fmt.Printf("Event triggered successfully, execution ID: %d\n", response.ExecutionID)
+}
+
+// Trigger event on multiple callbacks (bulk scanning)
+callbackIDs := []int{1, 2, 3, 4, 5}
+response, err = client.EventingTriggerManualBulk(ctx, scanEventGroupID, callbackIDs, nil)
+if err != nil {
+    return err
+}
+fmt.Printf("Bulk trigger: %s\n", response.String())
+
+// Trigger all events tagged with "cleanup"
+response, err = client.EventingTriggerKeyword(ctx, "cleanup", 0, nil)
+if err != nil {
+    return err
+}
+
+// Cancel a runaway workflow
+response, err = client.EventingTriggerCancel(ctx, executionID)
+if err != nil {
+    return err
+}
+
+// Retry a failed workflow from step 5
+response, err = client.EventingTriggerRetryFromStep(ctx, failedExecutionID, 5)
+if err != nil {
+    return err
+}
+
+// Export workflow for backup
+exportResp, err := client.EventingExportWorkflow(ctx, workflowID)
+if err != nil {
+    return err
+}
+if exportResp.IsSuccessful() {
+    // Save exportResp.Definition to file
+    fmt.Printf("Exported workflow: %s\n", exportResp.WorkflowName)
+}
+
+// Import workflow from payload type container
+importResp, err := client.EventingImportContainerWorkflow(ctx, "apollo", "workflows/auto_enum.json", 0)
+if err != nil {
+    return err
+}
+if importResp.IsSuccessful() {
+    fmt.Printf("Imported workflow ID: %d\n", importResp.WorkflowID)
+}
+
+// Test workflow before importing
+testResp, err := client.EventingTestFile(ctx, "workflows/new_workflow.json", nil)
+if err != nil {
+    return err
+}
+if !testResp.IsValid() {
+    fmt.Println("Workflow validation errors:")
+    for _, err := range testResp.Errors {
+        fmt.Printf("  - %s\n", err)
+    }
+}
+
+// Approve an event group for execution
+approveResp, err := client.UpdateEventGroupApproval(ctx, eventGroupID, true, "Verified safe for production")
+if err != nil {
+    return err
+}
+
+// Send webhook to Slack
+headers := map[string]string{
+    "Content-Type": "application/json",
+}
+body := map[string]interface{}{
+    "text":    "New callback from production target!",
+    "channel": "#alerts",
+}
+webhookResp, err := client.SendExternalWebhook(ctx, slackWebhookURL, "POST", headers, body)
+if err != nil {
+    return err
+}
+if webhookResp.IsSuccessful() {
+    fmt.Printf("Webhook sent: HTTP %d\n", webhookResp.StatusCode)
+}
+
+// Test Slack webhook service
+testData := map[string]interface{}{
+    "message": "Test notification from Mythic SDK",
+}
+serviceResp, err := client.ConsumingServicesTestWebhook(ctx, "slack-notifications", testData)
+if err != nil {
+    return err
+}
+if serviceResp.IsSuccessful() {
+    fmt.Printf("Service test passed: %s\n", serviceResp.Message)
+}
+```
+
+**Workflow Examples:**
+
+1. **Auto-Enumeration on New Callback:**
+   - Trigger: New callback registered
+   - Actions: Run hostname, whoami, ps, netstat
+   - Result: Automatic situational awareness
+
+2. **Keyword-Based Alerting:**
+   - Trigger: Task output contains "Administrator"
+   - Actions: Send Slack webhook, tag callback as "high-value"
+   - Result: Immediate notification of privileged access
+
+3. **Automated Lateral Movement:**
+   - Trigger: Manual with target list
+   - Actions: Scan network, identify vulnerable systems, deploy payloads
+   - Approval: Required before payload deployment
+   - Result: Coordinated multi-stage attack
+
+4. **Log Forwarding:**
+   - Trigger: Any task completion
+   - Actions: Send task details to Elasticsearch
+   - Result: Centralized logging for all operations
+
+5. **Scheduled Cleanup:**
+   - Trigger: Keyword "cleanup" or scheduled daily
+   - Actions: Delete old files, close inactive callbacks, archive logs
+   - Result: Automated housekeeping
+
+**Security Considerations:**
+- Event groups with RequiresApproval prevent accidental automation
+- Limit event group creation to trusted operators
+- Review workflows before importing from external sources
+- Webhook URLs may contain sensitive credentials - protect configuration
+- Failed workflows can leave operations in inconsistent state - design for idempotency
+- Bulk triggers can overwhelm targets - use rate limiting
+- External webhooks expose operation details - use only with trusted services
+
+**Notes:**
+- Event groups are operation-scoped
+- Workflows can call other workflows (nested execution)
+- Execution history tracked for auditing
+- Failed steps can be retried individually
+- Approval workflow prevents auto-execution until approved
+- Keywords are case-insensitive
+- Bulk triggers execute in parallel where possible
+- Consuming services must be configured in Mythic settings
 
 ---
 
