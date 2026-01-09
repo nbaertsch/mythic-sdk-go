@@ -330,7 +330,6 @@ func TestUtility_CreateRandomInvalidFormat(t *testing.T) {
 
 // TestUtility_GetConfig tests retrieving client configuration
 func TestUtility_GetConfig(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -360,7 +359,6 @@ func TestUtility_GetConfig(t *testing.T) {
 
 // TestUtility_GetGlobalSettings tests retrieving global Mythic settings
 func TestUtility_GetGlobalSettings(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -395,8 +393,6 @@ func TestUtility_GetGlobalSettings(t *testing.T) {
 // TestUtility_UpdateGlobalSettings tests updating global Mythic settings
 func TestUtility_UpdateGlobalSettings(t *testing.T) {
 	t.Skip("Skipping UpdateGlobalSettings to avoid modifying global configuration")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -448,7 +444,6 @@ func TestUtility_UpdateGlobalSettings(t *testing.T) {
 
 // TestUtility_UpdateGlobalSettings_InvalidInput tests with invalid input
 func TestUtility_UpdateGlobalSettings_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

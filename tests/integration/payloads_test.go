@@ -12,7 +12,6 @@ import (
 )
 
 func TestPayloads_GetPayloadTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -48,7 +47,6 @@ func TestPayloads_GetPayloadTypes(t *testing.T) {
 }
 
 func TestPayloads_GetPayloads(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -80,7 +78,6 @@ func TestPayloads_GetPayloads(t *testing.T) {
 }
 
 func TestPayloads_CreateAndManagePayload(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -236,7 +233,6 @@ func TestPayloads_CreateAndManagePayload(t *testing.T) {
 }
 
 func TestPayloads_GetPayloadByUUID_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -253,7 +249,6 @@ func TestPayloads_GetPayloadByUUID_NotFound(t *testing.T) {
 }
 
 func TestPayloads_GetPayloadCommands(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -289,7 +284,6 @@ func TestPayloads_GetPayloadCommands(t *testing.T) {
 }
 
 func TestPayloads_GetPayloadOnHost(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -328,7 +322,6 @@ func TestPayloads_GetPayloadOnHost(t *testing.T) {
 }
 
 func TestPayloads_RebuildPayload(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -385,7 +378,6 @@ func TestPayloads_RebuildPayload(t *testing.T) {
 }
 
 func TestPayloads_DeletePayload(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -450,7 +442,6 @@ func TestPayloads_DeletePayload(t *testing.T) {
 }
 
 func TestPayloads_CreatePayload_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -479,7 +470,6 @@ func TestPayloads_CreatePayload_InvalidRequest(t *testing.T) {
 }
 
 func TestPayloads_UpdatePayload_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -508,7 +498,6 @@ func TestPayloads_UpdatePayload_InvalidRequest(t *testing.T) {
 }
 
 func TestPayloads_DownloadPayload_NotReady(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -525,7 +514,6 @@ func TestPayloads_DownloadPayload_NotReady(t *testing.T) {
 }
 
 func TestPayloads_ExportPayloadConfig(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -556,7 +544,6 @@ func TestPayloads_ExportPayloadConfig(t *testing.T) {
 }
 
 func TestPayloads_WaitForPayloadComplete_Timeout(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -573,7 +560,6 @@ func TestPayloads_WaitForPayloadComplete_Timeout(t *testing.T) {
 }
 
 func TestPayloads_DownloadToFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

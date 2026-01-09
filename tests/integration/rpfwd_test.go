@@ -11,7 +11,6 @@ import (
 )
 
 func TestRPFWD_GetRPFWDs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -53,7 +52,6 @@ func TestRPFWD_GetRPFWDs(t *testing.T) {
 func TestRPFWD_CreateAndDeleteRPFWD(t *testing.T) {
 	t.Skip("Skipping create/delete test to avoid network changes")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -113,7 +111,6 @@ func TestRPFWD_CreateAndDeleteRPFWD(t *testing.T) {
 }
 
 func TestRPFWD_GetRPFWDStatus(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -158,7 +155,6 @@ func TestRPFWD_GetRPFWDStatus(t *testing.T) {
 }
 
 func TestRPFWD_RequestValidation(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -223,7 +219,6 @@ func TestRPFWD_RequestValidation(t *testing.T) {
 }
 
 func TestRPFWD_HelperMethods(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -288,7 +283,6 @@ func TestRPFWD_HelperMethods(t *testing.T) {
 }
 
 func TestRPFWD_InvalidInputs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

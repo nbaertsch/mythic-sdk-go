@@ -6,13 +6,16 @@ package integration
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // TestBrowserScripts_GetBrowserScripts tests retrieving all browser scripts
 func TestBrowserScripts_GetBrowserScripts(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	scripts, err := client.GetBrowserScripts(ctx)
 	if err != nil {
@@ -56,7 +59,9 @@ func TestBrowserScripts_GetBrowserScripts(t *testing.T) {
 
 // TestBrowserScripts_GetBrowserScriptsByOperation tests retrieving scripts for a specific operation
 func TestBrowserScripts_GetBrowserScriptsByOperation(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get current operation
 	operationID := client.GetCurrentOperation()
@@ -105,7 +110,9 @@ func TestBrowserScripts_GetBrowserScriptsByOperation(t *testing.T) {
 
 // TestBrowserScripts_GetBrowserScriptsByOperation_InvalidInput tests with invalid input
 func TestBrowserScripts_GetBrowserScriptsByOperation_InvalidInput(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get scripts with operation ID 0
 	_, err := client.GetBrowserScriptsByOperation(ctx, 0)
@@ -116,7 +123,9 @@ func TestBrowserScripts_GetBrowserScriptsByOperation_InvalidInput(t *testing.T) 
 
 // TestBrowserScripts_CustomBrowserExport tests custom browser export functionality
 func TestBrowserScripts_CustomBrowserExport(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get current operation
 	operationID := client.GetCurrentOperation()
@@ -172,7 +181,9 @@ func TestBrowserScripts_CustomBrowserExport(t *testing.T) {
 
 // TestBrowserScripts_CustomBrowserExport_InvalidInput tests export with invalid input
 func TestBrowserScripts_CustomBrowserExport_InvalidInput(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to export with nil request
 	_, err := client.CustomBrowserExport(ctx, nil)
@@ -206,7 +217,9 @@ func TestBrowserScripts_CustomBrowserExport_InvalidInput(t *testing.T) {
 
 // TestBrowserScripts_CustomBrowserExport_WithParameters tests export with various parameters
 func TestBrowserScripts_CustomBrowserExport_WithParameters(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get current operation
 	operationID := client.GetCurrentOperation()
@@ -261,7 +274,9 @@ func TestBrowserScripts_CustomBrowserExport_WithParameters(t *testing.T) {
 
 // TestBrowserScripts_GetBrowserScriptsMultipleOperations tests scripts across multiple operations
 func TestBrowserScripts_GetBrowserScriptsMultipleOperations(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get all operations to test with
 	operations, err := client.GetOperations(ctx)
@@ -287,7 +302,9 @@ func TestBrowserScripts_GetBrowserScriptsMultipleOperations(t *testing.T) {
 
 // TestBrowserScripts_ActiveVsInactiveScripts tests filtering of active vs inactive scripts
 func TestBrowserScripts_ActiveVsInactiveScripts(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	scripts, err := client.GetBrowserScripts(ctx)
 	if err != nil {
@@ -326,7 +343,9 @@ func TestBrowserScripts_ActiveVsInactiveScripts(t *testing.T) {
 
 // TestBrowserScripts_ScriptContent tests script content validation
 func TestBrowserScripts_ScriptContent(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	scripts, err := client.GetBrowserScripts(ctx)
 	if err != nil {
@@ -358,7 +377,9 @@ func TestBrowserScripts_ScriptContent(t *testing.T) {
 
 // TestBrowserScripts_OperatorSpecificScripts tests operator-specific script assignments
 func TestBrowserScripts_OperatorSpecificScripts(t *testing.T) {
-	ctx := context.Background()
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get current operation
 	operationID := client.GetCurrentOperation()

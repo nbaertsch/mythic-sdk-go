@@ -11,7 +11,6 @@ import (
 )
 
 func TestAlerts_GetAlerts(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -39,7 +38,6 @@ func TestAlerts_GetAlerts(t *testing.T) {
 }
 
 func TestAlerts_GetAlertByID(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -74,7 +72,6 @@ func TestAlerts_GetAlertByID(t *testing.T) {
 }
 
 func TestAlerts_GetUnresolvedAlerts(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -111,7 +108,6 @@ func TestAlerts_GetUnresolvedAlerts(t *testing.T) {
 func TestAlerts_ResolveAlert(t *testing.T) {
 	t.Skip("Skipping resolve test to preserve alert state")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -151,7 +147,6 @@ func TestAlerts_ResolveAlert(t *testing.T) {
 func TestAlerts_CreateCustomAlert(t *testing.T) {
 	t.Skip("Skipping create test to avoid cluttering alerts")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -189,7 +184,6 @@ func TestAlerts_CreateCustomAlert(t *testing.T) {
 }
 
 func TestAlerts_GetAlertStatistics(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -218,7 +212,6 @@ func TestAlerts_GetAlertStatistics(t *testing.T) {
 }
 
 func TestAlerts_SubscribeToAlerts(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -276,7 +269,6 @@ func TestAlerts_SubscribeToAlerts(t *testing.T) {
 }
 
 func TestAlerts_InvalidInputs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

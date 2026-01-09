@@ -10,19 +10,19 @@ import (
 // policy violations, and security events during operations.
 type Alert struct {
 	ID          int       `json:"id"`
-	Message     string    `json:"message"`      // Alert description
-	AlertType   string    `json:"alert"` // Category: opsec, error, warning, info
-	Source      string    `json:"source"`       // Component that triggered alert
-	Severity    int       `json:"severity"`     // Severity level (1-5, 5 being highest)
-	Resolved    bool      `json:"resolved"`     // Whether alert has been acknowledged
-	OperationID int       `json:"operation_id"` // Associated operation
+	Message     string    `json:"message"`               // Alert description
+	AlertType   string    `json:"alert"`                 // Category: opsec, error, warning, info
+	Source      string    `json:"source"`                // Component that triggered alert
+	Severity    int       `json:"severity"`              // Severity level (1-5, 5 being highest)
+	Resolved    bool      `json:"resolved"`              // Whether alert has been acknowledged
+	OperationID int       `json:"operation_id"`          // Associated operation
 	CallbackID  *int      `json:"callback_id,omitempty"` // Associated callback (if applicable)
-	Timestamp   time.Time `json:"timestamp"`    // When alert was created
+	Timestamp   time.Time `json:"timestamp"`             // When alert was created
 
 	// Related entities (populated with nested queries)
-	OperatorID  *int   `json:"operator_id,omitempty"` // Operator who resolved (if resolved)
-	ResolvedAt  *time.Time `json:"resolved_at,omitempty"` // When alert was resolved
-	Notes       string `json:"notes,omitempty"`       // Resolution notes
+	OperatorID *int       `json:"operator_id,omitempty"` // Operator who resolved (if resolved)
+	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // When alert was resolved
+	Notes      string     `json:"notes,omitempty"`       // Resolution notes
 }
 
 // AlertType constants for common alert categories.
@@ -45,7 +45,7 @@ const (
 // CreateAlertRequest represents a request to create a new alert.
 type CreateAlertRequest struct {
 	Message     string `json:"message"`               // Alert description (required)
-	AlertType   string `json:"alert"`        // Alert category (required)
+	AlertType   string `json:"alert"`                 // Alert category (required)
 	Source      string `json:"source"`                // Alert source (required)
 	Severity    int    `json:"severity"`              // Severity level 1-5 (required)
 	OperationID int    `json:"operation_id"`          // Operation ID (required)
@@ -54,7 +54,7 @@ type CreateAlertRequest struct {
 
 // ResolveAlertRequest represents a request to resolve/acknowledge an alert.
 type ResolveAlertRequest struct {
-	AlertID int    `json:"alert_id"` // Alert ID to resolve
+	AlertID int    `json:"alert_id"`        // Alert ID to resolve
 	Notes   string `json:"notes,omitempty"` // Optional resolution notes
 }
 

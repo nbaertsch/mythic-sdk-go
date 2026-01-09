@@ -9,14 +9,14 @@ import (
 // Hosts are distinct from callbacks - a single host may have multiple
 // callbacks or be discovered through reconnaissance before compromise.
 type HostInfo struct {
-	ID          int       `json:"id"`
-	Hostname    string    `json:"host"`         // Host identifier/hostname
-	IP          string    `json:"ip"`           // IP address(es)
-	Domain      string    `json:"domain"`       // Active Directory domain
-	OS          string    `json:"os"`           // Operating system details
-	Architecture string   `json:"architecture"` // x64, x86, ARM, etc.
-	OperationID int       `json:"operation_id"` // Associated operation
-	Timestamp   time.Time `json:"timestamp"`    // When host was discovered/added
+	ID           int       `json:"id"`
+	Hostname     string    `json:"host"`         // Host identifier/hostname
+	IP           string    `json:"ip"`           // IP address(es)
+	Domain       string    `json:"domain"`       // Active Directory domain
+	OS           string    `json:"os"`           // Operating system details
+	Architecture string    `json:"architecture"` // x64, x86, ARM, etc.
+	OperationID  int       `json:"operation_id"` // Associated operation
+	Timestamp    time.Time `json:"timestamp"`    // When host was discovered/added
 
 	// Related entities (populated with nested queries)
 	Callbacks []*Callback `json:"callbacks,omitempty"` // Active callbacks on this host
@@ -24,8 +24,8 @@ type HostInfo struct {
 
 // HostNetworkMap represents network topology information.
 type HostNetworkMap struct {
-	Hosts       []*HostInfo        `json:"hosts"`
-	Connections []HostConnection   `json:"connections"`
+	Hosts       []*HostInfo            `json:"hosts"`
+	Connections []HostConnection       `json:"connections"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -89,7 +89,7 @@ func (h *HostInfo) IsMacOS() bool {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
 		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-		findSubstring(s, substr)))
+			findSubstring(s, substr)))
 }
 
 // findSubstring performs a simple substring search.

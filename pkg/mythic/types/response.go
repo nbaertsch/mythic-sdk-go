@@ -10,9 +10,9 @@ import (
 // A single task may have multiple response entries as output is generated.
 type Response struct {
 	ID             int       `json:"id"`
-	Response       string    `json:"response"`      // The actual output content
-	Timestamp      time.Time `json:"timestamp"`     // When output was generated
-	TaskID         int       `json:"task_id"`       // Associated task
+	Response       string    `json:"response"`                  // The actual output content
+	Timestamp      time.Time `json:"timestamp"`                 // When output was generated
+	TaskID         int       `json:"task_id"`                   // Associated task
 	SequenceNumber *int      `json:"sequence_number,omitempty"` // For ordering multi-part responses
 
 	// Task details (populated inline in API responses when available)
@@ -40,10 +40,10 @@ type ResponseSearchRequest struct {
 type ResponseStatistics struct {
 	TaskID         int       `json:"task_id"`
 	ResponseCount  int       `json:"response_count"`
-	TotalSize      int       `json:"total_size"`       // Total bytes of response data
-	FirstResponse  time.Time `json:"first_response"`   // Timestamp of first response
-	LatestResponse time.Time `json:"latest_response"`  // Timestamp of latest response
-	IsComplete     bool      `json:"is_complete"`      // Whether task is completed
+	TotalSize      int       `json:"total_size"`      // Total bytes of response data
+	FirstResponse  time.Time `json:"first_response"`  // Timestamp of first response
+	LatestResponse time.Time `json:"latest_response"` // Timestamp of latest response
+	IsComplete     bool      `json:"is_complete"`     // Whether task is completed
 }
 
 // String returns a string representation of a Response.

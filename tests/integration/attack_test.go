@@ -13,7 +13,6 @@ import (
 
 // TestAttack_GetAttackTechniques tests retrieving all MITRE ATT&CK techniques
 func TestAttack_GetAttackTechniques(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -56,7 +55,6 @@ func TestAttack_GetAttackTechniques(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByID tests retrieving a specific technique by ID
 func TestAttack_GetAttackTechniqueByID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -89,7 +87,6 @@ func TestAttack_GetAttackTechniqueByID(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByID_InvalidID tests getting with invalid ID
 func TestAttack_GetAttackTechniqueByID_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -111,7 +108,6 @@ func TestAttack_GetAttackTechniqueByID_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByTNum tests retrieving by technique number
 func TestAttack_GetAttackTechniqueByTNum(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -144,7 +140,6 @@ func TestAttack_GetAttackTechniqueByTNum(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByTNum_InvalidTNum tests getting with invalid TNum
 func TestAttack_GetAttackTechniqueByTNum_InvalidTNum(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -166,7 +161,6 @@ func TestAttack_GetAttackTechniqueByTNum_InvalidTNum(t *testing.T) {
 
 // TestAttack_GetAttackByTask tests retrieving ATT&CK tags for a task
 func TestAttack_GetAttackByTask(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -217,7 +211,6 @@ func TestAttack_GetAttackByTask(t *testing.T) {
 
 // TestAttack_GetAttackByTask_InvalidID tests getting with invalid task ID
 func TestAttack_GetAttackByTask_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -233,7 +226,6 @@ func TestAttack_GetAttackByTask_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttackByCommand tests retrieving ATT&CK tags for a command
 func TestAttack_GetAttackByCommand(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -273,7 +265,6 @@ func TestAttack_GetAttackByCommand(t *testing.T) {
 
 // TestAttack_GetAttackByCommand_InvalidID tests getting with invalid command ID
 func TestAttack_GetAttackByCommand_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -289,7 +280,6 @@ func TestAttack_GetAttackByCommand_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttacksByOperation tests retrieving all techniques used in an operation
 func TestAttack_GetAttacksByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -323,7 +313,6 @@ func TestAttack_GetAttacksByOperation(t *testing.T) {
 
 // TestAttack_GetAttacksByOperation_InvalidID tests getting with invalid operation ID
 func TestAttack_GetAttacksByOperation_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -339,7 +328,6 @@ func TestAttack_GetAttacksByOperation_InvalidID(t *testing.T) {
 
 // TestAttack_TechniqueOrdering tests that techniques are ordered by TNum
 func TestAttack_TechniqueOrdering(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -369,7 +357,6 @@ func TestAttack_TechniqueOrdering(t *testing.T) {
 
 // TestAttack_AttackTaskOrdering tests that attack tasks are ordered by timestamp
 func TestAttack_AttackTaskOrdering(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -399,7 +386,6 @@ func TestAttack_AttackTaskOrdering(t *testing.T) {
 
 // TestAttack_CommonTechniques tests retrieval of common attack techniques
 func TestAttack_CommonTechniques(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -434,8 +420,6 @@ func TestAttack_CommonTechniques(t *testing.T) {
 // TestAttack_AddMITREAttackToTask tests adding MITRE ATT&CK tag to a task
 func TestAttack_AddMITREAttackToTask(t *testing.T) {
 	t.Skip("Skipping AddMITREAttackToTask to avoid modifying task tags")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -507,7 +491,6 @@ func TestAttack_AddMITREAttackToTask(t *testing.T) {
 
 // TestAttack_AddMITREAttackToTask_InvalidInput tests with invalid input
 func TestAttack_AddMITREAttackToTask_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

@@ -11,7 +11,6 @@ import (
 )
 
 func TestTasks_IssueTask(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -60,7 +59,6 @@ func TestTasks_IssueTask(t *testing.T) {
 }
 
 func TestTasks_IssueTask_InvalidCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -83,7 +81,6 @@ func TestTasks_IssueTask_InvalidCallback(t *testing.T) {
 }
 
 func TestTasks_IssueTask_MissingCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -108,7 +105,6 @@ func TestTasks_IssueTask_MissingCallback(t *testing.T) {
 }
 
 func TestTasks_IssueTask_MissingCommand(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -129,7 +125,6 @@ func TestTasks_IssueTask_MissingCommand(t *testing.T) {
 }
 
 func TestTasks_GetTask(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -176,7 +171,6 @@ func TestTasks_GetTask(t *testing.T) {
 }
 
 func TestTasks_GetTask_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -193,7 +187,6 @@ func TestTasks_GetTask_NotFound(t *testing.T) {
 }
 
 func TestTasks_GetTasksForCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -245,7 +238,6 @@ func TestTasks_GetTasksForCallback(t *testing.T) {
 }
 
 func TestTasks_GetTaskOutput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -296,7 +288,6 @@ func TestTasks_GetTaskOutput(t *testing.T) {
 }
 
 func TestTasks_UpdateTask(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -348,7 +339,6 @@ func TestTasks_UpdateTask(t *testing.T) {
 }
 
 func TestTasks_WaitForTaskComplete_Timeout(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -389,7 +379,6 @@ func TestTasks_WaitForTaskComplete_Timeout(t *testing.T) {
 }
 
 func TestTasks_GetTaskOutput_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -406,7 +395,6 @@ func TestTasks_GetTaskOutput_NotFound(t *testing.T) {
 }
 
 func TestTasks_TaskStatusHelpers(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -450,7 +438,6 @@ func TestTasks_TaskStatusHelpers(t *testing.T) {
 }
 
 func TestTasks_GetTaskArtifacts(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -507,7 +494,6 @@ func TestTasks_GetTaskArtifacts(t *testing.T) {
 }
 
 func TestTasks_GetTaskArtifacts_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -531,8 +517,6 @@ func TestTasks_GetTaskArtifacts_InvalidID(t *testing.T) {
 
 func TestTasks_ReissueTask(t *testing.T) {
 	t.Skip("Skipping ReissueTask to avoid re-executing tasks")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -576,7 +560,6 @@ func TestTasks_ReissueTask(t *testing.T) {
 }
 
 func TestTasks_ReissueTask_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -600,8 +583,6 @@ func TestTasks_ReissueTask_InvalidID(t *testing.T) {
 
 func TestTasks_ReissueTaskWithHandler(t *testing.T) {
 	t.Skip("Skipping ReissueTaskWithHandler to avoid re-executing tasks")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -642,7 +623,6 @@ func TestTasks_ReissueTaskWithHandler(t *testing.T) {
 }
 
 func TestTasks_ReissueTaskWithHandler_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -666,8 +646,6 @@ func TestTasks_ReissueTaskWithHandler_InvalidID(t *testing.T) {
 
 func TestTasks_RequestOpsecBypass(t *testing.T) {
 	t.Skip("Skipping RequestOpsecBypass to avoid modifying task security status")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -710,7 +688,6 @@ func TestTasks_RequestOpsecBypass(t *testing.T) {
 }
 
 func TestTasks_RequestOpsecBypass_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

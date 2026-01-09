@@ -11,7 +11,6 @@ import (
 )
 
 func TestProcesses_GetProcesses(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -46,7 +45,6 @@ func TestProcesses_GetProcesses(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -79,7 +77,6 @@ func TestProcesses_GetProcessesByOperation(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByOperation_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -96,7 +93,6 @@ func TestProcesses_GetProcessesByOperation_InvalidID(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -145,7 +141,6 @@ func TestProcesses_GetProcessesByCallback(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByCallback_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -162,7 +157,6 @@ func TestProcesses_GetProcessesByCallback_InvalidID(t *testing.T) {
 }
 
 func TestProcesses_GetProcessTree(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -244,7 +238,6 @@ func verifyTreeChildren(t *testing.T, node *types.ProcessTree, depth int) {
 }
 
 func TestProcesses_GetProcessTree_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -261,7 +254,6 @@ func TestProcesses_GetProcessTree_InvalidID(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByHost(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -310,7 +302,6 @@ func TestProcesses_GetProcessesByHost(t *testing.T) {
 }
 
 func TestProcesses_GetProcessesByHost_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -327,7 +318,6 @@ func TestProcesses_GetProcessesByHost_InvalidID(t *testing.T) {
 }
 
 func TestProcesses_ProcessHelperMethods(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -372,7 +362,6 @@ func TestProcesses_ProcessHelperMethods(t *testing.T) {
 }
 
 func TestProcesses_ProcessFields(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

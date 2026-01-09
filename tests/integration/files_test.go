@@ -9,7 +9,6 @@ import (
 )
 
 func TestFiles_GetFiles(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -44,7 +43,6 @@ func TestFiles_GetFiles(t *testing.T) {
 }
 
 func TestFiles_GetDownloadedFiles(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -75,7 +73,6 @@ func TestFiles_GetDownloadedFiles(t *testing.T) {
 }
 
 func TestFiles_UploadFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -111,7 +108,6 @@ func TestFiles_UploadFile(t *testing.T) {
 }
 
 func TestFiles_UploadFile_MissingFilename(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -130,7 +126,6 @@ func TestFiles_UploadFile_MissingFilename(t *testing.T) {
 }
 
 func TestFiles_UploadFile_EmptyData(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -148,7 +143,6 @@ func TestFiles_UploadFile_EmptyData(t *testing.T) {
 }
 
 func TestFiles_GetFileByID_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -166,7 +160,6 @@ func TestFiles_GetFileByID_NotFound(t *testing.T) {
 }
 
 func TestFiles_DownloadFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -199,7 +192,6 @@ func TestFiles_DownloadFile(t *testing.T) {
 }
 
 func TestFiles_DownloadFile_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -217,7 +209,6 @@ func TestFiles_DownloadFile_NotFound(t *testing.T) {
 }
 
 func TestFiles_DownloadFile_EmptyID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -235,7 +226,6 @@ func TestFiles_DownloadFile_EmptyID(t *testing.T) {
 }
 
 func TestFiles_DeleteFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -271,7 +261,6 @@ func TestFiles_DeleteFile(t *testing.T) {
 }
 
 func TestFiles_DeleteFile_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -289,7 +278,6 @@ func TestFiles_DeleteFile_NotFound(t *testing.T) {
 }
 
 func TestFiles_DeleteFile_EmptyID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -307,7 +295,6 @@ func TestFiles_DeleteFile_EmptyID(t *testing.T) {
 }
 
 func TestFiles_UploadDownloadCycle(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -347,7 +334,6 @@ func TestFiles_UploadDownloadCycle(t *testing.T) {
 }
 
 func TestFiles_FilterByType(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -382,7 +368,6 @@ func TestFiles_FilterByType(t *testing.T) {
 }
 
 func TestFiles_BulkDownload(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -430,7 +415,6 @@ func TestFiles_BulkDownload(t *testing.T) {
 }
 
 func TestFiles_BulkDownload_EmptyList(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -448,7 +432,6 @@ func TestFiles_BulkDownload_EmptyList(t *testing.T) {
 }
 
 func TestFiles_PreviewFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -487,7 +470,6 @@ func TestFiles_PreviewFile(t *testing.T) {
 }
 
 func TestFiles_PreviewFile_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -505,7 +487,6 @@ func TestFiles_PreviewFile_NotFound(t *testing.T) {
 }
 
 func TestFiles_PreviewFile_EmptyID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

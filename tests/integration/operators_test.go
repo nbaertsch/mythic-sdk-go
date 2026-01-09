@@ -470,8 +470,6 @@ func boolPtr(b bool) *bool {
 func TestOperators_UpdateOperatorOperation(t *testing.T) {
 	t.Skip("Skipping UpdateOperatorOperation to avoid modifying operator permissions")
 
-	SkipIfNoMythic(t)
-
 	client := AuthenticateTestClient(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -520,7 +518,6 @@ func TestOperators_UpdateOperatorOperation(t *testing.T) {
 
 // TestOperators_UpdateOperatorOperation_InvalidInput tests with invalid input
 func TestOperators_UpdateOperatorOperation_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -558,8 +555,6 @@ func TestOperators_UpdateOperatorOperation_InvalidInput(t *testing.T) {
 // TestOperators_UpdateOperatorPreferences tests updating operator preferences
 func TestOperators_UpdateOperatorPreferences(t *testing.T) {
 	t.Skip("Skipping UpdateOperatorPreferences to avoid modifying operator settings")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -602,7 +597,6 @@ func TestOperators_UpdateOperatorPreferences(t *testing.T) {
 
 // TestOperators_UpdateOperatorPreferences_InvalidInput tests with invalid input
 func TestOperators_UpdateOperatorPreferences_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -640,8 +634,6 @@ func TestOperators_UpdateOperatorPreferences_InvalidInput(t *testing.T) {
 // TestOperators_UpdateOperatorSecrets tests updating operator secrets
 func TestOperators_UpdateOperatorSecrets(t *testing.T) {
 	t.Skip("Skipping UpdateOperatorSecrets to avoid modifying operator secrets")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -683,7 +675,6 @@ func TestOperators_UpdateOperatorSecrets(t *testing.T) {
 
 // TestOperators_UpdateOperatorSecrets_InvalidInput tests with invalid input
 func TestOperators_UpdateOperatorSecrets_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -721,8 +712,6 @@ func TestOperators_UpdateOperatorSecrets_InvalidInput(t *testing.T) {
 // TestOperators_UpdatePasswordAndEmail tests updating password and email
 func TestOperators_UpdatePasswordAndEmail(t *testing.T) {
 	t.Skip("Skipping UpdatePasswordAndEmail to avoid modifying operator credentials")
-
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -769,7 +758,6 @@ func TestOperators_UpdatePasswordAndEmail(t *testing.T) {
 
 // TestOperators_UpdatePasswordAndEmail_InvalidInput tests with invalid input
 func TestOperators_UpdatePasswordAndEmail_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

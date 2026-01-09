@@ -48,14 +48,14 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 
 	var query struct {
 		Host []struct {
-			ID          int       `graphql:"id"`
-			Host        string    `graphql:"host"`
-			IP          string    `graphql:"ip"`
-			Domain      string    `graphql:"domain"`
-			OS          string    `graphql:"os"`
-			Architecture string   `graphql:"architecture"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID           int       `graphql:"id"`
+			Host         string    `graphql:"host"`
+			IP           string    `graphql:"ip"`
+			Domain       string    `graphql:"domain"`
+			OS           string    `graphql:"os"`
+			Architecture string    `graphql:"architecture"`
+			OperationID  int       `graphql:"operation_id"`
+			Timestamp    time.Time `graphql:"timestamp"`
 		} `graphql:"host(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
 	}
 
@@ -71,14 +71,14 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 	hosts := make([]*types.HostInfo, len(query.Host))
 	for i, hostData := range query.Host {
 		hosts[i] = &types.HostInfo{
-			ID:          hostData.ID,
-			Hostname:    hostData.Host,
-			IP:          hostData.IP,
-			Domain:      hostData.Domain,
-			OS:          hostData.OS,
+			ID:           hostData.ID,
+			Hostname:     hostData.Host,
+			IP:           hostData.IP,
+			Domain:       hostData.Domain,
+			OS:           hostData.OS,
 			Architecture: hostData.Architecture,
-			OperationID: hostData.OperationID,
-			Timestamp:   hostData.Timestamp,
+			OperationID:  hostData.OperationID,
+			Timestamp:    hostData.Timestamp,
 		}
 	}
 
@@ -114,14 +114,14 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 
 	var query struct {
 		Host []struct {
-			ID          int       `graphql:"id"`
-			Host        string    `graphql:"host"`
-			IP          string    `graphql:"ip"`
-			Domain      string    `graphql:"domain"`
-			OS          string    `graphql:"os"`
-			Architecture string   `graphql:"architecture"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID           int       `graphql:"id"`
+			Host         string    `graphql:"host"`
+			IP           string    `graphql:"ip"`
+			Domain       string    `graphql:"domain"`
+			OS           string    `graphql:"os"`
+			Architecture string    `graphql:"architecture"`
+			OperationID  int       `graphql:"operation_id"`
+			Timestamp    time.Time `graphql:"timestamp"`
 		} `graphql:"host(where: {id: {_eq: $host_id}})"`
 	}
 
@@ -140,14 +140,14 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 
 	hostData := query.Host[0]
 	return &types.HostInfo{
-		ID:          hostData.ID,
-		Hostname:    hostData.Host,
-		IP:          hostData.IP,
-		Domain:      hostData.Domain,
-		OS:          hostData.OS,
+		ID:           hostData.ID,
+		Hostname:     hostData.Host,
+		IP:           hostData.IP,
+		Domain:       hostData.Domain,
+		OS:           hostData.OS,
 		Architecture: hostData.Architecture,
-		OperationID: hostData.OperationID,
-		Timestamp:   hostData.Timestamp,
+		OperationID:  hostData.OperationID,
+		Timestamp:    hostData.Timestamp,
 	}, nil
 }
 
@@ -181,14 +181,14 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 
 	var query struct {
 		Host []struct {
-			ID          int       `graphql:"id"`
-			Host        string    `graphql:"host"`
-			IP          string    `graphql:"ip"`
-			Domain      string    `graphql:"domain"`
-			OS          string    `graphql:"os"`
-			Architecture string   `graphql:"architecture"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID           int       `graphql:"id"`
+			Host         string    `graphql:"host"`
+			IP           string    `graphql:"ip"`
+			Domain       string    `graphql:"domain"`
+			OS           string    `graphql:"os"`
+			Architecture string    `graphql:"architecture"`
+			OperationID  int       `graphql:"operation_id"`
+			Timestamp    time.Time `graphql:"timestamp"`
 		} `graphql:"host(where: {host: {_ilike: $hostname}}, limit: 1)"`
 	}
 
@@ -207,14 +207,14 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 
 	hostData := query.Host[0]
 	return &types.HostInfo{
-		ID:          hostData.ID,
-		Hostname:    hostData.Host,
-		IP:          hostData.IP,
-		Domain:      hostData.Domain,
-		OS:          hostData.OS,
+		ID:           hostData.ID,
+		Hostname:     hostData.Host,
+		IP:           hostData.IP,
+		Domain:       hostData.Domain,
+		OS:           hostData.OS,
 		Architecture: hostData.Architecture,
-		OperationID: hostData.OperationID,
-		Timestamp:   hostData.Timestamp,
+		OperationID:  hostData.OperationID,
+		Timestamp:    hostData.Timestamp,
 	}, nil
 }
 

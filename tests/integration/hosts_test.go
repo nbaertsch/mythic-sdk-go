@@ -9,7 +9,6 @@ import (
 )
 
 func TestHosts_GetHosts(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -34,7 +33,6 @@ func TestHosts_GetHosts(t *testing.T) {
 }
 
 func TestHosts_GetHostByID(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -71,7 +69,6 @@ func TestHosts_GetHostByID(t *testing.T) {
 }
 
 func TestHosts_GetHostByHostname(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -103,7 +100,6 @@ func TestHosts_GetHostByHostname(t *testing.T) {
 }
 
 func TestHosts_GetCallbacksForHost(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -150,7 +146,6 @@ func TestHosts_GetCallbacksForHost(t *testing.T) {
 }
 
 func TestHosts_GetHostNetworkMap(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -225,7 +220,6 @@ func TestHosts_GetHostNetworkMap(t *testing.T) {
 }
 
 func TestHosts_HelperMethods(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -283,7 +277,6 @@ func TestHosts_HelperMethods(t *testing.T) {
 }
 
 func TestHosts_InvalidInputs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

@@ -28,7 +28,12 @@
       "Bash(source:*)",
       "Bash(python3:*)",
       "Bash(sudo ./mythic-cli status:*)",
-      "Bash(gofmt:*)"
+      "Bash(gofmt:*)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(while read f)",
+      "Bash(find:*)"
     ]
   }
 }

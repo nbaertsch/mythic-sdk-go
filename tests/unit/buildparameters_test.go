@@ -266,27 +266,27 @@ func TestBuildParameterInstanceIsEncrypted(t *testing.T) {
 		{
 			name: "encrypted instance",
 			instance: types.BuildParameterInstance{
-				ID:               1,
-				Value:            "plaintext",
-				EncValue:         &encValue,
+				ID:       1,
+				Value:    "plaintext",
+				EncValue: &encValue,
 			},
 			want: true,
 		},
 		{
 			name: "non-encrypted instance",
 			instance: types.BuildParameterInstance{
-				ID:               2,
-				Value:            "plaintext",
-				EncValue:         nil,
+				ID:       2,
+				Value:    "plaintext",
+				EncValue: nil,
 			},
 			want: false,
 		},
 		{
 			name: "empty encrypted value",
 			instance: types.BuildParameterInstance{
-				ID:               3,
-				Value:            "plaintext",
-				EncValue:         &emptyEncValue,
+				ID:       3,
+				Value:    "plaintext",
+				EncValue: &emptyEncValue,
 			},
 			want: false,
 		},
@@ -313,18 +313,18 @@ func TestBuildParameterInstanceGetValue(t *testing.T) {
 		{
 			name: "get encrypted value",
 			instance: types.BuildParameterInstance{
-				ID:               1,
-				Value:            "plaintext",
-				EncValue:         &encValue,
+				ID:       1,
+				Value:    "plaintext",
+				EncValue: &encValue,
 			},
 			want: "encrypted_data",
 		},
 		{
 			name: "get plain value",
 			instance: types.BuildParameterInstance{
-				ID:               2,
-				Value:            "plaintext",
-				EncValue:         nil,
+				ID:       2,
+				Value:    "plaintext",
+				EncValue: nil,
 			},
 			want: "plaintext",
 		},

@@ -11,7 +11,6 @@ import (
 )
 
 func TestResponses_GetResponsesByTask(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -53,7 +52,6 @@ func TestResponses_GetResponsesByTask(t *testing.T) {
 }
 
 func TestResponses_GetResponseByID(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -88,7 +86,6 @@ func TestResponses_GetResponseByID(t *testing.T) {
 }
 
 func TestResponses_GetResponsesByCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -126,7 +123,6 @@ func TestResponses_GetResponsesByCallback(t *testing.T) {
 }
 
 func TestResponses_SearchResponses(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -155,7 +151,6 @@ func TestResponses_SearchResponses(t *testing.T) {
 }
 
 func TestResponses_GetLatestResponses(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -196,7 +191,6 @@ func TestResponses_GetLatestResponses(t *testing.T) {
 }
 
 func TestResponses_GetResponseStatistics(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -241,7 +235,6 @@ func TestResponses_GetResponseStatistics(t *testing.T) {
 }
 
 func TestResponses_InvalidInputs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

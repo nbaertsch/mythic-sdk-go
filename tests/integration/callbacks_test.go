@@ -11,7 +11,6 @@ import (
 )
 
 func TestCallbacks_GetAllCallbacks(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -56,7 +55,6 @@ func TestCallbacks_GetAllCallbacks(t *testing.T) {
 }
 
 func TestCallbacks_GetAllActiveCallbacks(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -96,7 +94,6 @@ func TestCallbacks_GetAllActiveCallbacks(t *testing.T) {
 }
 
 func TestCallbacks_GetCallbackByID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -148,7 +145,6 @@ func TestCallbacks_GetCallbackByID(t *testing.T) {
 }
 
 func TestCallbacks_GetCallbackByID_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -167,7 +163,6 @@ func TestCallbacks_GetCallbackByID_NotFound(t *testing.T) {
 }
 
 func TestCallbacks_UpdateCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -227,7 +222,6 @@ func TestCallbacks_UpdateCallback(t *testing.T) {
 }
 
 func TestCallbacks_UpdateCallback_Locked(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -285,7 +279,6 @@ func TestCallbacks_UpdateCallback_Locked(t *testing.T) {
 }
 
 func TestCallbacks_IntegrityLevelHelpers(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -330,7 +323,6 @@ func TestCallbacks_IntegrityLevelHelpers(t *testing.T) {
 }
 
 func TestCallbacks_CallbackFields(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -395,7 +387,6 @@ func TestCallbacks_CallbackFields(t *testing.T) {
 func TestCallbacks_CreateCallback(t *testing.T) {
 	t.Skip("Skipping CreateCallback test - requires valid payload UUID and manual verification")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -430,7 +421,6 @@ func TestCallbacks_CreateCallback(t *testing.T) {
 }
 
 func TestCallbacks_CreateCallback_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -453,7 +443,6 @@ func TestCallbacks_CreateCallback_InvalidInput(t *testing.T) {
 func TestCallbacks_DeleteCallback(t *testing.T) {
 	t.Skip("Skipping DeleteCallback test - destructive operation")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -465,7 +454,6 @@ func TestCallbacks_DeleteCallback(t *testing.T) {
 }
 
 func TestCallbacks_DeleteCallback_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -486,7 +474,6 @@ func TestCallbacks_DeleteCallback_InvalidInput(t *testing.T) {
 }
 
 func TestCallbacks_ExportCallbackConfig(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -522,7 +509,6 @@ func TestCallbacks_ExportCallbackConfig(t *testing.T) {
 }
 
 func TestCallbacks_ExportCallbackConfig_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -545,7 +531,6 @@ func TestCallbacks_ExportCallbackConfig_InvalidInput(t *testing.T) {
 func TestCallbacks_ImportCallbackConfig(t *testing.T) {
 	t.Skip("Skipping ImportCallbackConfig test - requires valid exported config")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -557,7 +542,6 @@ func TestCallbacks_ImportCallbackConfig(t *testing.T) {
 }
 
 func TestCallbacks_ImportCallbackConfig_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -580,7 +564,6 @@ func TestCallbacks_ImportCallbackConfig_InvalidInput(t *testing.T) {
 func TestCallbacks_AddCallbackGraphEdge(t *testing.T) {
 	t.Skip("Skipping AddCallbackGraphEdge test - requires multiple callbacks")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -613,7 +596,6 @@ func TestCallbacks_AddCallbackGraphEdge(t *testing.T) {
 }
 
 func TestCallbacks_AddCallbackGraphEdge_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -642,7 +624,6 @@ func TestCallbacks_AddCallbackGraphEdge_InvalidInput(t *testing.T) {
 func TestCallbacks_RemoveCallbackGraphEdge(t *testing.T) {
 	t.Skip("Skipping RemoveCallbackGraphEdge test - requires existing graph edge")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -654,7 +635,6 @@ func TestCallbacks_RemoveCallbackGraphEdge(t *testing.T) {
 }
 
 func TestCallbacks_RemoveCallbackGraphEdge_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

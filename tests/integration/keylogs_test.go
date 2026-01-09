@@ -9,7 +9,6 @@ import (
 )
 
 func TestKeylogs_GetKeylogs(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -47,7 +46,6 @@ func TestKeylogs_GetKeylogs(t *testing.T) {
 }
 
 func TestKeylogs_GetKeylogsByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -90,7 +88,6 @@ func TestKeylogs_GetKeylogsByOperation(t *testing.T) {
 }
 
 func TestKeylogs_GetKeylogsByOperation_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -107,7 +104,6 @@ func TestKeylogs_GetKeylogsByOperation_InvalidID(t *testing.T) {
 }
 
 func TestKeylogs_GetKeylogsByCallback(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -170,7 +166,6 @@ func TestKeylogs_GetKeylogsByCallback(t *testing.T) {
 }
 
 func TestKeylogs_GetKeylogsByCallback_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -187,7 +182,6 @@ func TestKeylogs_GetKeylogsByCallback_InvalidID(t *testing.T) {
 }
 
 func TestKeylogs_KeylogHelperMethods(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -221,7 +215,6 @@ func TestKeylogs_KeylogHelperMethods(t *testing.T) {
 }
 
 func TestKeylogs_MultipleCallbacks(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -262,7 +255,6 @@ func TestKeylogs_MultipleCallbacks(t *testing.T) {
 }
 
 func TestKeylogs_TimestampOrdering(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

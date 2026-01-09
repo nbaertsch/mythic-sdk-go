@@ -11,7 +11,6 @@ import (
 )
 
 func TestTags_GetTagTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -48,7 +47,6 @@ func TestTags_GetTagTypes(t *testing.T) {
 }
 
 func TestTags_CreateAndRetrieveTagType(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -115,7 +113,6 @@ func TestTags_CreateAndRetrieveTagType(t *testing.T) {
 }
 
 func TestTags_CreateTagType_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -140,7 +137,6 @@ func TestTags_CreateTagType_InvalidInput(t *testing.T) {
 }
 
 func TestTags_GetTagTypeByID_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -163,7 +159,6 @@ func TestTags_GetTagTypeByID_InvalidID(t *testing.T) {
 }
 
 func TestTags_UpdateTagType(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -219,7 +214,6 @@ func TestTags_UpdateTagType(t *testing.T) {
 }
 
 func TestTags_DeleteTagType(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -263,7 +257,6 @@ func TestTags_DeleteTagType(t *testing.T) {
 }
 
 func TestTags_CreateTag(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -333,7 +326,6 @@ func TestTags_CreateTag(t *testing.T) {
 }
 
 func TestTags_CreateTag_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -382,7 +374,6 @@ func TestTags_CreateTag_InvalidInput(t *testing.T) {
 }
 
 func TestTags_GetTags(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -448,7 +439,6 @@ func TestTags_GetTags(t *testing.T) {
 }
 
 func TestTags_GetTagsByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -491,7 +481,6 @@ func TestTags_GetTagsByOperation(t *testing.T) {
 }
 
 func TestTags_DeleteTag(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -550,7 +539,6 @@ func TestTags_DeleteTag(t *testing.T) {
 }
 
 func TestTags_TagSourceTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -577,7 +565,6 @@ func TestTags_TagSourceTypes(t *testing.T) {
 }
 
 func TestTags_TimestampOrdering(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -615,7 +602,6 @@ func TestTags_TimestampOrdering(t *testing.T) {
 }
 
 func TestTags_GetTagTypesByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -678,7 +664,6 @@ func TestTags_GetTagTypesByOperation(t *testing.T) {
 }
 
 func TestTags_GetTagTypesByOperation_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

@@ -12,7 +12,6 @@ import (
 )
 
 func TestScreenshots_GetScreenshots(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -53,7 +52,6 @@ func TestScreenshots_GetScreenshots(t *testing.T) {
 }
 
 func TestScreenshots_GetScreenshotByID(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -96,7 +94,6 @@ func TestScreenshots_GetScreenshotByID(t *testing.T) {
 }
 
 func TestScreenshots_DownloadScreenshot(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -144,7 +141,6 @@ func TestScreenshots_DownloadScreenshot(t *testing.T) {
 }
 
 func TestScreenshots_GetScreenshotThumbnail(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -191,7 +187,6 @@ func TestScreenshots_GetScreenshotThumbnail(t *testing.T) {
 func TestScreenshots_DeleteScreenshot(t *testing.T) {
 	t.Skip("Skipping delete test to preserve test data")
 
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -229,7 +224,6 @@ func TestScreenshots_DeleteScreenshot(t *testing.T) {
 }
 
 func TestScreenshots_GetScreenshotTimeline(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -289,7 +283,6 @@ func TestScreenshots_GetScreenshotTimeline(t *testing.T) {
 }
 
 func TestScreenshots_InvalidInputs(t *testing.T) {
-	SkipIfNoMythic(t)
 	client := AuthenticateTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

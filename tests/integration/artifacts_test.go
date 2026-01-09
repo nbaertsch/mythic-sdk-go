@@ -11,7 +11,6 @@ import (
 )
 
 func TestArtifacts_GetArtifacts(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -49,7 +48,6 @@ func TestArtifacts_GetArtifacts(t *testing.T) {
 }
 
 func TestArtifacts_CreateAndRetrieve(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -121,7 +119,6 @@ func TestArtifacts_CreateAndRetrieve(t *testing.T) {
 }
 
 func TestArtifacts_CreateArtifact_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -146,7 +143,6 @@ func TestArtifacts_CreateArtifact_InvalidInput(t *testing.T) {
 }
 
 func TestArtifacts_GetArtifactByID_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -169,7 +165,6 @@ func TestArtifacts_GetArtifactByID_InvalidID(t *testing.T) {
 }
 
 func TestArtifacts_UpdateArtifact(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -223,7 +218,6 @@ func TestArtifacts_UpdateArtifact(t *testing.T) {
 }
 
 func TestArtifacts_DeleteArtifact(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -269,7 +263,6 @@ func TestArtifacts_DeleteArtifact(t *testing.T) {
 }
 
 func TestArtifacts_GetArtifactsByHost(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -325,7 +318,6 @@ func TestArtifacts_GetArtifactsByHost(t *testing.T) {
 }
 
 func TestArtifacts_GetArtifactsByType(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -384,7 +376,6 @@ func TestArtifacts_GetArtifactsByType(t *testing.T) {
 }
 
 func TestArtifacts_TimestampOrdering(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -418,7 +409,6 @@ func TestArtifacts_TimestampOrdering(t *testing.T) {
 }
 
 func TestArtifacts_ArtifactTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -447,7 +437,6 @@ func TestArtifacts_ArtifactTypes(t *testing.T) {
 }
 
 func TestArtifacts_GetArtifactsByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -502,7 +491,6 @@ func TestArtifacts_GetArtifactsByOperation(t *testing.T) {
 }
 
 func TestArtifacts_GetArtifactsByOperation_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

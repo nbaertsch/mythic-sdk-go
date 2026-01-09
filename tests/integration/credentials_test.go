@@ -11,7 +11,6 @@ import (
 )
 
 func TestCredentials_GetCredentials(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -43,7 +42,6 @@ func TestCredentials_GetCredentials(t *testing.T) {
 }
 
 func TestCredentials_CreateAndManageCredential(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -155,7 +153,6 @@ func TestCredentials_CreateAndManageCredential(t *testing.T) {
 }
 
 func TestCredentials_CreateCredential_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -204,7 +201,6 @@ func TestCredentials_CreateCredential_InvalidRequest(t *testing.T) {
 }
 
 func TestCredentials_UpdateCredential_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -240,7 +236,6 @@ func TestCredentials_UpdateCredential_InvalidRequest(t *testing.T) {
 }
 
 func TestCredentials_UpdateCredential_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -263,7 +258,6 @@ func TestCredentials_UpdateCredential_NotFound(t *testing.T) {
 }
 
 func TestCredentials_DeleteCredential_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -280,7 +274,6 @@ func TestCredentials_DeleteCredential_InvalidID(t *testing.T) {
 }
 
 func TestCredentials_GetCredentialsByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -313,7 +306,6 @@ func TestCredentials_GetCredentialsByOperation(t *testing.T) {
 }
 
 func TestCredentials_CreateDifferentTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -386,7 +378,6 @@ func TestCredentials_CreateDifferentTypes(t *testing.T) {
 }
 
 func TestCredentials_PartialUpdate(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

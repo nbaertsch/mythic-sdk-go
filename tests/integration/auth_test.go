@@ -11,7 +11,6 @@ import (
 )
 
 func TestAuthentication_LoginWithPassword(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := NewTestClient(t)
 
@@ -37,7 +36,6 @@ func TestAuthentication_LoginWithPassword(t *testing.T) {
 }
 
 func TestAuthentication_GetMe(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -76,7 +74,6 @@ func TestAuthentication_GetMe(t *testing.T) {
 }
 
 func TestAuthentication_CreateAPIToken(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -128,7 +125,6 @@ func TestAuthentication_CreateAPIToken(t *testing.T) {
 }
 
 func TestAuthentication_EnsureAuthenticated(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := NewTestClient(t)
 
@@ -156,7 +152,6 @@ func TestAuthentication_EnsureAuthenticated(t *testing.T) {
 }
 
 func TestAuthentication_InvalidCredentials(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	cfg := GetTestConfig(t)
 
@@ -205,7 +200,6 @@ func TestAuthentication_GetMeWithoutAuth(t *testing.T) {
 }
 
 func TestAuthentication_CurrentOperationID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -246,7 +240,6 @@ func TestAuthentication_CurrentOperationID(t *testing.T) {
 }
 
 func TestAuthentication_RefreshAccessToken(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := NewTestClient(t)
 
@@ -307,7 +300,6 @@ func TestAuthentication_RefreshAccessToken(t *testing.T) {
 }
 
 func TestAuthentication_RefreshAccessToken_NoRefreshToken(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := NewTestClient(t)
 

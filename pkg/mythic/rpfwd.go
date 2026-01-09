@@ -185,7 +185,7 @@ func (c *Client) DeleteRPFWD(ctx context.Context, rpfwdID int) error {
 	// Mark RPFWD as inactive
 	var mutation struct {
 		UpdateRpfwd struct {
-			Affected_rows int `graphql:"affected_rows"`
+			AffectedRows int `graphql:"affected_rows"`
 		} `graphql:"update_rpfwd(where: {id: {_eq: $rpfwd_id}}, _set: {active: false})"`
 	}
 
@@ -198,7 +198,7 @@ func (c *Client) DeleteRPFWD(ctx context.Context, rpfwdID int) error {
 		return WrapError("DeleteRPFWD", err, "failed to delete RPFWD")
 	}
 
-	if mutation.UpdateRpfwd.Affected_rows == 0 {
+	if mutation.UpdateRpfwd.AffectedRows == 0 {
 		return WrapError("DeleteRPFWD", ErrNotFound, fmt.Sprintf("RPFWD %d not found", rpfwdID))
 	}
 

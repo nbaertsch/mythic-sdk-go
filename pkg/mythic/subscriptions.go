@@ -196,7 +196,13 @@ func (c *Client) Subscribe(ctx context.Context, config *types.SubscriptionConfig
 
 		// Unsubscribe using the graphqlSubID
 		if graphqlSubID != "" {
-			_ = subscriptionClient.Unsubscribe(graphqlSubID)
+			if err := subscriptionClient.Unsubscribe(graphqlSubID); err != nil {
+				// Log error but continue cleanup
+				select {
+				case sub.Errors <- WrapError("Subscribe", ErrOperationFailed, fmt.Sprintf("unsubscribe error: %v", err)):
+				default:
+				}
+			}
 		}
 	}()
 
@@ -380,16 +386,16 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 		// Subscribe to screenshot uploads (filemeta with is_screenshot=true)
 		var query struct {
 			FileMeta []struct {
-				ID                  int    `graphql:"id"`
-				AgentFileID         string `graphql:"agent_file_id"`
-				Filename            string `graphql:"filename_text"`
-				Path                string `graphql:"full_remote_path"`
-				Host                string `graphql:"host"`
-				Timestamp           string `graphql:"timestamp"`
-				Complete            bool   `graphql:"complete"`
-				TaskID              *int   `graphql:"task_id"`
-				CallbackID          *int   `graphql:"callback_id"`
-				OperationID         int    `graphql:"operation_id"`
+				ID          int    `graphql:"id"`
+				AgentFileID string `graphql:"agent_file_id"`
+				Filename    string `graphql:"filename_text"`
+				Path        string `graphql:"full_remote_path"`
+				Host        string `graphql:"host"`
+				Timestamp   string `graphql:"timestamp"`
+				Complete    bool   `graphql:"complete"`
+				TaskID      *int   `graphql:"task_id"`
+				CallbackID  *int   `graphql:"callback_id"`
+				OperationID int    `graphql:"operation_id"`
 			} `graphql:"filemeta(where: {operation_id: {_eq: $operation_id}, is_screenshot: {_eq: true}, deleted: {_eq: false}}, order_by: {id: desc})"`
 		}
 		return &query, variables
@@ -475,22 +481,22 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 		// Subscribe to token discoveries
 		var query struct {
 			Token []struct {
-				ID              int    `graphql:"id"`
-				TokenID         string `graphql:"token_id"`
-				User            string `graphql:"user"`
-				Groups          string `graphql:"groups"`
-				Privileges      string `graphql:"privileges"`
-				ThreadID        int    `graphql:"thread_id"`
-				ProcessID       int    `graphql:"process_id"`
-				SessionID       int    `graphql:"session_id"`
-				LogonSID        string `graphql:"logon_sid"`
-				IntegrityLevel  int    `graphql:"integrity_level_int"`
-				Restricted      bool   `graphql:"restricted"`
-				TaskID          *int   `graphql:"task_id"`
-				OperationID     int    `graphql:"operation_id"`
-				Timestamp       string `graphql:"timestamp"`
-				Host            string `graphql:"host"`
-				Deleted         bool   `graphql:"deleted"`
+				ID             int    `graphql:"id"`
+				TokenID        string `graphql:"token_id"`
+				User           string `graphql:"user"`
+				Groups         string `graphql:"groups"`
+				Privileges     string `graphql:"privileges"`
+				ThreadID       int    `graphql:"thread_id"`
+				ProcessID      int    `graphql:"process_id"`
+				SessionID      int    `graphql:"session_id"`
+				LogonSID       string `graphql:"logon_sid"`
+				IntegrityLevel int    `graphql:"integrity_level_int"`
+				Restricted     bool   `graphql:"restricted"`
+				TaskID         *int   `graphql:"task_id"`
+				OperationID    int    `graphql:"operation_id"`
+				Timestamp      string `graphql:"timestamp"`
+				Host           string `graphql:"host"`
+				Deleted        bool   `graphql:"deleted"`
 			} `graphql:"token(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
 		}
 		return &query, variables

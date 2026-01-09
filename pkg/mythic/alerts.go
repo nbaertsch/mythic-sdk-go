@@ -262,7 +262,7 @@ func (c *Client) ResolveAlert(ctx context.Context, req *types.ResolveAlertReques
 	// Update alert to mark as resolved
 	var mutation struct {
 		UpdateOperationalert struct {
-			Affected_rows int `graphql:"affected_rows"`
+			AffectedRows int `graphql:"affected_rows"`
 		} `graphql:"update_operationalert(where: {id: {_eq: $alert_id}}, _set: {resolved: true})"`
 	}
 
@@ -275,7 +275,7 @@ func (c *Client) ResolveAlert(ctx context.Context, req *types.ResolveAlertReques
 		return WrapError("ResolveAlert", err, "failed to resolve alert")
 	}
 
-	if mutation.UpdateOperationalert.Affected_rows == 0 {
+	if mutation.UpdateOperationalert.AffectedRows == 0 {
 		return WrapError("ResolveAlert", ErrNotFound, fmt.Sprintf("alert %d not found or already resolved", req.AlertID))
 	}
 

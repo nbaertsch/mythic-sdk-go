@@ -329,8 +329,8 @@ func TestConfigCheckResponse_GetErrors(t *testing.T) {
 
 func TestConfigCheckResponse_CompleteStructure(t *testing.T) {
 	config := map[string]interface{}{
-		"database":  "postgresql",
-		"rabbitmq":  "connected",
+		"database":   "postgresql",
+		"rabbitmq":   "connected",
 		"containers": 5,
 	}
 

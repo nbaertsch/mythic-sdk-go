@@ -11,7 +11,6 @@ import (
 )
 
 func TestOperations_GetOperations(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -48,7 +47,6 @@ func TestOperations_GetOperations(t *testing.T) {
 }
 
 func TestOperations_GetOperationByID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -87,7 +85,6 @@ func TestOperations_GetOperationByID(t *testing.T) {
 }
 
 func TestOperations_GetOperationByID_NotFound(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -104,7 +101,6 @@ func TestOperations_GetOperationByID_NotFound(t *testing.T) {
 }
 
 func TestOperations_CreateAndUpdateOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -190,7 +186,6 @@ func TestOperations_CreateAndUpdateOperation(t *testing.T) {
 }
 
 func TestOperations_UpdateCurrentOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -245,7 +240,6 @@ func TestOperations_UpdateCurrentOperation(t *testing.T) {
 }
 
 func TestOperations_GetOperatorsByOperation(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -298,7 +292,6 @@ func TestOperations_GetOperatorsByOperation(t *testing.T) {
 }
 
 func TestOperations_OperationEventLog(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -383,7 +376,6 @@ func TestOperations_OperationEventLog(t *testing.T) {
 }
 
 func TestOperations_CreateOperation_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -412,7 +404,6 @@ func TestOperations_CreateOperation_InvalidRequest(t *testing.T) {
 }
 
 func TestOperations_UpdateOperation_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -445,7 +436,6 @@ func TestOperations_UpdateOperation_InvalidRequest(t *testing.T) {
 }
 
 func TestOperations_CreateEventLog_InvalidRequest(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 

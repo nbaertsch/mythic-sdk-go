@@ -289,7 +289,9 @@ func (c *Client) getSubscriptionClient() *graphql.SubscriptionClient {
 
 	// Start the subscription client in background
 	go func() {
-		_ = c.subscriptionClient.Run()
+		if err := c.subscriptionClient.Run(); err != nil {
+			// Error is logged by OnError handler above, no additional action needed
+		}
 	}()
 
 	return c.subscriptionClient

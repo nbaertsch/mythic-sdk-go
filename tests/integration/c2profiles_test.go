@@ -11,7 +11,6 @@ import (
 )
 
 func TestC2Profiles_GetC2Profiles(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -49,7 +48,6 @@ func TestC2Profiles_GetC2Profiles(t *testing.T) {
 }
 
 func TestC2Profiles_GetC2ProfileByID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -88,7 +86,6 @@ func TestC2Profiles_GetC2ProfileByID(t *testing.T) {
 }
 
 func TestC2Profiles_GetC2ProfileByID_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -105,7 +102,6 @@ func TestC2Profiles_GetC2ProfileByID_InvalidID(t *testing.T) {
 }
 
 func TestC2Profiles_GetProfileOutput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -158,7 +154,6 @@ func TestC2Profiles_GetProfileOutput(t *testing.T) {
 }
 
 func TestC2Profiles_GetProfileOutput_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -175,7 +170,6 @@ func TestC2Profiles_GetProfileOutput_InvalidID(t *testing.T) {
 }
 
 func TestC2Profiles_StartStopProfile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -258,7 +252,6 @@ func TestC2Profiles_StartStopProfile(t *testing.T) {
 }
 
 func TestC2Profiles_StartStopProfile_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -275,7 +268,6 @@ func TestC2Profiles_StartStopProfile_InvalidID(t *testing.T) {
 }
 
 func TestC2Profiles_C2SampleMessage(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -317,7 +309,6 @@ func TestC2Profiles_C2SampleMessage(t *testing.T) {
 }
 
 func TestC2Profiles_C2SampleMessage_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -334,7 +325,6 @@ func TestC2Profiles_C2SampleMessage_InvalidID(t *testing.T) {
 }
 
 func TestC2Profiles_C2GetIOC(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -386,7 +376,6 @@ func TestC2Profiles_C2GetIOC(t *testing.T) {
 }
 
 func TestC2Profiles_C2GetIOC_InvalidID(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -403,7 +392,6 @@ func TestC2Profiles_C2GetIOC_InvalidID(t *testing.T) {
 }
 
 func TestC2Profiles_C2HostFile(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -452,7 +440,6 @@ func TestC2Profiles_C2HostFile(t *testing.T) {
 }
 
 func TestC2Profiles_C2HostFile_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -475,7 +462,6 @@ func TestC2Profiles_C2HostFile_InvalidInput(t *testing.T) {
 }
 
 func TestC2Profiles_ProfileTypes(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -521,8 +507,6 @@ func TestC2Profiles_ProfileTypes(t *testing.T) {
 func TestC2Profiles_CreateC2Instance(t *testing.T) {
 	t.Skip("Skipping CreateC2Instance to avoid creating C2 instances")
 
-	SkipIfNoMythic(t)
-
 	client := AuthenticateTestClient(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -562,7 +546,6 @@ func TestC2Profiles_CreateC2Instance(t *testing.T) {
 }
 
 func TestC2Profiles_CreateC2Instance_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
@@ -598,8 +581,6 @@ func TestC2Profiles_CreateC2Instance_InvalidInput(t *testing.T) {
 func TestC2Profiles_ImportC2Instance(t *testing.T) {
 	t.Skip("Skipping ImportC2Instance to avoid importing C2 instances")
 
-	SkipIfNoMythic(t)
-
 	client := AuthenticateTestClient(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -625,7 +606,6 @@ func TestC2Profiles_ImportC2Instance(t *testing.T) {
 }
 
 func TestC2Profiles_ImportC2Instance_InvalidInput(t *testing.T) {
-	SkipIfNoMythic(t)
 
 	client := AuthenticateTestClient(t)
 
