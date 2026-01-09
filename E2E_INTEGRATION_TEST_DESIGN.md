@@ -25,9 +25,9 @@
 
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
-**Current Phase:** Phase 2 - Core Workflows ✅ COMPLETE (8/8 - 100%)
-**Completion:** 8/16 workflows (50%)
-**API Coverage:** 75/204 methods (36.8%)
+**Current Phase:** Phase 3 - Agent-Dependent Workflows (1/4 complete - 25%)
+**Completion:** 9/16 workflows (56.25%)
+**API Coverage:** 89/204 methods (43.6%)
 
 ### Completed Workflows
 
@@ -207,6 +207,31 @@
   * Verifies well-known techniques (T1059, T1003, T1055, T1082, T1083)
   * Conservative task mapping (limited without active tasks)
 
+#### ✅ Workflow 9: Payload Build & Deployment - COMPLETE
+- [CI Run #20868939817](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868939817)
+- **File:** `tests/integration/e2e_payload_test.go`
+- **Tests:**
+  * `TestE2E_PayloadLifecycle` - Complete payload lifecycle (21 sub-tests)
+  * `TestE2E_PayloadErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (14/204):**
+  * GetPayloadTypes ✓, GetPayloads ✓, GetPayloadByUUID ✓
+  * CreatePayload ✓, UpdatePayload ✓, DeletePayload ✓
+  * DownloadPayload ✓, ExportPayloadConfig ✓, RebuildPayload ✓
+  * WaitForPayloadComplete ✓ (helper)
+  * GetPayloadCommands ✓, GetPayloadOnHost ✓
+  * GetBuildParametersByPayloadType ✓, GetBuildParameterInstancesByPayload ✓
+- **Duration:** ~2 minutes (includes payload build time)
+- **Skip Rate:** Test skips if Poseidon container not available
+- **Status:** All tests passing in CI
+- **Features:**
+  * Creates and builds Poseidon payloads (waits up to 90 seconds)
+  * Downloads and verifies ELF binary format
+  * Exports and validates JSON payload config
+  * Tests payload rebuild functionality
+  * Updates payload metadata (description)
+  * Comprehensive build parameter testing
+  * Proper cleanup of created payloads
+
 ---
 
 ## 🎉 Phase 2 Complete! 🎉
@@ -229,12 +254,20 @@
 
 ---
 
+## Phase 3: Agent-Dependent Workflows (1/4 complete - 25%)
+
+- ✅ Workflow 9: Payload Build & Deployment
+- ⏳ Workflow 10: Callback & Task Execution
+- ⏳ Workflow 11: Advanced Features
+- ⏳ Workflow 12: Real-time Monitoring
+
+---
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-- ⏳ Workflow 9: Payload Build & Deployment (Requires Poseidon)
 - ⏳ Workflow 10: Callback & Task Execution (Requires Workflow 9)
 - ⏳ Workflow 11: Advanced Features (Requires Workflow 10)
 - ⏳ Workflow 12: Real-time Monitoring (Requires Workflow 10)
