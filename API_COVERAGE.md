@@ -35,16 +35,16 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Advanced Features | 23 | 0 | 0 | 23 |
 | Staging | 1 | 0 | 0 | 1 |
 | GraphQL Subscriptions | 2 | 2 | 8 | 12 |
-| Responses | 0 | 0 | 6 | 6 |
-| Screenshots | 0 | 0 | 6 | 6 |
-| Alerts | 0 | 0 | 7 | 7 |
-| Hosts | 0 | 0 | 5 | 5 |
-| RPFWD | 0 | 0 | 4 | 4 |
-| **TOTAL** | **169** | **2** | **43** | **214** |
+| Responses | 6 | 0 | 0 | 6 |
+| Screenshots | 6 | 0 | 0 | 6 |
+| Alerts | 7 | 0 | 0 | 7 |
+| Hosts | 5 | 0 | 0 | 5 |
+| RPFWD | 4 | 0 | 0 | 4 |
+| **TOTAL** | **197** | **2** | **15** | **214** |
 
-**Overall Coverage: 79% (169/214 APIs)**
+**Overall Coverage: 92% (197/214 APIs)**
 **Core APIs: 100% COMPLETE ✅**
-**Advanced APIs Identified: 43 additional methods available**
+**Advanced APIs Identified: 15 additional methods available**
 
 ---
 
@@ -3304,9 +3304,9 @@ if result.IsSuccessful() {
 
 ## 20. Response Management (Task Output Processing)
 
-### ⏳ Pending (0/6 - 0%)
+### ✅ Tested (6/6 - 100%)
 
-**Status:** High priority - Critical for automation workflows
+**Status:** COMPLETE - Fully implemented
 
 Mythic has a dedicated `response` table separate from the task table for storing task output. While tasks track command execution status, responses contain the actual output data. This separation allows for efficient output streaming and processing.
 
@@ -3325,13 +3325,19 @@ Mythic has a dedicated `response` table separate from the task table for storing
 - Output filtering and search
 - Historical output analysis
 
-**Planned Methods:**
-- `GetResponsesByTask(taskID)` - Retrieve all responses for a specific task
-- `GetResponseByID(responseID)` - Get specific response by ID
-- `GetResponsesByCallback(callbackID, limit)` - Get recent responses from a callback
-- `SearchResponses(query, filters)` - Full-text search across responses
-- `GetLatestResponses(operationID, limit)` - Stream recent outputs across operation
-- `GetResponseStatistics(taskID)` - Get response count/size statistics
+**Implemented Methods:**
+- **GetResponsesByTask(taskID)** - Retrieve all responses for a specific task
+  - File: `pkg/mythic/responses.go:37`
+- **GetResponseByID(responseID)** - Get specific response by ID
+  - File: `pkg/mythic/responses.go:96`
+- **GetResponsesByCallback(callbackID, limit)** - Get recent responses from a callback
+  - File: `pkg/mythic/responses.go:169`
+- **SearchResponses(query, filters)** - Full-text search across responses
+  - File: `pkg/mythic/responses.go:331`
+- **GetLatestResponses(operationID, limit)** - Stream recent outputs across operation
+  - File: `pkg/mythic/responses.go:237`
+- **GetResponseStatistics(taskID)** - Get response count/size statistics
+  - File: `pkg/mythic/responses.go:487`
 
 **GraphQL Example:**
 ```graphql
@@ -3362,9 +3368,9 @@ query GetResponsesByTask($task_id: Int!) {
 
 ## 21. Screenshot Management
 
-### ⏳ Pending (0/6 - 0%)
+### ✅ Tested (6/6 - 100%)
 
-**Status:** High priority - Specialized file handling for screen captures
+**Status:** COMPLETE - Fully implemented
 
 Screenshots in Mythic are stored in the `filemeta` table with `is_screenshot=true`. They require specialized handling for display, thumbnailing, and batch operations distinct from regular file management.
 
@@ -3384,13 +3390,19 @@ Screenshots in Mythic are stored in the `filemeta` table with `is_screenshot=tru
 - Evidence collection for reporting
 - Timeline visualization of user actions
 
-**Planned Methods:**
-- `GetScreenshots(callbackID, filters)` - List screenshots from callback
-- `GetScreenshotByID(screenshotID)` - Get specific screenshot metadata
-- `DownloadScreenshot(screenshotID, outputPath)` - Download screenshot file
-- `GetScreenshotThumbnail(screenshotID)` - Get thumbnail version
-- `DeleteScreenshot(screenshotID)` - Remove screenshot
-- `GetScreenshotTimeline(callbackID, startTime, endTime)` - Time-ordered screenshot list
+**Implemented Methods:**
+- **GetScreenshots(callbackID, filters)** - List screenshots from callback
+  - File: `pkg/mythic/screenshots.go:43`
+- **GetScreenshotByID(screenshotID)** - Get specific screenshot metadata
+  - File: `pkg/mythic/screenshots.go:127`
+- **DownloadScreenshot(screenshotID, outputPath)** - Download screenshot file
+  - File: `pkg/mythic/screenshots.go:267`
+- **GetScreenshotThumbnail(screenshotID)** - Get thumbnail version (base64)
+  - File: `pkg/mythic/screenshots.go:333`
+- **DeleteScreenshot(screenshotID)** - Remove screenshot
+  - File: `pkg/mythic/screenshots.go:425`
+- **GetScreenshotTimeline(callbackID, startTime, endTime)** - Time-ordered screenshot list
+  - File: `pkg/mythic/screenshots.go:195`
 
 **GraphQL Example:**
 ```graphql
@@ -3423,9 +3435,9 @@ query GetScreenshots($callback_id: Int!) {
 
 ## 22. Alert System (Operational Monitoring)
 
-### ⏳ Pending (0/7 - 0%)
+### ✅ Tested (7/7 - 100%)
 
-**Status:** High priority - Critical for OPSEC and security monitoring
+**Status:** COMPLETE - Fully implemented (including WebSocket subscription)
 
 Mythic's alert system (`operationalert` table) provides automated security monitoring and OPSEC notifications. Alerts trigger on suspicious activities, policy violations, or security events during operations.
 
@@ -3453,14 +3465,22 @@ Mythic's alert system (`operationalert` table) provides automated security monit
 - Operation health monitoring
 - Compliance and policy enforcement
 
-**Planned Methods:**
-- `GetAlerts(operationID, filters)` - List alerts for operation
-- `GetAlertByID(alertID)` - Get specific alert details
-- `GetUnresolvedAlerts(operationID)` - Get active/unacknowledged alerts
-- `ResolveAlert(alertID, notes)` - Mark alert as resolved
-- `CreateCustomAlert(operationID, message, severity)` - Create manual alert
-- `GetAlertStatistics(operationID)` - Get alert counts by type/severity
-- `SubscribeToAlerts(operationID)` - Real-time alert subscription (WebSocket)
+**Implemented Methods:**
+- **GetAlerts(operationID, filters)** - List alerts for operation
+  - File: `pkg/mythic/alerts.go:42`
+- **GetAlertByID(alertID)** - Get specific alert details
+  - File: `pkg/mythic/alerts.go:116`
+- **GetUnresolvedAlerts(operationID)** - Get active/unacknowledged alerts
+  - File: `pkg/mythic/alerts.go:184`
+- **ResolveAlert(alertID, notes)** - Mark alert as resolved
+  - File: `pkg/mythic/alerts.go:295`
+- **CreateCustomAlert(operationID, message, severity)** - Create manual alert
+  - File: `pkg/mythic/alerts.go:370`
+- **GetAlertStatistics(operationID)** - Get alert counts by type/severity
+  - File: `pkg/mythic/alerts.go:475`
+- **SubscribeToAlerts(operationID)** - Real-time alert subscription (WebSocket)
+  - File: `pkg/mythic/subscriptions.go:362` (query builder)
+  - Usage: `client.Subscribe(ctx, &types.SubscriptionConfig{Type: types.SubscriptionTypeAlert})`
 
 **GraphQL Example:**
 ```graphql
@@ -3505,9 +3525,9 @@ sub, err := client.Subscribe(ctx, config)
 
 ## 23. Host Management
 
-### ⏳ Pending (0/5 - 0%)
+### ✅ Tested (5/5 - 100%)
 
-**Status:** Medium priority - Asset tracking for large operations
+**Status:** COMPLETE - Fully implemented
 
 The `host` table tracks compromised or discovered hosts across the network. This is distinct from callbacks - a single host may have multiple callbacks or be discovered through network reconnaissance before compromise.
 
@@ -3528,12 +3548,17 @@ The `host` table tracks compromised or discovered hosts across the network. This
 - Pivot path identification
 - Operation scope tracking
 
-**Planned Methods:**
-- `GetHosts(operationID)` - List all hosts in operation
-- `GetHostByID(hostID)` - Get specific host details
-- `GetHostByHostname(hostname)` - Find host by name
-- `GetCallbacksForHost(hostID)` - List callbacks on specific host
-- `GetHostNetworkMap(operationID)` - Build network topology
+**Implemented Methods:**
+- **GetHosts(operationID)** - List all hosts in operation
+  - File: `pkg/mythic/hosts.go:35`
+- **GetHostByID(hostID)** - Get specific host details
+  - File: `pkg/mythic/hosts.go:106`
+- **GetHostByHostname(hostname)** - Find host by name (case-insensitive)
+  - File: `pkg/mythic/hosts.go:173`
+- **GetCallbacksForHost(hostID)** - List callbacks on specific host
+  - File: `pkg/mythic/hosts.go:248`
+- **GetHostNetworkMap(operationID)** - Build network topology with callback enrichment
+  - File: `pkg/mythic/hosts.go:368`
 
 **GraphQL Example:**
 ```graphql
@@ -3559,9 +3584,9 @@ query GetHosts($operation_id: Int!) {
 
 ## 24. Reverse Port Forward (RPFWD)
 
-### ⏳ Pending (0/4 - 0%)
+### ✅ Tested (4/4 - 100%)
 
-**Status:** Medium priority - Network pivoting (distinct from SOCKS proxies)
+**Status:** COMPLETE - Fully implemented
 
 The `rpfwd` table manages reverse port forwarding tunnels, which are distinct from SOCKS proxies. RPFWD exposes internal network services to the operator, while SOCKS proxies operator traffic into the target network.
 
@@ -3581,11 +3606,16 @@ The `rpfwd` table manages reverse port forwarding tunnels, which are distinct fr
 - Bypassing network segmentation
 - Accessing non-routable services
 
-**Planned Methods:**
-- `GetRPFWDs(callbackID)` - List port forwards for callback
-- `CreateRPFWD(callbackID, localPort, remoteHost, remotePort)` - Create tunnel
-- `DeleteRPFWD(rpfwdID)` - Close tunnel
-- `GetRPFWDStatus(rpfwdID)` - Check tunnel health
+**Implemented Methods:**
+- **GetRPFWDs(callbackID)** - List port forwards for callback
+  - File: `pkg/mythic/rpfwd.go:35`
+- **CreateRPFWD(req)** - Create tunnel with full configuration
+  - File: `pkg/mythic/rpfwd.go:109`
+  - Request type: `types.CreateRPFWDRequest` (includes validation)
+- **DeleteRPFWD(rpfwdID)** - Close tunnel (marks as inactive)
+  - File: `pkg/mythic/rpfwd.go:176`
+- **GetRPFWDStatus(rpfwdID)** - Check tunnel health and configuration
+  - File: `pkg/mythic/rpfwd.go:233`
 
 **Difference from SOCKS:**
 - **SOCKS**: Operator tools → Mythic → Callback → Target (outbound from operator)
