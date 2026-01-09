@@ -6,11 +6,19 @@ package integration
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
 )
 
 // TestAttack_GetAttackTechniques tests retrieving all MITRE ATT&CK techniques
 func TestAttack_GetAttackTechniques(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get all attack techniques
 	attacks, err := client.GetAttackTechniques(ctx)
@@ -48,7 +56,12 @@ func TestAttack_GetAttackTechniques(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByID tests retrieving a specific technique by ID
 func TestAttack_GetAttackTechniqueByID(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// First get all techniques to find a valid ID
 	attacks, err := client.GetAttackTechniques(ctx)
@@ -76,7 +89,12 @@ func TestAttack_GetAttackTechniqueByID(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByID_InvalidID tests getting with invalid ID
 func TestAttack_GetAttackTechniqueByID_InvalidID(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get attack with ID 0
 	_, err := client.GetAttackTechniqueByID(ctx, 0)
@@ -93,7 +111,12 @@ func TestAttack_GetAttackTechniqueByID_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByTNum tests retrieving by technique number
 func TestAttack_GetAttackTechniqueByTNum(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// First get all techniques to find a valid TNum
 	attacks, err := client.GetAttackTechniques(ctx)
@@ -121,7 +144,12 @@ func TestAttack_GetAttackTechniqueByTNum(t *testing.T) {
 
 // TestAttack_GetAttackTechniqueByTNum_InvalidTNum tests getting with invalid TNum
 func TestAttack_GetAttackTechniqueByTNum_InvalidTNum(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get attack with empty TNum
 	_, err := client.GetAttackTechniqueByTNum(ctx, "")
@@ -138,10 +166,15 @@ func TestAttack_GetAttackTechniqueByTNum_InvalidTNum(t *testing.T) {
 
 // TestAttack_GetAttackByTask tests retrieving ATT&CK tags for a task
 func TestAttack_GetAttackByTask(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// First get all tasks to find one that might have attack tags
-	tasks, err := client.GetTasksForCallback(ctx, 1) // Use callback 1 if available
+	tasks, err := client.GetTasksForCallback(ctx, 1, 10) // Use callback 1 if available
 	if err != nil {
 		// Try to get tasks without specifying callback
 		t.Skip("Could not retrieve tasks for testing")
@@ -184,7 +217,12 @@ func TestAttack_GetAttackByTask(t *testing.T) {
 
 // TestAttack_GetAttackByTask_InvalidID tests getting with invalid task ID
 func TestAttack_GetAttackByTask_InvalidID(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get attack tags with ID 0
 	_, err := client.GetAttackByTask(ctx, 0)
@@ -195,7 +233,12 @@ func TestAttack_GetAttackByTask_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttackByCommand tests retrieving ATT&CK tags for a command
 func TestAttack_GetAttackByCommand(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// For this test, we'll use a command ID of 1 if it exists
 	// Most Mythic installations will have some commands
@@ -230,7 +273,12 @@ func TestAttack_GetAttackByCommand(t *testing.T) {
 
 // TestAttack_GetAttackByCommand_InvalidID tests getting with invalid command ID
 func TestAttack_GetAttackByCommand_InvalidID(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get attack tags with ID 0
 	_, err := client.GetAttackByCommand(ctx, 0)
@@ -241,7 +289,12 @@ func TestAttack_GetAttackByCommand_InvalidID(t *testing.T) {
 
 // TestAttack_GetAttacksByOperation tests retrieving all techniques used in an operation
 func TestAttack_GetAttacksByOperation(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get current operation
 	operationID := client.GetCurrentOperation()
@@ -270,7 +323,12 @@ func TestAttack_GetAttacksByOperation(t *testing.T) {
 
 // TestAttack_GetAttacksByOperation_InvalidID tests getting with invalid operation ID
 func TestAttack_GetAttacksByOperation_InvalidID(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Try to get attacks with operation ID 0
 	_, err := client.GetAttacksByOperation(ctx, 0)
@@ -281,7 +339,12 @@ func TestAttack_GetAttacksByOperation_InvalidID(t *testing.T) {
 
 // TestAttack_TechniqueOrdering tests that techniques are ordered by TNum
 func TestAttack_TechniqueOrdering(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Get all techniques
 	attacks, err := client.GetAttackTechniques(ctx)
@@ -306,10 +369,15 @@ func TestAttack_TechniqueOrdering(t *testing.T) {
 
 // TestAttack_AttackTaskOrdering tests that attack tasks are ordered by timestamp
 func TestAttack_AttackTaskOrdering(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// First get tasks to find one with attack tags
-	tasks, err := client.GetTasksForCallback(ctx, 1)
+	tasks, err := client.GetTasksForCallback(ctx, 1, 10)
 	if err != nil || len(tasks) == 0 {
 		t.Skip("Could not retrieve tasks for testing")
 	}
@@ -331,7 +399,12 @@ func TestAttack_AttackTaskOrdering(t *testing.T) {
 
 // TestAttack_CommonTechniques tests retrieval of common attack techniques
 func TestAttack_CommonTechniques(t *testing.T) {
-	ctx := context.Background()
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Common techniques that should exist in most Mythic installations
 	commonTechniques := []string{
@@ -356,4 +429,116 @@ func TestAttack_CommonTechniques(t *testing.T) {
 	} else {
 		t.Logf("Found %d out of %d common techniques", foundCount, len(commonTechniques))
 	}
+}
+
+// TestAttack_AddMITREAttackToTask tests adding MITRE ATT&CK tag to a task
+func TestAttack_AddMITREAttackToTask(t *testing.T) {
+	t.Skip("Skipping AddMITREAttackToTask to avoid modifying task tags")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get all attack techniques to find a valid one
+	attacks, err := client.GetAttackTechniques(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get attack techniques: %v", err)
+	}
+
+	if len(attacks) == 0 {
+		t.Skip("No attack techniques available for testing")
+	}
+
+	// Get callbacks first
+	callbacks, err := client.GetAllCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get callbacks: %v", err)
+	}
+
+	if len(callbacks) == 0 {
+		t.Skip("No callbacks available for testing")
+	}
+
+	// Issue a task
+	callbackID := callbacks[0].DisplayID
+	task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "whoami",
+		Params:     "",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to issue task: %v", err)
+	}
+
+	t.Logf("Created task %d for MITRE ATT&CK tag test", task.DisplayID)
+
+	// Add MITRE ATT&CK tag to the task
+	attackTNum := attacks[0].TNum
+	err = client.AddMITREAttackToTask(ctx, task.DisplayID, attackTNum)
+	if err != nil {
+		t.Fatalf("Failed to add MITRE ATT&CK tag to task: %v", err)
+	}
+
+	t.Logf("Successfully added MITRE ATT&CK tag %s to task %d", attackTNum, task.DisplayID)
+
+	// Verify the tag was added
+	attackTasks, err := client.GetAttackByTask(ctx, task.ID)
+	if err != nil {
+		t.Fatalf("Failed to get attack tags for task: %v", err)
+	}
+
+	found := false
+	for _, at := range attackTasks {
+		if at.TaskID == task.ID {
+			found = true
+			t.Logf("Verified MITRE ATT&CK tag on task: %s", at.String())
+			break
+		}
+	}
+
+	if !found {
+		t.Error("MITRE ATT&CK tag was not found on task after adding")
+	}
+}
+
+// TestAttack_AddMITREAttackToTask_InvalidInput tests with invalid input
+func TestAttack_AddMITREAttackToTask_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero task ID
+	err := client.AddMITREAttackToTask(ctx, 0, "T1003")
+	if err == nil {
+		t.Fatal("Expected error for zero task ID, got nil")
+	}
+	t.Logf("Zero task ID error: %v", err)
+
+	// Test with empty attack ID
+	err = client.AddMITREAttackToTask(ctx, 1, "")
+	if err == nil {
+		t.Fatal("Expected error for empty attack ID, got nil")
+	}
+	t.Logf("Empty attack ID error: %v", err)
+
+	// Test with non-existent task ID
+	err = client.AddMITREAttackToTask(ctx, 999999, "T1003")
+	if err == nil {
+		t.Fatal("Expected error for non-existent task ID, got nil")
+	}
+	t.Logf("Non-existent task ID error: %v", err)
+
+	// Test with invalid attack technique
+	err = client.AddMITREAttackToTask(ctx, 1, "T999999")
+	if err == nil {
+		t.Fatal("Expected error for invalid attack technique, got nil")
+	}
+	t.Logf("Invalid attack technique error: %v", err)
 }

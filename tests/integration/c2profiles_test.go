@@ -517,3 +517,155 @@ func TestC2Profiles_ProfileTypes(t *testing.T) {
 	t.Logf("  - Running profiles: %d", runningCount)
 	t.Logf("  - Stopped profiles: %d", stoppedCount)
 }
+
+func TestC2Profiles_CreateC2Instance(t *testing.T) {
+	t.Skip("Skipping CreateC2Instance to avoid creating C2 instances")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get current operation
+	currentOpID := client.GetCurrentOperation()
+	if currentOpID == nil {
+		t.Skip("No current operation set")
+	}
+
+	// Create a C2 instance (requires valid C2 profile name)
+	description := "Test C2 instance created by integration test"
+	req := &types.CreateC2InstanceRequest{
+		Name:        "http", // Common C2 profile name
+		Description: &description,
+		Parameters:  map[string]interface{}{},
+		OperationID: currentOpID,
+	}
+
+	profile, err := client.CreateC2Instance(ctx, req)
+	if err != nil {
+		t.Logf("CreateC2Instance failed (may not have http profile): %v", err)
+		return
+	}
+
+	if profile == nil {
+		t.Fatal("CreateC2Instance returned nil")
+	}
+
+	t.Logf("Created C2 instance: %s", profile.String())
+	t.Logf("  - ID: %d", profile.ID)
+	t.Logf("  - Name: %s", profile.Name)
+
+	// Clean up: delete the C2 instance (if API supports it)
+	// Note: Mythic may not have a delete C2 instance endpoint
+}
+
+func TestC2Profiles_CreateC2Instance_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	_, err := client.CreateC2Instance(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with empty name
+	_, err = client.CreateC2Instance(ctx, &types.CreateC2InstanceRequest{
+		Name: "",
+	})
+	if err == nil {
+		t.Fatal("Expected error for empty name, got nil")
+	}
+	t.Logf("Empty name error: %v", err)
+
+	// Test with non-existent C2 profile name
+	_, err = client.CreateC2Instance(ctx, &types.CreateC2InstanceRequest{
+		Name: "nonexistent-profile-12345",
+	})
+	if err == nil {
+		t.Fatal("Expected error for non-existent profile name, got nil")
+	}
+	t.Logf("Non-existent profile error: %v", err)
+}
+
+func TestC2Profiles_ImportC2Instance(t *testing.T) {
+	t.Skip("Skipping ImportC2Instance to avoid importing C2 instances")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Import C2 instance requires a valid JSON config from an export
+	// This is a placeholder test showing the expected structure
+	req := &types.ImportC2InstanceRequest{
+		Name:   "imported-test-profile",
+		Config: `{"test": "config"}`, // Would need real exported config
+	}
+
+	profile, err := client.ImportC2Instance(ctx, req)
+	if err != nil {
+		// Expected to fail with test config
+		t.Logf("ImportC2Instance failed (expected with test config): %v", err)
+		return
+	}
+
+	if profile != nil {
+		t.Logf("Imported C2 instance: %s", profile.String())
+	}
+}
+
+func TestC2Profiles_ImportC2Instance_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	_, err := client.ImportC2Instance(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with empty name
+	_, err = client.ImportC2Instance(ctx, &types.ImportC2InstanceRequest{
+		Name:   "",
+		Config: `{}`,
+	})
+	if err == nil {
+		t.Fatal("Expected error for empty name, got nil")
+	}
+	t.Logf("Empty name error: %v", err)
+
+	// Test with empty config
+	_, err = client.ImportC2Instance(ctx, &types.ImportC2InstanceRequest{
+		Name:   "test",
+		Config: "",
+	})
+	if err == nil {
+		t.Fatal("Expected error for empty config, got nil")
+	}
+	t.Logf("Empty config error: %v", err)
+
+	// Test with invalid JSON config
+	_, err = client.ImportC2Instance(ctx, &types.ImportC2InstanceRequest{
+		Name:   "test",
+		Config: "not-json",
+	})
+	if err == nil {
+		t.Fatal("Expected error for invalid JSON config, got nil")
+	}
+	t.Logf("Invalid JSON error: %v", err)
+}

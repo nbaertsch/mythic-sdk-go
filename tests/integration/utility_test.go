@@ -327,3 +327,145 @@ func TestUtility_CreateRandomInvalidFormat(t *testing.T) {
 		})
 	}
 }
+
+// TestUtility_GetConfig tests retrieving client configuration
+func TestUtility_GetConfig(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	// GetConfig doesn't require context - it's a local operation
+	config := client.GetConfig()
+
+	// Verify config structure
+	if config.ServerURL == "" {
+		t.Error("Config should have ServerURL")
+	}
+	if config.Username == "" {
+		t.Error("Config should have Username")
+	}
+
+	t.Logf("Client configuration:")
+	t.Logf("  - ServerURL: %s", config.ServerURL)
+	t.Logf("  - Username: %s", config.Username)
+	t.Logf("  - SSL: %v", config.SSL)
+	t.Logf("  - SkipTLSVerify: %v", config.SkipTLSVerify)
+	t.Logf("  - Timeout: %v", config.Timeout)
+
+	// Password should be redacted or empty in retrieved config
+	if config.Password != "" {
+		t.Log("Note: Password is present in config (should be handled securely)")
+	}
+}
+
+// TestUtility_GetGlobalSettings tests retrieving global Mythic settings
+func TestUtility_GetGlobalSettings(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	settings, err := client.GetGlobalSettings(ctx)
+	if err != nil {
+		t.Fatalf("GetGlobalSettings failed: %v", err)
+	}
+
+	if settings == nil {
+		t.Fatal("GetGlobalSettings returned nil")
+	}
+
+	t.Logf("Global settings retrieved: %d setting(s)", len(settings))
+
+	// Log some settings (if any)
+	count := 0
+	for key, value := range settings {
+		if count < 10 { // Only log first 10
+			t.Logf("  - %s: %v", key, value)
+			count++
+		}
+	}
+
+	if len(settings) > 10 {
+		t.Logf("  ... and %d more settings", len(settings)-10)
+	}
+}
+
+// TestUtility_UpdateGlobalSettings tests updating global Mythic settings
+func TestUtility_UpdateGlobalSettings(t *testing.T) {
+	t.Skip("Skipping UpdateGlobalSettings to avoid modifying global configuration")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get current settings first
+	currentSettings, err := client.GetGlobalSettings(ctx)
+	if err != nil {
+		t.Fatalf("GetGlobalSettings failed: %v", err)
+	}
+
+	t.Logf("Current settings count: %d", len(currentSettings))
+
+	// Update a test setting (use a non-critical setting)
+	// Note: This requires admin privileges
+	testSettings := map[string]interface{}{
+		"test_setting": "test_value",
+	}
+
+	err = client.UpdateGlobalSettings(ctx, testSettings)
+	if err != nil {
+		t.Logf("UpdateGlobalSettings failed (may require admin): %v", err)
+		return
+	}
+
+	t.Log("Successfully updated global settings")
+
+	// Verify the setting was updated
+	updatedSettings, err := client.GetGlobalSettings(ctx)
+	if err != nil {
+		t.Fatalf("Failed to retrieve updated settings: %v", err)
+	}
+
+	if val, ok := updatedSettings["test_setting"]; ok {
+		if val != "test_value" {
+			t.Errorf("Expected test_setting value 'test_value', got %v", val)
+		}
+	}
+
+	// Restore original settings (remove test setting)
+	restoreSettings := map[string]interface{}{
+		"test_setting": nil,
+	}
+	if err := client.UpdateGlobalSettings(ctx, restoreSettings); err != nil {
+		t.Logf("Warning: Failed to restore original settings: %v", err)
+	}
+}
+
+// TestUtility_UpdateGlobalSettings_InvalidInput tests with invalid input
+func TestUtility_UpdateGlobalSettings_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil settings
+	err := client.UpdateGlobalSettings(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil settings, got nil")
+	}
+	t.Logf("Nil settings error: %v", err)
+
+	// Test with empty settings map
+	err = client.UpdateGlobalSettings(ctx, map[string]interface{}{})
+	if err == nil {
+		t.Fatal("Expected error for empty settings, got nil")
+	}
+	t.Logf("Empty settings error: %v", err)
+}

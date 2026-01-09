@@ -448,3 +448,286 @@ func TestTasks_TaskStatusHelpers(t *testing.T) {
 	}
 	t.Logf("Task string: %s", taskStr)
 }
+
+func TestTasks_GetTaskArtifacts(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get callbacks first
+	callbacks, err := client.GetAllCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get callbacks: %v", err)
+	}
+
+	if len(callbacks) == 0 {
+		t.Skip("No callbacks available for testing")
+	}
+
+	// Issue a task
+	callbackID := callbacks[0].DisplayID
+	task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "ls",
+		Params:     "",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to issue task: %v", err)
+	}
+
+	// Get task artifacts (may be empty for new tasks)
+	artifacts, err := client.GetTaskArtifacts(ctx, task.DisplayID)
+	if err != nil {
+		t.Fatalf("Failed to get task artifacts: %v", err)
+	}
+
+	if artifacts == nil {
+		t.Fatal("GetTaskArtifacts returned nil")
+	}
+
+	t.Logf("Task %d has %d artifact(s)", task.DisplayID, len(artifacts))
+
+	// If there are artifacts, verify structure
+	for i, artifact := range artifacts {
+		if artifact.ID == 0 {
+			t.Errorf("Artifact %d has zero ID", i)
+		}
+		if artifact.TaskID != task.ID {
+			t.Errorf("Artifact %d has wrong TaskID: expected %d, got %d", i, task.ID, artifact.TaskID)
+		}
+		if artifact.Artifact == "" {
+			t.Errorf("Artifact %d has empty artifact value", i)
+		}
+		t.Logf("  - Artifact %d: %s (host: %s)", i, artifact.Artifact, artifact.Host)
+	}
+}
+
+func TestTasks_GetTaskArtifacts_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	_, err := client.GetTaskArtifacts(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero task ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent task ID
+	_, err = client.GetTaskArtifacts(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent task ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}
+
+func TestTasks_ReissueTask(t *testing.T) {
+	t.Skip("Skipping ReissueTask to avoid re-executing tasks")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get callbacks first
+	callbacks, err := client.GetAllCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get callbacks: %v", err)
+	}
+
+	if len(callbacks) == 0 {
+		t.Skip("No callbacks available for testing")
+	}
+
+	// Issue a task
+	callbackID := callbacks[0].DisplayID
+	task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "whoami",
+		Params:     "",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to issue task: %v", err)
+	}
+
+	t.Logf("Created task %d for reissue test", task.DisplayID)
+
+	// Reissue the task
+	err = client.ReissueTask(ctx, task.DisplayID)
+	if err != nil {
+		t.Fatalf("Failed to reissue task: %v", err)
+	}
+
+	t.Logf("Successfully reissued task %d", task.DisplayID)
+
+	// Note: The reissued task will create a new task with the same parameters
+	// We don't verify the new task here to keep the test simple
+}
+
+func TestTasks_ReissueTask_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	err := client.ReissueTask(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero task ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent task ID
+	err = client.ReissueTask(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent task ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}
+
+func TestTasks_ReissueTaskWithHandler(t *testing.T) {
+	t.Skip("Skipping ReissueTaskWithHandler to avoid re-executing tasks")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get callbacks first
+	callbacks, err := client.GetAllCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get callbacks: %v", err)
+	}
+
+	if len(callbacks) == 0 {
+		t.Skip("No callbacks available for testing")
+	}
+
+	// Issue a task
+	callbackID := callbacks[0].DisplayID
+	task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "whoami",
+		Params:     "",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to issue task: %v", err)
+	}
+
+	t.Logf("Created task %d for reissue with handler test", task.DisplayID)
+
+	// Reissue the task with handler
+	err = client.ReissueTaskWithHandler(ctx, task.DisplayID)
+	if err != nil {
+		t.Fatalf("Failed to reissue task with handler: %v", err)
+	}
+
+	t.Logf("Successfully reissued task %d with handler", task.DisplayID)
+}
+
+func TestTasks_ReissueTaskWithHandler_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	err := client.ReissueTaskWithHandler(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero task ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent task ID
+	err = client.ReissueTaskWithHandler(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent task ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}
+
+func TestTasks_RequestOpsecBypass(t *testing.T) {
+	t.Skip("Skipping RequestOpsecBypass to avoid modifying task security status")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get callbacks first
+	callbacks, err := client.GetAllCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get callbacks: %v", err)
+	}
+
+	if len(callbacks) == 0 {
+		t.Skip("No callbacks available for testing")
+	}
+
+	// Issue a task that might require OPSEC bypass
+	callbackID := callbacks[0].DisplayID
+	task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "whoami",
+		Params:     "",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to issue task: %v", err)
+	}
+
+	t.Logf("Created task %d for OPSEC bypass test", task.DisplayID)
+
+	// Request OPSEC bypass
+	err = client.RequestOpsecBypass(ctx, task.DisplayID)
+	if err != nil {
+		// This may fail if the task doesn't require OPSEC review or if already bypassed
+		t.Logf("RequestOpsecBypass result: %v (may be expected)", err)
+		return
+	}
+
+	t.Logf("Successfully requested OPSEC bypass for task %d", task.DisplayID)
+}
+
+func TestTasks_RequestOpsecBypass_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	err := client.RequestOpsecBypass(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero task ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent task ID
+	err = client.RequestOpsecBypass(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent task ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}

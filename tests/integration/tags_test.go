@@ -613,3 +613,89 @@ func TestTags_TimestampOrdering(t *testing.T) {
 	t.Logf("  - Newest: %s", tags[0].Timestamp.Format("2006-01-02 15:04:05"))
 	t.Logf("  - Oldest: %s", tags[len(tags)-1].Timestamp.Format("2006-01-02 15:04:05"))
 }
+
+func TestTags_GetTagTypesByOperation(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get current operation
+	currentOpID := client.GetCurrentOperation()
+	if currentOpID == nil {
+		t.Skip("No current operation set")
+	}
+
+	// Get tag types for the operation
+	tagTypes, err := client.GetTagTypesByOperation(ctx, *currentOpID)
+	if err != nil {
+		t.Fatalf("GetTagTypesByOperation failed: %v", err)
+	}
+
+	if tagTypes == nil {
+		t.Fatal("GetTagTypesByOperation returned nil")
+	}
+
+	t.Logf("Found %d tag type(s) for operation %d", len(tagTypes), *currentOpID)
+
+	// Verify all tag types belong to the operation
+	for i, tagType := range tagTypes {
+		if tagType.OperationID != *currentOpID {
+			t.Errorf("Tag type %d belongs to operation %d, expected %d",
+				i, tagType.OperationID, *currentOpID)
+		}
+
+		// Log first few tag types
+		if i < 5 {
+			t.Logf("  - Tag type %d: %s (color: %s)",
+				i, tagType.Name, tagType.Color)
+			if tagType.Description != "" {
+				t.Logf("    Description: %s", tagType.Description)
+			}
+		}
+	}
+
+	if len(tagTypes) > 5 {
+		t.Logf("  ... and %d more tag types", len(tagTypes)-5)
+	}
+
+	// Count deleted vs active tag types
+	activeCount := 0
+	deletedCount := 0
+	for _, tagType := range tagTypes {
+		if tagType.IsDeleted() {
+			deletedCount++
+		} else {
+			activeCount++
+		}
+	}
+
+	t.Logf("Tag type status:")
+	t.Logf("  - Active: %d", activeCount)
+	t.Logf("  - Deleted: %d", deletedCount)
+}
+
+func TestTags_GetTagTypesByOperation_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	_, err := client.GetTagTypesByOperation(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero operation ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent operation ID
+	_, err = client.GetTagTypesByOperation(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent operation ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}

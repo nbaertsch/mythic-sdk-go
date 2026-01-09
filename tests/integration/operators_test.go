@@ -465,3 +465,351 @@ func TestOperators_OperatorStatusChecks(t *testing.T) {
 func boolPtr(b bool) *bool {
 	return &b
 }
+
+// TestOperators_UpdateOperatorOperation tests updating operator's operation settings
+func TestOperators_UpdateOperatorOperation(t *testing.T) {
+	t.Skip("Skipping UpdateOperatorOperation to avoid modifying operator permissions")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get operators
+	operators, err := client.GetOperators(ctx)
+	if err != nil || len(operators) == 0 {
+		t.Skip("No operators available for testing")
+	}
+
+	// Get current operation
+	currentOpID := client.GetCurrentOperation()
+	if currentOpID == nil {
+		t.Skip("No current operation set")
+	}
+
+	// Find a non-admin operator
+	var testOperatorID int
+	for _, op := range operators {
+		if !op.Admin && !op.Deleted {
+			testOperatorID = op.ID
+			break
+		}
+	}
+
+	if testOperatorID == 0 {
+		t.Skip("No suitable operator found for testing")
+	}
+
+	// Update operator's view mode in the operation
+	viewMode := types.ViewModeOperator
+	req := &types.UpdateOperatorOperationRequest{
+		OperatorID:  testOperatorID,
+		OperationID: *currentOpID,
+		ViewMode:    &viewMode,
+	}
+
+	err = client.UpdateOperatorOperation(ctx, req)
+	if err != nil {
+		t.Fatalf("UpdateOperatorOperation failed: %v", err)
+	}
+
+	t.Logf("Successfully updated operator %d operation settings", testOperatorID)
+}
+
+// TestOperators_UpdateOperatorOperation_InvalidInput tests with invalid input
+func TestOperators_UpdateOperatorOperation_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	err := client.UpdateOperatorOperation(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with zero operator ID
+	err = client.UpdateOperatorOperation(ctx, &types.UpdateOperatorOperationRequest{
+		OperatorID:  0,
+		OperationID: 1,
+	})
+	if err == nil {
+		t.Fatal("Expected error for zero operator ID, got nil")
+	}
+	t.Logf("Zero operator ID error: %v", err)
+
+	// Test with zero operation ID
+	err = client.UpdateOperatorOperation(ctx, &types.UpdateOperatorOperationRequest{
+		OperatorID:  1,
+		OperationID: 0,
+	})
+	if err == nil {
+		t.Fatal("Expected error for zero operation ID, got nil")
+	}
+	t.Logf("Zero operation ID error: %v", err)
+}
+
+// TestOperators_UpdateOperatorPreferences tests updating operator preferences
+func TestOperators_UpdateOperatorPreferences(t *testing.T) {
+	t.Skip("Skipping UpdateOperatorPreferences to avoid modifying operator settings")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get operators
+	operators, err := client.GetOperators(ctx)
+	if err != nil || len(operators) == 0 {
+		t.Skip("No operators available for testing")
+	}
+
+	operatorID := operators[0].ID
+
+	// Update operator preferences
+	req := &types.UpdateOperatorPreferencesRequest{
+		OperatorID: operatorID,
+		Preferences: map[string]interface{}{
+			"theme":    "dark",
+			"fontSize": 14,
+		},
+	}
+
+	err = client.UpdateOperatorPreferences(ctx, req)
+	if err != nil {
+		t.Fatalf("UpdateOperatorPreferences failed: %v", err)
+	}
+
+	t.Logf("Successfully updated preferences for operator %d", operatorID)
+
+	// Verify preferences were updated
+	prefs, err := client.GetOperatorPreferences(ctx, operatorID)
+	if err != nil {
+		t.Logf("Could not verify preferences: %v", err)
+		return
+	}
+
+	t.Logf("Preferences updated: %d bytes", len(prefs.PreferencesJSON))
+}
+
+// TestOperators_UpdateOperatorPreferences_InvalidInput tests with invalid input
+func TestOperators_UpdateOperatorPreferences_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	err := client.UpdateOperatorPreferences(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with zero operator ID
+	err = client.UpdateOperatorPreferences(ctx, &types.UpdateOperatorPreferencesRequest{
+		OperatorID:  0,
+		Preferences: map[string]interface{}{},
+	})
+	if err == nil {
+		t.Fatal("Expected error for zero operator ID, got nil")
+	}
+	t.Logf("Zero operator ID error: %v", err)
+
+	// Test with nil preferences
+	err = client.UpdateOperatorPreferences(ctx, &types.UpdateOperatorPreferencesRequest{
+		OperatorID:  1,
+		Preferences: nil,
+	})
+	if err == nil {
+		t.Fatal("Expected error for nil preferences, got nil")
+	}
+	t.Logf("Nil preferences error: %v", err)
+}
+
+// TestOperators_UpdateOperatorSecrets tests updating operator secrets
+func TestOperators_UpdateOperatorSecrets(t *testing.T) {
+	t.Skip("Skipping UpdateOperatorSecrets to avoid modifying operator secrets")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get operators
+	operators, err := client.GetOperators(ctx)
+	if err != nil || len(operators) == 0 {
+		t.Skip("No operators available for testing")
+	}
+
+	operatorID := operators[0].ID
+
+	// Update operator secrets
+	req := &types.UpdateOperatorSecretsRequest{
+		OperatorID: operatorID,
+		Secrets: map[string]interface{}{
+			"api_key": "test-key-12345",
+		},
+	}
+
+	err = client.UpdateOperatorSecrets(ctx, req)
+	if err != nil {
+		t.Fatalf("UpdateOperatorSecrets failed: %v", err)
+	}
+
+	t.Logf("Successfully updated secrets for operator %d", operatorID)
+
+	// Verify secrets were updated
+	secrets, err := client.GetOperatorSecrets(ctx, operatorID)
+	if err != nil {
+		t.Logf("Could not verify secrets: %v", err)
+		return
+	}
+
+	t.Logf("Secrets updated: %d bytes", len(secrets.SecretsJSON))
+}
+
+// TestOperators_UpdateOperatorSecrets_InvalidInput tests with invalid input
+func TestOperators_UpdateOperatorSecrets_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	err := client.UpdateOperatorSecrets(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with zero operator ID
+	err = client.UpdateOperatorSecrets(ctx, &types.UpdateOperatorSecretsRequest{
+		OperatorID: 0,
+		Secrets:    map[string]interface{}{},
+	})
+	if err == nil {
+		t.Fatal("Expected error for zero operator ID, got nil")
+	}
+	t.Logf("Zero operator ID error: %v", err)
+
+	// Test with nil secrets
+	err = client.UpdateOperatorSecrets(ctx, &types.UpdateOperatorSecretsRequest{
+		OperatorID: 1,
+		Secrets:    nil,
+	})
+	if err == nil {
+		t.Fatal("Expected error for nil secrets, got nil")
+	}
+	t.Logf("Nil secrets error: %v", err)
+}
+
+// TestOperators_UpdatePasswordAndEmail tests updating password and email
+func TestOperators_UpdatePasswordAndEmail(t *testing.T) {
+	t.Skip("Skipping UpdatePasswordAndEmail to avoid modifying operator credentials")
+
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get operators
+	operators, err := client.GetOperators(ctx)
+	if err != nil || len(operators) == 0 {
+		t.Skip("No operators available for testing")
+	}
+
+	// Find current operator
+	var currentOperatorID int
+	for _, op := range operators {
+		// Assuming first non-admin is test operator
+		if !op.Admin {
+			currentOperatorID = op.ID
+			break
+		}
+	}
+
+	if currentOperatorID == 0 {
+		t.Skip("No suitable operator found for testing")
+	}
+
+	// Update email only (password change requires old password)
+	newEmail := "test-updated@example.com"
+	req := &types.UpdatePasswordAndEmailRequest{
+		OperatorID:  currentOperatorID,
+		OldPassword: "test-password",
+		Email:       &newEmail,
+	}
+
+	err = client.UpdatePasswordAndEmail(ctx, req)
+	if err != nil {
+		// Expected to fail without correct password
+		t.Logf("UpdatePasswordAndEmail failed (expected): %v", err)
+		return
+	}
+
+	t.Logf("Successfully updated password/email for operator %d", currentOperatorID)
+}
+
+// TestOperators_UpdatePasswordAndEmail_InvalidInput tests with invalid input
+func TestOperators_UpdatePasswordAndEmail_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with nil request
+	err := client.UpdatePasswordAndEmail(ctx, nil)
+	if err == nil {
+		t.Fatal("Expected error for nil request, got nil")
+	}
+	t.Logf("Nil request error: %v", err)
+
+	// Test with zero operator ID
+	err = client.UpdatePasswordAndEmail(ctx, &types.UpdatePasswordAndEmailRequest{
+		OperatorID:  0,
+		OldPassword: "test",
+	})
+	if err == nil {
+		t.Fatal("Expected error for zero operator ID, got nil")
+	}
+	t.Logf("Zero operator ID error: %v", err)
+
+	// Test with empty old password
+	err = client.UpdatePasswordAndEmail(ctx, &types.UpdatePasswordAndEmailRequest{
+		OperatorID:  1,
+		OldPassword: "",
+	})
+	if err == nil {
+		t.Fatal("Expected error for empty old password, got nil")
+	}
+	t.Logf("Empty old password error: %v", err)
+
+	// Test with no new password or email
+	err = client.UpdatePasswordAndEmail(ctx, &types.UpdatePasswordAndEmailRequest{
+		OperatorID:  1,
+		OldPassword: "test",
+	})
+	if err == nil {
+		t.Fatal("Expected error when no new password or email provided, got nil")
+	}
+	t.Logf("No update fields error: %v", err)
+}

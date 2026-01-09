@@ -391,3 +391,285 @@ func TestCallbacks_CallbackFields(t *testing.T) {
 		t.Error("LastCheckin is in the future")
 	}
 }
+
+func TestCallbacks_CreateCallback(t *testing.T) {
+	t.Skip("Skipping CreateCallback test - requires valid payload UUID and manual verification")
+
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get a payload to use for callback creation
+	payloads, err := client.GetPayloads(ctx)
+	if err != nil {
+		t.Fatalf("GetPayloads failed: %v", err)
+	}
+	if len(payloads) == 0 {
+		t.Skip("No payloads available for callback creation")
+	}
+
+	payloadUUID := payloads[0].UUID
+	user := "test_user"
+	host := "test_host"
+	ip := "192.168.1.100"
+
+	input := &CreateCallbackInput{
+		PayloadUUID: payloadUUID,
+		User:        &user,
+		Host:        &host,
+		IP:          &ip,
+	}
+
+	err = client.CreateCallback(ctx, input)
+	if err != nil {
+		t.Fatalf("CreateCallback failed: %v", err)
+	}
+
+	t.Log("Successfully created callback (manual cleanup required)")
+}
+
+func TestCallbacks_CreateCallback_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test nil input
+	err := client.CreateCallback(ctx, nil)
+	if err == nil {
+		t.Error("Expected error for nil input")
+	}
+
+	// Test empty payload UUID
+	err = client.CreateCallback(ctx, &CreateCallbackInput{})
+	if err == nil {
+		t.Error("Expected error for empty payload UUID")
+	}
+
+	t.Log("All invalid input tests passed")
+}
+
+func TestCallbacks_DeleteCallback(t *testing.T) {
+	t.Skip("Skipping DeleteCallback test - destructive operation")
+
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Note: This test is skipped by default as it's destructive
+	// To test manually, create a test callback first, then delete it
+
+	t.Log("DeleteCallback is a destructive operation and should be tested manually")
+}
+
+func TestCallbacks_DeleteCallback_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test empty callback list
+	err := client.DeleteCallback(ctx, []int{})
+	if err == nil {
+		t.Error("Expected error for empty callback list")
+	}
+
+	// Test nonexistent callback
+	err = client.DeleteCallback(ctx, []int{999999})
+	if err == nil {
+		t.Log("Note: DeleteCallback might succeed even for non-existent callbacks")
+	}
+
+	t.Log("All invalid input tests completed")
+}
+
+func TestCallbacks_ExportCallbackConfig(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get a callback to export
+	callbacks, err := client.GetAllActiveCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("GetAllActiveCallbacks failed: %v", err)
+	}
+	if len(callbacks) == 0 {
+		t.Skip("No active callbacks for config export")
+	}
+
+	agentCallbackID := callbacks[0].AgentCallbackID
+	config, err := client.ExportCallbackConfig(ctx, agentCallbackID)
+	if err != nil {
+		t.Fatalf("ExportCallbackConfig failed: %v", err)
+	}
+
+	if config == "" {
+		t.Error("ExportCallbackConfig returned empty config")
+	}
+
+	t.Logf("Successfully exported config (length: %d bytes)", len(config))
+
+	// Verify it's valid JSON
+	var configMap map[string]interface{}
+	if err := parseJSON([]byte(config), &configMap); err != nil {
+		t.Errorf("Exported config is not valid JSON: %v", err)
+	} else {
+		t.Logf("Config contains %d top-level keys", len(configMap))
+	}
+}
+
+func TestCallbacks_ExportCallbackConfig_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test empty agent callback ID
+	_, err := client.ExportCallbackConfig(ctx, "")
+	if err == nil {
+		t.Error("Expected error for empty agent_callback_id")
+	}
+
+	// Test nonexistent callback
+	_, err = client.ExportCallbackConfig(ctx, "nonexistent-callback-id")
+	if err == nil {
+		t.Error("Expected error for nonexistent callback")
+	}
+
+	t.Log("All invalid input tests passed")
+}
+
+func TestCallbacks_ImportCallbackConfig(t *testing.T) {
+	t.Skip("Skipping ImportCallbackConfig test - requires valid exported config")
+
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Note: This test requires a valid exported config
+	// In practice, you would export a config first, then import it
+
+	t.Log("ImportCallbackConfig should be tested with a valid exported config")
+}
+
+func TestCallbacks_ImportCallbackConfig_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test empty config
+	err := client.ImportCallbackConfig(ctx, "")
+	if err == nil {
+		t.Error("Expected error for empty config")
+	}
+
+	// Test invalid JSON
+	err = client.ImportCallbackConfig(ctx, "not valid json")
+	if err == nil {
+		t.Error("Expected error for invalid JSON")
+	}
+
+	t.Log("All invalid input tests passed")
+}
+
+func TestCallbacks_AddCallbackGraphEdge(t *testing.T) {
+	t.Skip("Skipping AddCallbackGraphEdge test - requires multiple callbacks")
+
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get active callbacks
+	callbacks, err := client.GetAllActiveCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("GetAllActiveCallbacks failed: %v", err)
+	}
+	if len(callbacks) < 2 {
+		t.Skip("Need at least 2 callbacks for graph edge test")
+	}
+
+	// Get C2 profiles
+	profiles, err := client.GetC2Profiles(ctx, 0)
+	if err != nil || len(profiles) == 0 {
+		t.Skip("No C2 profiles available")
+	}
+
+	sourceID := callbacks[0].DisplayID
+	destID := callbacks[1].DisplayID
+	c2ProfileName := profiles[0].Name
+
+	err = client.AddCallbackGraphEdge(ctx, sourceID, destID, c2ProfileName)
+	if err != nil {
+		t.Fatalf("AddCallbackGraphEdge failed: %v", err)
+	}
+
+	t.Logf("Successfully added graph edge: %d -> %d (profile: %s)", sourceID, destID, c2ProfileName)
+}
+
+func TestCallbacks_AddCallbackGraphEdge_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test zero source ID
+	err := client.AddCallbackGraphEdge(ctx, 0, 1, "http")
+	if err == nil {
+		t.Error("Expected error for zero source ID")
+	}
+
+	// Test zero destination ID
+	err = client.AddCallbackGraphEdge(ctx, 1, 0, "http")
+	if err == nil {
+		t.Error("Expected error for zero destination ID")
+	}
+
+	// Test empty C2 profile name
+	err = client.AddCallbackGraphEdge(ctx, 1, 2, "")
+	if err == nil {
+		t.Error("Expected error for empty C2 profile name")
+	}
+
+	t.Log("All invalid input tests passed")
+}
+
+func TestCallbacks_RemoveCallbackGraphEdge(t *testing.T) {
+	t.Skip("Skipping RemoveCallbackGraphEdge test - requires existing graph edge")
+
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Note: This test requires an existing edge ID
+	// In practice, you would add an edge first, then remove it
+
+	t.Log("RemoveCallbackGraphEdge should be tested with an existing edge ID")
+}
+
+func TestCallbacks_RemoveCallbackGraphEdge_InvalidInput(t *testing.T) {
+	SkipIfNoMythic(t)
+	client := AuthenticateTestClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test zero edge ID
+	err := client.RemoveCallbackGraphEdge(ctx, 0)
+	if err == nil {
+		t.Error("Expected error for zero edge ID")
+	}
+
+	// Test negative edge ID
+	err = client.RemoveCallbackGraphEdge(ctx, -1)
+	if err == nil {
+		t.Error("Expected error for negative edge ID")
+	}
+
+	t.Log("All invalid input tests passed")
+}

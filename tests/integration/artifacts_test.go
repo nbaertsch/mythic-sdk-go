@@ -445,3 +445,81 @@ func TestArtifacts_ArtifactTypes(t *testing.T) {
 		t.Logf("  - %s: %d", artifactType, count)
 	}
 }
+
+func TestArtifacts_GetArtifactsByOperation(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get current operation
+	currentOpID := client.GetCurrentOperation()
+	if currentOpID == nil {
+		t.Skip("No current operation set")
+	}
+
+	// Get artifacts for the operation
+	artifacts, err := client.GetArtifactsByOperation(ctx, *currentOpID)
+	if err != nil {
+		t.Fatalf("GetArtifactsByOperation failed: %v", err)
+	}
+
+	if artifacts == nil {
+		t.Fatal("GetArtifactsByOperation returned nil")
+	}
+
+	t.Logf("Found %d artifact(s) for operation %d", len(artifacts), *currentOpID)
+
+	// Verify all artifacts belong to the operation
+	for i, artifact := range artifacts {
+		if artifact.OperationID != *currentOpID {
+			t.Errorf("Artifact %d belongs to operation %d, expected %d",
+				i, artifact.OperationID, *currentOpID)
+		}
+
+		// Log first few artifacts
+		if i < 5 {
+			t.Logf("  - Artifact %d: %s (type: %s, host: %s)",
+				i, artifact.Artifact, artifact.ArtifactType, artifact.Host)
+		}
+	}
+
+	if len(artifacts) > 5 {
+		t.Logf("  ... and %d more artifacts", len(artifacts)-5)
+	}
+
+	// Verify artifacts are sorted by timestamp (descending)
+	if len(artifacts) > 1 {
+		for i := 1; i < len(artifacts); i++ {
+			if artifacts[i].Timestamp.After(artifacts[i-1].Timestamp) {
+				t.Error("Artifacts should be sorted by timestamp (descending/newest first)")
+				break
+			}
+		}
+	}
+}
+
+func TestArtifacts_GetArtifactsByOperation_InvalidID(t *testing.T) {
+	SkipIfNoMythic(t)
+
+	client := AuthenticateTestClient(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Test with zero ID
+	_, err := client.GetArtifactsByOperation(ctx, 0)
+	if err == nil {
+		t.Fatal("Expected error for zero operation ID, got nil")
+	}
+	t.Logf("Zero ID error: %v", err)
+
+	// Test with non-existent operation ID
+	_, err = client.GetArtifactsByOperation(ctx, 999999)
+	if err == nil {
+		t.Fatal("Expected error for non-existent operation ID, got nil")
+	}
+	t.Logf("Non-existent ID error: %v", err)
+}
