@@ -26,7 +26,8 @@
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
 **Current Phase:** Phase 2 - Core Workflows
-**Completion:** 1/16 workflows (6.25%)
+**Completion:** 2/16 workflows (12.5%)
+**API Coverage:** 18/204 methods (8.8%)
 
 ### Completed Workflows
 
@@ -55,13 +56,33 @@
 - **Skip Rate:** 0%
 - **Status:** All tests passing in CI
 
+#### ✅ Workflow 2: Operations & Global Settings - COMPLETE
+- [CI Run #20868077719](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868077719)
+- **File:** `tests/integration/e2e_operations_test.go`
+- **Tests:**
+  * `TestE2E_OperationsManagement` - Complete operations workflow (16 sub-tests)
+  * `TestE2E_OperationsErrorHandling` - Error scenarios (4 sub-tests)
+- **APIs Covered (11/204):**
+  * GetOperations ✓
+  * GetOperationByID ✓
+  * CreateOperation ✓
+  * UpdateOperation ✓
+  * SetCurrentOperation ✓
+  * GetCurrentOperation ✓
+  * GetOperatorsByOperation ✓
+  * CreateOperationEventLog ✓
+  * GetOperationEventLog ✓
+  * GetGlobalSettings ✓
+  * UpdateGlobalSettings ✓
+- **Duration:** ~50 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-
-- ⏳ Workflow 2: Operations & Global Settings
 - ⏳ Workflow 3: File Management
 - ⏳ Workflow 4: Credentials & Artifacts
 - ⏳ Workflow 5: Tags & Categorization
