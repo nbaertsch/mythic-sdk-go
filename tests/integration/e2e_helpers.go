@@ -72,7 +72,7 @@ func (s *E2ETestSetup) Cleanup() {
 		s.t.Logf("Deleting callback ID: %d", s.CallbackID)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		_ = s.Client.DeleteCallback(ctx, s.CallbackID)
+		_ = s.Client.DeleteCallback(ctx, []int{s.CallbackID})
 	}
 
 	// Delete payload if exists
@@ -145,7 +145,7 @@ func (s *E2ETestSetup) WaitForCallback(timeout time.Duration) (int, error) {
 	return 0, fmt.Errorf("timeout waiting for callback after %v", timeout)
 }
 
-// ExecuteCommand executes a command on the callback and returns the task
+// ExecuteCommand executes a command on the callback and returns the task display ID
 func (s *E2ETestSetup) ExecuteCommand(cmd string, params string) (int, error) {
 	s.t.Helper()
 
@@ -158,25 +158,33 @@ func (s *E2ETestSetup) ExecuteCommand(cmd string, params string) (int, error) {
 
 	s.t.Logf("Executing command: %s (params: %s)", cmd, params)
 
-	taskID, err := s.Client.IssueTask(ctx, s.CallbackID, cmd, params)
+	callbackID := s.CallbackID
+	taskReq := &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    cmd,
+		Params:     params,
+	}
+
+	task, err := s.Client.IssueTask(ctx, taskReq)
 	if err != nil {
 		return 0, fmt.Errorf("failed to issue task: %w", err)
 	}
 
-	s.t.Logf("Task issued: ID %d", taskID)
-	return taskID, nil
+	s.t.Logf("Task issued: Display ID %d (ID: %d)", task.DisplayID, task.ID)
+	return task.DisplayID, nil
 }
 
-// WaitForTaskComplete polls for task completion
-func (s *E2ETestSetup) WaitForTaskComplete(taskID int, timeout time.Duration) (string, error) {
+// WaitForTaskComplete polls for task completion and returns concatenated output
+func (s *E2ETestSetup) WaitForTaskComplete(taskDisplayID int, timeout time.Duration) (string, error) {
 	s.t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	s.t.Logf("Waiting for task %d to complete (timeout: %v)", taskID, timeout)
+	s.t.Logf("Waiting for task %d to complete (timeout: %v)", taskDisplayID, timeout)
 
-	err := s.Client.WaitForTaskComplete(ctx, taskID)
+	timeoutSeconds := int(timeout.Seconds())
+	err := s.Client.WaitForTaskComplete(ctx, taskDisplayID, timeoutSeconds)
 	if err != nil {
 		return "", fmt.Errorf("task did not complete: %w", err)
 	}
@@ -185,12 +193,18 @@ func (s *E2ETestSetup) WaitForTaskComplete(taskID int, timeout time.Duration) (s
 	outputCtx, outputCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer outputCancel()
 
-	output, err := s.Client.GetTaskOutput(outputCtx, taskID)
+	responses, err := s.Client.GetTaskOutput(outputCtx, taskDisplayID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get task output: %w", err)
 	}
 
-	s.t.Logf("Task %d completed with output length: %d bytes", taskID, len(output))
+	// Concatenate all response outputs
+	var output string
+	for _, resp := range responses {
+		output += resp.ResponseText
+	}
+
+	s.t.Logf("Task %d completed with %d responses, total output: %d bytes", taskDisplayID, len(responses), len(output))
 	return output, nil
 }
 
