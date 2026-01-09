@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 18 | 0 | 2 | 20 |
-| **TOTAL** | **147** | **0** | **7** | **154** |
+| Advanced Features | 20 | 0 | 0 | 20 |
+| **TOTAL** | **149** | **0** | **5** | **154** |
 
-**Overall Coverage: 95.5%**
+**Overall Coverage: 96.8%**
 
 ---
 
@@ -2353,7 +2353,156 @@ CreateRandom(ctx, "%s@%s.com", 6)
 
 ---
 
-### ⏳ Pending (2/20)
+**Block Lists:**
+
+- **DeleteBlockList(blockListID)** - Delete a block list and all its entries
+  - File: `pkg/mythic/blocklist.go:24`
+  - Tests: `tests/integration/blocklist_test.go:11`
+  - GraphQL: `deleteBlockList` mutation
+  - Input: Block list ID to delete
+  - Returns: DeleteBlockListResponse with status and message
+  - Validates block list ID is positive
+  - Removes the entire block list including all associated entries
+  - Used when a block list is no longer needed or was created in error
+
+- **DeleteBlockListEntry(entryIDs)** - Delete specific entries from block lists
+  - File: `pkg/mythic/blocklist.go:75`
+  - Tests: `tests/integration/blocklist_test.go:36`
+  - GraphQL: `deleteBlockListEntry` mutation
+  - Input: List of entry IDs to delete (must be non-empty, all positive, no duplicates)
+  - Returns: DeleteBlockListEntryResponse with status and count of deleted entries
+  - Validates entry IDs list is non-empty, all IDs are positive, no duplicates
+  - Allows removing specific IPs, domains, or user agents without deleting entire list
+  - More efficient than deleting entries one at a time
+
+**Block List System:**
+
+Block lists in Mythic prevent specific IP addresses, domains, or user agents from accessing C2 infrastructure. This security feature helps:
+- **Avoid Detection**: Block known security scanner IPs and user agents
+- **Prevent Analysis**: Stop automated malware analysis systems from connecting
+- **Operational Security**: Block IPs associated with security vendors and researchers
+- **Incident Response**: Quickly block IPs that show signs of defensive analysis
+
+**BlockList Structure:**
+- ID: Unique block list identifier
+- Name: Descriptive name for the block list (e.g., "Security Scanners", "Sandboxes")
+- Description: Detailed description of what the list blocks
+- OperationID: Associated operation
+- Active: Boolean indicating if list is actively enforced
+- Deleted: Soft delete flag
+
+**BlockListEntry Structure:**
+- ID: Unique entry identifier
+- BlockListID: Parent block list ID
+- Type: Entry type - "ip", "domain", or "user_agent"
+- Value: The actual value to block (IP address, domain name, or user agent string)
+- Description: Optional description of why this entry is blocked
+- Active: Boolean indicating if entry is actively enforced
+- Deleted: Soft delete flag
+
+**Helper Methods:**
+- **BlockList.String()**: Human-readable representation showing name and status
+- **BlockList.IsActive()**: Returns true if list is active and not deleted
+- **BlockList.IsDeleted()**: Returns true if list has been deleted
+- **BlockListEntry.String()**: Human-readable representation showing type, value, and status
+- **BlockListEntry.IsActive()**: Returns true if entry is active and not deleted
+- **BlockListEntry.IsDeleted()**: Returns true if entry has been deleted
+- **DeleteBlockListRequest.String()**: Display deletion request details
+- **DeleteBlockListResponse.String()**: Display deletion result
+- **DeleteBlockListResponse.IsSuccessful()**: Returns true if deletion succeeded
+- **DeleteBlockListEntryRequest.String()**: Display entry deletion request
+- **DeleteBlockListEntryResponse.String()**: Display entry deletion result with count
+- **DeleteBlockListEntryResponse.IsSuccessful()**: Returns true if entry deletion succeeded
+
+**Common Use Cases:**
+```go
+// Delete an outdated block list
+result, err := client.DeleteBlockList(ctx, blockListID)
+if err != nil {
+    return err
+}
+if result.IsSuccessful() {
+    fmt.Println(result.String())
+}
+
+// Remove specific entries from a block list
+// For example, after confirming an IP is no longer a threat
+entryIDs := []int{123, 456, 789}
+result, err := client.DeleteBlockListEntry(ctx, entryIDs)
+if err != nil {
+    return err
+}
+fmt.Printf("Deleted %d entries\n", result.DeletedCount)
+
+// Clean up multiple entries at once
+suspiciousIPs := []int{101, 102, 103, 104, 105}
+result, err = client.DeleteBlockListEntry(ctx, suspiciousIPs)
+if result.IsSuccessful() {
+    fmt.Printf("Removed %d IPs from block list\n", result.DeletedCount)
+}
+```
+
+**Entry Types:**
+- **ip**: Block specific IP addresses
+  - Examples: "192.168.1.100", "10.0.0.50", "203.0.113.42"
+  - Prevents connections from these IPs to C2 infrastructure
+  - Useful for blocking known security vendor IPs
+
+- **domain**: Block specific domain names
+  - Examples: "scanner.security.com", "sandbox.analysis.net"
+  - Blocks reverse DNS lookups or SNI requests matching these domains
+  - Prevents security tools with known domains from analyzing payloads
+
+- **user_agent**: Block specific user agent strings
+  - Examples: "SecurityScanner/1.0", "wget/1.21", "python-requests/2.28"
+  - Blocks HTTP/HTTPS requests with matching User-Agent headers
+  - Prevents automated tools and scripts from downloading payloads
+
+**Block List Management Workflow:**
+1. **Create Block Lists**: Set up lists for different categories (scanners, sandboxes, etc.)
+2. **Add Entries**: Populate with known security IPs, domains, and user agents
+3. **Activate Lists**: Enable lists to start blocking matching traffic
+4. **Monitor Traffic**: Watch for blocked connection attempts in logs
+5. **Update Entries**: Add new threats, remove false positives
+6. **Delete Obsolete Entries**: Remove entries that are no longer threats
+7. **Delete Old Lists**: Clean up block lists no longer needed
+
+**Deletion Strategies:**
+- **Individual Entry Deletion**: Remove specific false positives while keeping list
+- **Bulk Entry Deletion**: Clean up multiple obsolete entries efficiently
+- **Full List Deletion**: Remove entire category when no longer relevant
+- **Soft Deletes**: Mythic soft-deletes entries for audit trail (deleted flag)
+
+**Security Considerations:**
+- Block lists protect C2 infrastructure from analysis and detection
+- Over-aggressive blocking may block legitimate target networks
+- False positives in block lists can prevent valid callbacks
+- Block list changes take effect immediately on active C2 profiles
+- Deleted block lists may still be referenced in logs for audit purposes
+- Consider using both IP and user agent blocking for defense in depth
+- Regularly review and update block lists as threat landscape changes
+
+**Common Block List Entries:**
+- **Security Vendors**: IPs owned by Palo Alto, Cisco, CrowdStrike, etc.
+- **Malware Analysis**: VirusTotal, Any.run, Joe Sandbox, Hybrid Analysis
+- **Research Organizations**: University security labs, threat intelligence firms
+- **Automated Scanners**: Shodan, Censys, ZoomEye, BinaryEdge
+- **Cloud Providers**: AWS security scanning, Azure security center
+- **User Agents**: wget, curl, python-requests, automated security tools
+
+**Notes:**
+- DeleteBlockList removes both the list and all its entries permanently
+- DeleteBlockListEntry requires at least one entry ID
+- All entry IDs must be positive integers
+- Duplicate entry IDs in the same request are not allowed
+- Deletion is immediate and affects active C2 profile filtering
+- Block list IDs and entry IDs are unique within the Mythic instance
+- Soft-deleted entries remain in database for audit but are not enforced
+- Block lists are operation-specific - deleting one doesn't affect others
+
+---
+
+### ⏳ Pending (0/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -2368,13 +2517,6 @@ CreateRandom(ctx, "%s@%s.com", 6)
 **Staging:**
 - **GetStagingInfo()** - Get payload staging info
   - Database: `staginginfo` table
-
-**Block Lists:**
-- **DeleteBlockList()** - Delete block list
-  - GraphQL: `deleteBlockList` mutation
-
-- **DeleteBlockListEntry()** - Remove block list entries
-  - GraphQL: `deleteBlockListEntry` mutation
 
 ---
 
