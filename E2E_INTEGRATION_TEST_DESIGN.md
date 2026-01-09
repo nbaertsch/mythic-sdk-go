@@ -26,8 +26,8 @@
 **Status:** IN PROGRESS
 **Started:** 2026-01-09
 **Current Phase:** Phase 2 - Core Workflows
-**Completion:** 2/16 workflows (12.5%)
-**API Coverage:** 18/204 methods (8.8%)
+**Completion:** 3/16 workflows (18.75%)
+**API Coverage:** 26/204 methods (12.7%)
 
 ### Completed Workflows
 
@@ -78,12 +78,35 @@
 - **Skip Rate:** 0%
 - **Status:** All tests passing in CI
 
+#### ✅ Workflow 3: File Management - COMPLETE
+- [CI Run #20868245019](https://github.com/nbaertsch/mythic-sdk-go/actions/runs/20868245019)
+- **File:** `tests/integration/e2e_files_test.go`
+- **Tests:**
+  * `TestE2E_FileOperations` - Complete file lifecycle (15 sub-tests)
+  * `TestE2E_FileOperationsErrorHandling` - Error scenarios (5 sub-tests)
+- **APIs Covered (8/204):**
+  * GetFiles ✓
+  * GetFileByID ✓
+  * GetDownloadedFiles ✓
+  * UploadFile ✓
+  * DownloadFile ✓
+  * DeleteFile ✓
+  * BulkDownloadFiles ✓
+  * PreviewFile ✓
+- **Duration:** ~40 seconds
+- **Skip Rate:** 0%
+- **Status:** All tests passing in CI
+- **Features:**
+  * Tests with files of varying sizes (1KB, 1MB, 10MB)
+  * Content verification (upload/download match)
+  * Bulk operations (ZIP download)
+  * Comprehensive cleanup
+
 ### In Progress
 
 None
 
 ### Pending Workflows
-- ⏳ Workflow 3: File Management
 - ⏳ Workflow 4: Credentials & Artifacts
 - ⏳ Workflow 5: Tags & Categorization
 - ⏳ Workflow 6: Operator & User Management
