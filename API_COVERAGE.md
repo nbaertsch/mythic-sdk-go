@@ -33,10 +33,10 @@ This document provides a comprehensive overview of all available Mythic APIs and
 | Eventing/Workflows | 0 | 0 | 15 | 15 |
 | Operators | 11 | 0 | 0 | 11 |
 | GraphQL Subscriptions | 0 | 0 | 1 | 1 |
-| Advanced Features | 16 | 0 | 4 | 20 |
-| **TOTAL** | **145** | **0** | **9** | **154** |
+| Advanced Features | 18 | 0 | 2 | 20 |
+| **TOTAL** | **147** | **0** | **7** | **154** |
 
-**Overall Coverage: 94.2%**
+**Overall Coverage: 95.5%**
 
 ---
 
@@ -2189,7 +2189,171 @@ fmt.Println("Proxy stopped")
 
 ---
 
-### ⏳ Pending (4/20)
+**Utility Functions:**
+
+- **CreateRandom(format, length)** - Generate a random string based on a format specification
+  - File: `pkg/mythic/utility.go:20`
+  - Tests: `tests/integration/utility_test.go:12`
+  - GraphQL: `createRandom` mutation
+  - Input: Format string with specifiers (%s, %S, %d, %x, %X), optional length
+  - Returns: CreateRandomResponse with generated random string
+  - Validates format is non-empty
+  - Useful for generating random identifiers, callback IDs, payload names, or test data
+
+  Format specifiers:
+  - `%s`: Random lowercase letters (a-z)
+  - `%S`: Random uppercase letters (A-Z)
+  - `%d`: Random digits (0-9)
+  - `%x`: Random lowercase hexadecimal (0-9, a-f)
+  - `%X`: Random uppercase hexadecimal (0-9, A-F)
+  - Literal characters preserved (e.g., "callback-%s" → "callback-xyzab")
+
+- **ConfigCheck()** - Check Mythic configuration validity and status
+  - File: `pkg/mythic/utility.go:93`
+  - Tests: `tests/integration/utility_test.go:117`
+  - GraphQL: `config_check` query
+  - Returns: ConfigCheckResponse with validation results, errors, and config details
+  - No input parameters required
+  - Validates database, RabbitMQ, Redis, containers, environment variables, and permissions
+  - Useful for debugging configuration issues and validating setup before operations
+
+**CreateRandomResponse Structure:**
+- Status: Operation status ("success" or "error")
+- RandomString: Generated random string
+- Error: Error message if generation failed
+
+**ConfigCheckResponse Structure:**
+- Status: Operation status
+- Valid: Boolean indicating if configuration is valid
+- Errors: List of configuration error messages
+- Config: Map of configuration details (database, services, containers)
+- Message: Human-readable status message
+
+**Helper Methods:**
+- **CreateRandomRequest.String()**: Display request details
+- **CreateRandomResponse.String()**: Display generated string or error
+- **CreateRandomResponse.IsSuccessful()**: Returns true if generation succeeded
+- **ConfigCheckResponse.String()**: Display validation result
+- **ConfigCheckResponse.IsValid()**: Returns true if configuration is valid with no errors
+- **ConfigCheckResponse.HasErrors()**: Returns true if there are configuration errors
+- **ConfigCheckResponse.GetErrors()**: Returns list of error messages
+
+**Common Use Cases:**
+```go
+// Generate random callback ID
+result, err := client.CreateRandom(ctx, "callback-%s-%d", 8)
+if err != nil {
+    return err
+}
+callbackID := result.RandomString
+fmt.Printf("Generated callback ID: %s\n", callbackID)
+
+// Generate random hex payload name
+result, err = client.CreateRandom(ctx, "payload_%x", 16)
+if err != nil {
+    return err
+}
+payloadName := result.RandomString
+
+// Generate random test data
+testData, err := client.CreateRandom(ctx, "%S%d%s", 6)
+if testData.IsSuccessful() {
+    fmt.Printf("Test data: %s\n", testData.RandomString)
+}
+
+// Check configuration before starting operations
+config, err := client.ConfigCheck(ctx)
+if err != nil {
+    return err
+}
+
+if !config.IsValid() {
+    fmt.Printf("Configuration is invalid:\n")
+    for _, err := range config.GetErrors() {
+        fmt.Printf("  - %s\n", err)
+    }
+    return fmt.Errorf("fix configuration errors before proceeding")
+}
+
+fmt.Println("Configuration is valid, proceeding with operations")
+
+// Log configuration details
+if len(config.Config) > 0 {
+    fmt.Println("Configuration details:")
+    for key, value := range config.Config {
+        fmt.Printf("  %s: %v\n", key, value)
+    }
+}
+```
+
+**CreateRandom Use Cases:**
+- **Callback/Agent IDs**: Generate unique identifiers for callbacks and agents
+- **Payload Names**: Create random payload filenames to avoid detection
+- **Test Data**: Generate random strings for testing and development
+- **Session IDs**: Create random session identifiers for C2 communication
+- **Obfuscation**: Generate random strings for variable names, function names
+- **Operation Names**: Create random but memorable operation codenames
+
+**ConfigCheck Use Cases:**
+- **Pre-flight Checks**: Validate configuration before starting operations
+- **Troubleshooting**: Identify configuration issues when things aren't working
+- **Health Monitoring**: Periodic checks to ensure all services are connected
+- **Setup Validation**: Verify new Mythic installations are configured correctly
+- **Container Status**: Check that all required containers are running
+- **Database Connectivity**: Verify PostgreSQL connection is working
+- **Message Queue**: Ensure RabbitMQ is accessible for task distribution
+
+**Configuration Items Checked:**
+- **Database (PostgreSQL)**: Connection status, schema version
+- **RabbitMQ**: Message queue connectivity for task distribution
+- **Redis** (if configured): Cache and session storage connectivity
+- **Containers**: Status of payload type and C2 profile containers
+- **Environment Variables**: Required variables are set correctly
+- **Permissions**: File system and Docker permissions are adequate
+- **Network**: Internal service networking is functioning
+
+**Random String Patterns:**
+```go
+// Lowercase identifier: "abc123xyz"
+CreateRandom(ctx, "%s%d%s", 3)
+
+// Uppercase codename: "ALPHA123"
+CreateRandom(ctx, "%S%d", 5)
+
+// Hex UUID-style: "a1b2c3d4e5f6"
+CreateRandom(ctx, "%x", 12)
+
+// Mixed case: "Test123ABC"
+CreateRandom(ctx, "%S%d%S", 4)
+
+// With separators: "callback-abc-123"
+CreateRandom(ctx, "callback-%s-%d", 3)
+
+// Email-style: "user@random.com"
+CreateRandom(ctx, "%s@%s.com", 6)
+```
+
+**Security Considerations:**
+- **CreateRandom**: Generated strings are pseudo-random, not cryptographically secure
+- Use CreateRandom for identifiers and obfuscation, not cryptographic keys
+- Random strings may not have sufficient entropy for security-critical uses
+- Consider length requirements - longer strings are more unique
+- **ConfigCheck**: May expose configuration details - use in secure environments
+- Configuration errors may reveal internal infrastructure details
+- Limit ConfigCheck calls to authenticated, trusted operators
+
+**Notes:**
+- CreateRandom length parameter determines characters per format specifier
+- Zero length uses Mythic's default length per specifier
+- Format string can mix specifiers and literal characters
+- ConfigCheck requires authentication but no special permissions
+- Configuration details returned in Config map vary by Mythic version
+- Failed configuration checks don't prevent API usage - they're informational
+- Some configuration issues may only appear under specific conditions
+
+---
+
+### ⏳ Pending (2/20)
 
 **Dynamic Queries:**
 - **DynamicQueryFunction()** - Dynamic parameter queries
@@ -2211,13 +2375,6 @@ fmt.Println("Proxy stopped")
 
 - **DeleteBlockListEntry()** - Remove block list entries
   - GraphQL: `deleteBlockListEntry` mutation
-
-**Miscellaneous:**
-- **CreateRandom()** - Generate random string with format
-  - GraphQL: `createRandom` mutation
-
-- **ConfigCheck()** - Check configuration
-  - GraphQL: `config_check` query
 
 ---
 
