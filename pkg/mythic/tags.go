@@ -287,13 +287,21 @@ func (c *Client) GetTagByID(ctx context.Context, tagID int) (*types.Tag, error) 
 
 	var query struct {
 		Tag []struct {
-			ID          int       `graphql:"id"`
-			TagTypeID   int       `graphql:"tagtype_id"`
-			SourceType  string    `graphql:"source"`
-			SourceID    int       `graphql:"source_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID              int       `graphql:"id"`
+			TagTypeID       int       `graphql:"tagtype_id"`
+			SourceType      string    `graphql:"source"`
+			OperatorID      int       `graphql:"operator_id"`
+			OperationID     int       `graphql:"operation_id"`
+			Timestamp       time.Time `graphql:"timestamp"`
+			TaskArtifactID  *int      `graphql:"taskartifact_id"`
+			TaskID          *int      `graphql:"task_id"`
+			CallbackID      *int      `graphql:"callback_id"`
+			FilemetaID      *int      `graphql:"filemeta_id"`
+			PayloadID       *int      `graphql:"payload_id"`
+			MythictreeID    *int      `graphql:"mythictree_id"`
+			KeylogID        *int      `graphql:"keylog_id"`
+			CredentialID    *int      `graphql:"credential_id"`
+			ResponseID      *int      `graphql:"response_id"`
 		} `graphql:"tag(where: {id: {_eq: $tag_id}})"`
 	}
 
@@ -311,11 +319,34 @@ func (c *Client) GetTagByID(ctx context.Context, tagID int) (*types.Tag, error) 
 	}
 
 	t := query.Tag[0]
+
+	// Determine which source ID is populated
+	var sourceID int
+	if t.TaskArtifactID != nil {
+		sourceID = *t.TaskArtifactID
+	} else if t.TaskID != nil {
+		sourceID = *t.TaskID
+	} else if t.CallbackID != nil {
+		sourceID = *t.CallbackID
+	} else if t.FilemetaID != nil {
+		sourceID = *t.FilemetaID
+	} else if t.PayloadID != nil {
+		sourceID = *t.PayloadID
+	} else if t.MythictreeID != nil {
+		sourceID = *t.MythictreeID
+	} else if t.KeylogID != nil {
+		sourceID = *t.KeylogID
+	} else if t.CredentialID != nil {
+		sourceID = *t.CredentialID
+	} else if t.ResponseID != nil {
+		sourceID = *t.ResponseID
+	}
+
 	return &types.Tag{
 		ID:          t.ID,
 		TagTypeID:   t.TagTypeID,
 		SourceType:  t.SourceType,
-		SourceID:    t.SourceID,
+		SourceID:    sourceID,
 		OperatorID:  t.OperatorID,
 		OperationID: t.OperationID,
 		Timestamp:   t.Timestamp,
@@ -332,21 +363,54 @@ func (c *Client) GetTags(ctx context.Context, sourceType string, sourceID int) (
 		return nil, WrapError("GetTags", ErrInvalidInput, "source type and source ID are required")
 	}
 
+	// Build where clause based on source type
+	var whereField string
+	switch sourceType {
+	case types.TagSourceArtifact:
+		whereField = "taskartifact_id"
+	case types.TagSourceTask:
+		whereField = "task_id"
+	case types.TagSourceCallback:
+		whereField = "callback_id"
+	case types.TagSourceFile:
+		whereField = "filemeta_id"
+	case types.TagSourcePayload:
+		whereField = "payload_id"
+	case types.TagSourceProcess:
+		whereField = "mythictree_id"
+	case types.TagSourceKeylog:
+		whereField = "keylog_id"
+	case "credential":
+		whereField = "credential_id"
+	case "response":
+		whereField = "response_id"
+	default:
+		return nil, WrapError("GetTags", ErrInvalidInput, "unsupported source type: "+sourceType)
+	}
+
+	// Query all tags with this source type and then filter by ID in code
 	var query struct {
 		Tag []struct {
-			ID          int       `graphql:"id"`
-			TagTypeID   int       `graphql:"tagtype_id"`
-			SourceType  string    `graphql:"source"`
-			SourceID    int       `graphql:"source_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
-		} `graphql:"tag(where: {source: {_eq: $source}, source_id: {_eq: $source_id}}, order_by: {timestamp: desc})"`
+			ID              int       `graphql:"id"`
+			TagTypeID       int       `graphql:"tagtype_id"`
+			SourceType      string    `graphql:"source"`
+			OperatorID      int       `graphql:"operator_id"`
+			OperationID     int       `graphql:"operation_id"`
+			Timestamp       time.Time `graphql:"timestamp"`
+			TaskArtifactID  *int      `graphql:"taskartifact_id"`
+			TaskID          *int      `graphql:"task_id"`
+			CallbackID      *int      `graphql:"callback_id"`
+			FilemetaID      *int      `graphql:"filemeta_id"`
+			PayloadID       *int      `graphql:"payload_id"`
+			MythictreeID    *int      `graphql:"mythictree_id"`
+			KeylogID        *int      `graphql:"keylog_id"`
+			CredentialID    *int      `graphql:"credential_id"`
+			ResponseID      *int      `graphql:"response_id"`
+		} `graphql:"tag(where: {source: {_eq: $source}}, order_by: {timestamp: desc})"`
 	}
 
 	variables := map[string]interface{}{
-		"source":    sourceType,
-		"source_id": sourceID,
+		"source": sourceType,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)
@@ -354,16 +418,60 @@ func (c *Client) GetTags(ctx context.Context, sourceType string, sourceID int) (
 		return nil, WrapError("GetTags", err, "failed to query tags")
 	}
 
-	tags := make([]*types.Tag, len(query.Tag))
-	for i, t := range query.Tag {
-		tags[i] = &types.Tag{
-			ID:          t.ID,
-			TagTypeID:   t.TagTypeID,
-			SourceType:  t.SourceType,
-			SourceID:    t.SourceID,
-			OperatorID:  t.OperatorID,
-			OperationID: t.OperationID,
-			Timestamp:   t.Timestamp,
+	// Filter tags by the appropriate ID field
+	tags := make([]*types.Tag, 0)
+	for _, t := range query.Tag {
+		var tagSourceID int
+		switch whereField {
+		case "taskartifact_id":
+			if t.TaskArtifactID != nil {
+				tagSourceID = *t.TaskArtifactID
+			}
+		case "task_id":
+			if t.TaskID != nil {
+				tagSourceID = *t.TaskID
+			}
+		case "callback_id":
+			if t.CallbackID != nil {
+				tagSourceID = *t.CallbackID
+			}
+		case "filemeta_id":
+			if t.FilemetaID != nil {
+				tagSourceID = *t.FilemetaID
+			}
+		case "payload_id":
+			if t.PayloadID != nil {
+				tagSourceID = *t.PayloadID
+			}
+		case "mythictree_id":
+			if t.MythictreeID != nil {
+				tagSourceID = *t.MythictreeID
+			}
+		case "keylog_id":
+			if t.KeylogID != nil {
+				tagSourceID = *t.KeylogID
+			}
+		case "credential_id":
+			if t.CredentialID != nil {
+				tagSourceID = *t.CredentialID
+			}
+		case "response_id":
+			if t.ResponseID != nil {
+				tagSourceID = *t.ResponseID
+			}
+		}
+
+		// Only include tags that match the requested source ID
+		if tagSourceID == sourceID {
+			tags = append(tags, &types.Tag{
+				ID:          t.ID,
+				TagTypeID:   t.TagTypeID,
+				SourceType:  t.SourceType,
+				SourceID:    tagSourceID,
+				OperatorID:  t.OperatorID,
+				OperationID: t.OperationID,
+				Timestamp:   t.Timestamp,
+			})
 		}
 	}
 
@@ -382,13 +490,21 @@ func (c *Client) GetTagsByOperation(ctx context.Context, operationID int) ([]*ty
 
 	var query struct {
 		Tag []struct {
-			ID          int       `graphql:"id"`
-			TagTypeID   int       `graphql:"tagtype_id"`
-			SourceType  string    `graphql:"source"`
-			SourceID    int       `graphql:"source_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID              int       `graphql:"id"`
+			TagTypeID       int       `graphql:"tagtype_id"`
+			SourceType      string    `graphql:"source"`
+			OperatorID      int       `graphql:"operator_id"`
+			OperationID     int       `graphql:"operation_id"`
+			Timestamp       time.Time `graphql:"timestamp"`
+			TaskArtifactID  *int      `graphql:"taskartifact_id"`
+			TaskID          *int      `graphql:"task_id"`
+			CallbackID      *int      `graphql:"callback_id"`
+			FilemetaID      *int      `graphql:"filemeta_id"`
+			PayloadID       *int      `graphql:"payload_id"`
+			MythictreeID    *int      `graphql:"mythictree_id"`
+			KeylogID        *int      `graphql:"keylog_id"`
+			CredentialID    *int      `graphql:"credential_id"`
+			ResponseID      *int      `graphql:"response_id"`
 		} `graphql:"tag(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
 	}
 
@@ -403,11 +519,33 @@ func (c *Client) GetTagsByOperation(ctx context.Context, operationID int) ([]*ty
 
 	tags := make([]*types.Tag, len(query.Tag))
 	for i, t := range query.Tag {
+		// Determine which source ID is populated
+		var sourceID int
+		if t.TaskArtifactID != nil {
+			sourceID = *t.TaskArtifactID
+		} else if t.TaskID != nil {
+			sourceID = *t.TaskID
+		} else if t.CallbackID != nil {
+			sourceID = *t.CallbackID
+		} else if t.FilemetaID != nil {
+			sourceID = *t.FilemetaID
+		} else if t.PayloadID != nil {
+			sourceID = *t.PayloadID
+		} else if t.MythictreeID != nil {
+			sourceID = *t.MythictreeID
+		} else if t.KeylogID != nil {
+			sourceID = *t.KeylogID
+		} else if t.CredentialID != nil {
+			sourceID = *t.CredentialID
+		} else if t.ResponseID != nil {
+			sourceID = *t.ResponseID
+		}
+
 		tags[i] = &types.Tag{
 			ID:          t.ID,
 			TagTypeID:   t.TagTypeID,
 			SourceType:  t.SourceType,
-			SourceID:    t.SourceID,
+			SourceID:    sourceID,
 			OperatorID:  t.OperatorID,
 			OperationID: t.OperationID,
 			Timestamp:   t.Timestamp,
