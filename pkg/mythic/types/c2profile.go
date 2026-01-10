@@ -21,7 +21,6 @@ type C2Profile struct {
 	ContainerID   string                 `json:"container_id,omitempty"`
 	Deleted       bool                   `json:"deleted"`
 	IsP2P         bool                   `json:"is_p2p"`
-	ServerOnly    bool                   `json:"server_only"`
 	PayloadTypeID *int                   `json:"payload_type_id,omitempty"`
 }
 

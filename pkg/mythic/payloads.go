@@ -113,7 +113,6 @@ func (c *Client) GetPayloadByUUID(ctx context.Context, uuid string) (*types.Payl
 				Name          string `graphql:"name"`
 				FileExtension string `graphql:"file_extension"`
 				Author        string `graphql:"author"`
-				Supported     bool   `graphql:"supported"`
 			} `graphql:"payloadtype"`
 		} `graphql:"payload(where: {uuid: {_eq: $uuid}})"`
 	}
@@ -156,7 +155,6 @@ func (c *Client) GetPayloadByUUID(ctx context.Context, uuid string) (*types.Payl
 			Name:          p.PayloadType.Name,
 			FileExtension: p.PayloadType.FileExtension,
 			Author:        p.PayloadType.Author,
-			Supported:     p.PayloadType.Supported,
 		},
 	}, nil
 }
@@ -359,7 +357,6 @@ func (c *Client) GetPayloadTypes(ctx context.Context) ([]*types.PayloadType, err
 			Name                string    `graphql:"name"`
 			FileExtension       string    `graphql:"file_extension"`
 			Author              string    `graphql:"author"`
-			Supported           bool      `graphql:"supported"`
 			WrapperMode         bool      `graphql:"wrapper"`
 			Wrapped             bool      `graphql:"wrapped"`
 			Note                string    `graphql:"note"`
@@ -382,7 +379,6 @@ func (c *Client) GetPayloadTypes(ctx context.Context) ([]*types.PayloadType, err
 			Name:                pt.Name,
 			FileExtension:       pt.FileExtension,
 			Author:              pt.Author,
-			Supported:           pt.Supported,
 			WrapperMode:         pt.WrapperMode,
 			Wrapped:             pt.Wrapped,
 			Note:                pt.Note,

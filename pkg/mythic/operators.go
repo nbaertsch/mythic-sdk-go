@@ -21,7 +21,6 @@ func (c *Client) GetOperators(ctx context.Context) ([]*types.Operator, error) {
 			Active           bool   `graphql:"active"`
 			Deleted          bool   `graphql:"deleted"`
 			CurrentOperation *int   `graphql:"current_operation_id"`
-			ViewMode         string `graphql:"view_mode"`
 			AccountType      string `graphql:"account_type"`
 			FailedLoginCount int    `graphql:"failed_login_count"`
 		} `graphql:"operator(order_by: {username: asc})"`
@@ -41,7 +40,6 @@ func (c *Client) GetOperators(ctx context.Context) ([]*types.Operator, error) {
 			Active:             op.Active,
 			Deleted:            op.Deleted,
 			CurrentOperationID: op.CurrentOperation,
-			ViewMode:           op.ViewMode,
 			AccountType:        op.AccountType,
 			FailedLoginCount:   op.FailedLoginCount,
 		}
@@ -68,7 +66,6 @@ func (c *Client) GetOperatorByID(ctx context.Context, operatorID int) (*types.Op
 			Active           bool   `graphql:"active"`
 			Deleted          bool   `graphql:"deleted"`
 			CurrentOperation *int   `graphql:"current_operation_id"`
-			ViewMode         string `graphql:"view_mode"`
 			AccountType      string `graphql:"account_type"`
 			FailedLoginCount int    `graphql:"failed_login_count"`
 		} `graphql:"operator(where: {id: {_eq: $operator_id}})"`
@@ -95,7 +92,6 @@ func (c *Client) GetOperatorByID(ctx context.Context, operatorID int) (*types.Op
 		Active:             op.Active,
 		Deleted:            op.Deleted,
 		CurrentOperationID: op.CurrentOperation,
-		ViewMode:           op.ViewMode,
 		AccountType:        op.AccountType,
 		FailedLoginCount:   op.FailedLoginCount,
 	}, nil

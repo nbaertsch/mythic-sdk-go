@@ -11,7 +11,7 @@ type Credential struct {
 	Type        string     `json:"type"`
 	Account     string     `json:"account"`
 	Realm       string     `json:"realm"`
-	Credential  string     `json:"credential"`
+	Credential  string     `json:"credential_text"`
 	Comment     string     `json:"comment"`
 	OperationID int        `json:"operation_id"`
 	OperatorID  int        `json:"operator_id"`
@@ -28,7 +28,7 @@ type CreateCredentialRequest struct {
 	Type       string `json:"type"`               // e.g., "plaintext", "hash", "key", "ticket", "cookie"
 	Account    string `json:"account"`            // Username or account name
 	Realm      string `json:"realm"`              // Domain, hostname, or scope
-	Credential string `json:"credential"`         // The actual credential value
+	Credential string `json:"credential_text"`    // The actual credential value
 	Comment    string `json:"comment,omitempty"`  // Optional comment
 	TaskID     *int   `json:"task_id,omitempty"`  // Optional task that discovered it
 	Metadata   string `json:"metadata,omitempty"` // Optional JSON metadata
@@ -40,7 +40,7 @@ type UpdateCredentialRequest struct {
 	Type       *string `json:"type,omitempty"`
 	Account    *string `json:"account,omitempty"`
 	Realm      *string `json:"realm,omitempty"`
-	Credential *string `json:"credential,omitempty"`
+	Credential *string `json:"credential_text,omitempty"`
 	Comment    *string `json:"comment,omitempty"`
 	Deleted    *bool   `json:"deleted,omitempty"`
 	Metadata   *string `json:"metadata,omitempty"`

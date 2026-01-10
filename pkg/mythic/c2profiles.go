@@ -22,7 +22,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
 			IsP2P         bool      `graphql:"is_p2p"`
-			ServerOnly    bool      `graphql:"server_only"`
 			ContainerID   string    `graphql:"container_id"`
 			PayloadTypeID *int      `graphql:"payloadtype_id"`
 		} `graphql:"c2profile(where: {deleted: {_eq: false}}, order_by: {name: asc})"`
@@ -43,7 +42,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			Running:       p.Running,
 			Deleted:       p.Deleted,
 			IsP2P:         p.IsP2P,
-			ServerOnly:    p.ServerOnly,
 			ContainerID:   p.ContainerID,
 			PayloadTypeID: p.PayloadTypeID,
 		}
@@ -71,7 +69,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
 			IsP2P         bool      `graphql:"is_p2p"`
-			ServerOnly    bool      `graphql:"server_only"`
 			ContainerID   string    `graphql:"container_id"`
 			PayloadTypeID *int      `graphql:"payloadtype_id"`
 		} `graphql:"c2profile(where: {id: {_eq: $profile_id}})"`
@@ -99,7 +96,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 		Running:       p.Running,
 		Deleted:       p.Deleted,
 		IsP2P:         p.IsP2P,
-		ServerOnly:    p.ServerOnly,
 		ContainerID:   p.ContainerID,
 		PayloadTypeID: p.PayloadTypeID,
 	}, nil

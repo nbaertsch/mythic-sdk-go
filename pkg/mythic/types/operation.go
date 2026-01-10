@@ -15,7 +15,6 @@ type Operation struct {
 	AdminID             int       `json:"admin_id"`
 	BannerText          string    `json:"banner_text"`
 	BannerColor         string    `json:"banner_color"`
-	DisplayName         string    `json:"display_name"`
 	Icon                string    `json:"icon"`
 	IconURL             string    `json:"icon_url"`
 	IconEmoji           string    `json:"icon_emoji"`
@@ -27,12 +26,11 @@ type Operation struct {
 
 // OperationOperator represents the relationship between an operation and an operator.
 type OperationOperator struct {
-	ID          int              `json:"id"`
-	OperationID int              `json:"operation_id"`
-	OperatorID  int              `json:"operator_id"`
-	ViewMode    OperatorViewMode `json:"view_mode"`
-	Operation   *Operation       `json:"operation,omitempty"`
-	Operator    *Operator        `json:"operator,omitempty"`
+	ID          int        `json:"id"`
+	OperationID int        `json:"operation_id"`
+	OperatorID  int        `json:"operator_id"`
+	Operation   *Operation `json:"operation,omitempty"`
+	Operator    *Operator  `json:"operator,omitempty"`
 }
 
 // Operator represents a Mythic operator (user).
@@ -46,7 +44,6 @@ type Operator struct {
 	CurrentOperationID *int       `json:"current_operation_id"`
 	ViewUTCTime        bool       `json:"view_utc_time"`
 	Deleted            bool       `json:"deleted"`
-	ViewMode           string     `json:"view_mode"`
 	CurrentOperation   *Operation `json:"current_operation,omitempty"`
 	AccountType        string     `json:"account_type,omitempty"`
 	FailedLoginCount   int        `json:"failed_login_count"`
@@ -88,10 +85,9 @@ type UpdateOperationRequest struct {
 
 // UpdateOperatorOperationRequest represents a request to update an operator's role in an operation.
 type UpdateOperatorOperationRequest struct {
-	OperatorID  int               `json:"operator_id"`
-	OperationID int               `json:"operation_id"`
-	ViewMode    *OperatorViewMode `json:"view_mode,omitempty"`
-	Remove      bool              `json:"remove,omitempty"` // If true, remove operator from operation
+	OperatorID  int  `json:"operator_id"`
+	OperationID int  `json:"operation_id"`
+	Remove      bool `json:"remove,omitempty"` // If true, remove operator from operation
 }
 
 // CreateOperationEventLogRequest represents a request to create an event log entry.

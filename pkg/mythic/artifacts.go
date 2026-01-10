@@ -33,19 +33,15 @@ func (c *Client) GetArtifactsByOperation(ctx context.Context, operationID int) (
 	}
 
 	var query struct {
-		Artifact []struct {
+		TaskArtifact []struct {
 			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact"`
+			Artifact     string    `graphql:"artifact_text"`
 			BaseArtifact string    `graphql:"base_artifact"`
 			Host         string    `graphql:"host"`
-			ArtifactType string    `graphql:"type"`
 			OperationID  int       `graphql:"operation_id"`
-			OperatorID   int       `graphql:"operator_id"`
 			TaskID       *int      `graphql:"task_id"`
 			Timestamp    time.Time `graphql:"timestamp"`
-			Deleted      bool      `graphql:"deleted"`
-			Metadata     string    `graphql:"metadata"`
-		} `graphql:"artifact(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
+		} `graphql:"taskartifact(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -57,20 +53,16 @@ func (c *Client) GetArtifactsByOperation(ctx context.Context, operationID int) (
 		return nil, WrapError("GetArtifactsByOperation", err, "failed to query artifacts")
 	}
 
-	artifacts := make([]*types.Artifact, len(query.Artifact))
-	for i, a := range query.Artifact {
+	artifacts := make([]*types.Artifact, len(query.TaskArtifact))
+	for i, a := range query.TaskArtifact {
 		artifacts[i] = &types.Artifact{
 			ID:           a.ID,
 			Artifact:     a.Artifact,
 			BaseArtifact: a.BaseArtifact,
 			Host:         a.Host,
-			ArtifactType: a.ArtifactType,
 			OperationID:  a.OperationID,
-			OperatorID:   a.OperatorID,
 			TaskID:       a.TaskID,
 			Timestamp:    a.Timestamp,
-			Deleted:      a.Deleted,
-			Metadata:     a.Metadata,
 		}
 	}
 
@@ -98,7 +90,7 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 			Status     string `graphql:"status"`
 			Error      string `graphql:"error"`
 			ArtifactID int    `graphql:"id"`
-		} `graphql:"createArtifact(artifact: $artifact, base_artifact: $base_artifact, host: $host, type: $type, operation_id: $operation_id, task_id: $task_id, metadata: $metadata)"`
+		} `graphql:"createArtifact(artifact_text: $artifact_text, base_artifact: $base_artifact, host: $host, operation_id: $operation_id, task_id: $task_id)"`
 	}
 
 	baseArtifact := ""
@@ -111,29 +103,17 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 		host = *req.Host
 	}
 
-	artifactType := types.ArtifactTypeOther
-	if req.ArtifactType != nil {
-		artifactType = *req.ArtifactType
-	}
-
 	var taskID *int
 	if req.TaskID != nil {
 		taskID = req.TaskID
 	}
 
-	metadata := ""
-	if req.Metadata != nil {
-		metadata = *req.Metadata
-	}
-
 	variables := map[string]interface{}{
-		"artifact":      req.Artifact,
+		"artifact_text": req.Artifact,
 		"base_artifact": baseArtifact,
 		"host":          host,
-		"type":          artifactType,
 		"operation_id":  *operationID,
 		"task_id":       taskID,
-		"metadata":      metadata,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -160,19 +140,15 @@ func (c *Client) GetArtifactByID(ctx context.Context, artifactID int) (*types.Ar
 	}
 
 	var query struct {
-		Artifact []struct {
+		TaskArtifact []struct {
 			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact"`
+			Artifact     string    `graphql:"artifact_text"`
 			BaseArtifact string    `graphql:"base_artifact"`
 			Host         string    `graphql:"host"`
-			ArtifactType string    `graphql:"type"`
 			OperationID  int       `graphql:"operation_id"`
-			OperatorID   int       `graphql:"operator_id"`
 			TaskID       *int      `graphql:"task_id"`
 			Timestamp    time.Time `graphql:"timestamp"`
-			Deleted      bool      `graphql:"deleted"`
-			Metadata     string    `graphql:"metadata"`
-		} `graphql:"artifact(where: {id: {_eq: $artifact_id}})"`
+		} `graphql:"taskartifact(where: {id: {_eq: $artifact_id}})"`
 	}
 
 	variables := map[string]interface{}{
@@ -184,23 +160,19 @@ func (c *Client) GetArtifactByID(ctx context.Context, artifactID int) (*types.Ar
 		return nil, WrapError("GetArtifactByID", err, "failed to query artifact")
 	}
 
-	if len(query.Artifact) == 0 {
+	if len(query.TaskArtifact) == 0 {
 		return nil, WrapError("GetArtifactByID", ErrNotFound, "artifact not found")
 	}
 
-	a := query.Artifact[0]
+	a := query.TaskArtifact[0]
 	return &types.Artifact{
 		ID:           a.ID,
 		Artifact:     a.Artifact,
 		BaseArtifact: a.BaseArtifact,
 		Host:         a.Host,
-		ArtifactType: a.ArtifactType,
 		OperationID:  a.OperationID,
-		OperatorID:   a.OperatorID,
 		TaskID:       a.TaskID,
 		Timestamp:    a.Timestamp,
-		Deleted:      a.Deleted,
-		Metadata:     a.Metadata,
 	}, nil
 }
 
@@ -219,21 +191,15 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 	if req.Host != nil {
 		updates["host"] = *req.Host
 	}
-	if req.Deleted != nil {
-		updates["deleted"] = *req.Deleted
-	}
-	if req.Metadata != nil {
-		updates["metadata"] = *req.Metadata
-	}
 
 	if len(updates) == 0 {
 		return nil, WrapError("UpdateArtifact", ErrInvalidInput, "no fields to update")
 	}
 
 	var mutation struct {
-		UpdateArtifact struct {
+		UpdateTaskArtifact struct {
 			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_artifact(where: {id: {_eq: $artifact_id}}, _set: $updates)"`
+		} `graphql:"update_taskartifact(where: {id: {_eq: $artifact_id}}, _set: $updates)"`
 	}
 
 	variables := map[string]interface{}{
@@ -246,7 +212,7 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 		return nil, WrapError("UpdateArtifact", err, "failed to update artifact")
 	}
 
-	if mutation.UpdateArtifact.Affected == 0 {
+	if mutation.UpdateTaskArtifact.Affected == 0 {
 		return nil, WrapError("UpdateArtifact", ErrNotFound, "artifact not found or not updated")
 	}
 
@@ -254,7 +220,8 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 	return c.GetArtifactByID(ctx, req.ID)
 }
 
-// DeleteArtifact marks an artifact as deleted (soft delete).
+// DeleteArtifact deletes an artifact by ID.
+// Note: Mythic's taskartifact table doesn't support soft delete.
 func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -264,12 +231,26 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 		return WrapError("DeleteArtifact", ErrInvalidInput, "artifact ID is required")
 	}
 
-	deleted := true
-	_, err := c.UpdateArtifact(ctx, &types.UpdateArtifactRequest{
-		ID:      artifactID,
-		Deleted: &deleted,
-	})
-	return err
+	var mutation struct {
+		DeleteTaskArtifact struct {
+			Affected int `graphql:"affected_rows"`
+		} `graphql:"delete_taskartifact(where: {id: {_eq: $artifact_id}})"`
+	}
+
+	variables := map[string]interface{}{
+		"artifact_id": artifactID,
+	}
+
+	err := c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return WrapError("DeleteArtifact", err, "failed to delete artifact")
+	}
+
+	if mutation.DeleteTaskArtifact.Affected == 0 {
+		return WrapError("DeleteArtifact", ErrNotFound, "artifact not found")
+	}
+
+	return nil
 }
 
 // GetArtifactsByHost retrieves artifacts for a specific host.
@@ -289,19 +270,15 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 	}
 
 	var query struct {
-		Artifact []struct {
+		TaskArtifact []struct {
 			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact"`
+			Artifact     string    `graphql:"artifact_text"`
 			BaseArtifact string    `graphql:"base_artifact"`
 			Host         string    `graphql:"host"`
-			ArtifactType string    `graphql:"type"`
 			OperationID  int       `graphql:"operation_id"`
-			OperatorID   int       `graphql:"operator_id"`
 			TaskID       *int      `graphql:"task_id"`
 			Timestamp    time.Time `graphql:"timestamp"`
-			Deleted      bool      `graphql:"deleted"`
-			Metadata     string    `graphql:"metadata"`
-		} `graphql:"artifact(where: {operation_id: {_eq: $operation_id}, host: {_eq: $host}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
+		} `graphql:"taskartifact(where: {operation_id: {_eq: $operation_id}, host: {_eq: $host}}, order_by: {timestamp: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -314,20 +291,16 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 		return nil, WrapError("GetArtifactsByHost", err, "failed to query artifacts")
 	}
 
-	artifacts := make([]*types.Artifact, len(query.Artifact))
-	for i, a := range query.Artifact {
+	artifacts := make([]*types.Artifact, len(query.TaskArtifact))
+	for i, a := range query.TaskArtifact {
 		artifacts[i] = &types.Artifact{
 			ID:           a.ID,
 			Artifact:     a.Artifact,
 			BaseArtifact: a.BaseArtifact,
 			Host:         a.Host,
-			ArtifactType: a.ArtifactType,
 			OperationID:  a.OperationID,
-			OperatorID:   a.OperatorID,
 			TaskID:       a.TaskID,
 			Timestamp:    a.Timestamp,
-			Deleted:      a.Deleted,
-			Metadata:     a.Metadata,
 		}
 	}
 
@@ -335,63 +308,9 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 }
 
 // GetArtifactsByType retrieves artifacts of a specific type.
+// Note: Mythic's taskartifact table doesn't have a type field, so this function
+// simply returns all artifacts for the current operation.
 func (c *Client) GetArtifactsByType(ctx context.Context, artifactType string) ([]*types.Artifact, error) {
-	if err := c.EnsureAuthenticated(ctx); err != nil {
-		return nil, err
-	}
-
-	if artifactType == "" {
-		return nil, WrapError("GetArtifactsByType", ErrInvalidInput, "artifact type is required")
-	}
-
-	// Use current operation
-	operationID := c.GetCurrentOperation()
-	if operationID == nil {
-		return nil, WrapError("GetArtifactsByType", ErrInvalidInput, "no current operation set")
-	}
-
-	var query struct {
-		Artifact []struct {
-			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact"`
-			BaseArtifact string    `graphql:"base_artifact"`
-			Host         string    `graphql:"host"`
-			ArtifactType string    `graphql:"type"`
-			OperationID  int       `graphql:"operation_id"`
-			OperatorID   int       `graphql:"operator_id"`
-			TaskID       *int      `graphql:"task_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
-			Deleted      bool      `graphql:"deleted"`
-			Metadata     string    `graphql:"metadata"`
-		} `graphql:"artifact(where: {operation_id: {_eq: $operation_id}, type: {_eq: $type}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
-	}
-
-	variables := map[string]interface{}{
-		"operation_id": *operationID,
-		"type":         artifactType,
-	}
-
-	err := c.executeQuery(ctx, &query, variables)
-	if err != nil {
-		return nil, WrapError("GetArtifactsByType", err, "failed to query artifacts")
-	}
-
-	artifacts := make([]*types.Artifact, len(query.Artifact))
-	for i, a := range query.Artifact {
-		artifacts[i] = &types.Artifact{
-			ID:           a.ID,
-			Artifact:     a.Artifact,
-			BaseArtifact: a.BaseArtifact,
-			Host:         a.Host,
-			ArtifactType: a.ArtifactType,
-			OperationID:  a.OperationID,
-			OperatorID:   a.OperatorID,
-			TaskID:       a.TaskID,
-			Timestamp:    a.Timestamp,
-			Deleted:      a.Deleted,
-			Metadata:     a.Metadata,
-		}
-	}
-
-	return artifacts, nil
+	// Since taskartifact doesn't have a type field, just return all artifacts
+	return c.GetArtifacts(ctx)
 }

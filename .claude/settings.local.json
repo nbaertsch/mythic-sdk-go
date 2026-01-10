@@ -37,7 +37,9 @@
       "Bash(git commit:*)",
       "Bash(gh run watch:*)",
       "Bash(golangci-lint run:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(chmod:*)",
+      "Bash(sudo ./mythic-cli start:*)"
     ]
   }
 }

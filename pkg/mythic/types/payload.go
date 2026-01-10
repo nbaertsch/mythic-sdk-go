@@ -39,7 +39,6 @@ type PayloadType struct {
 	Name                string    `json:"name"`
 	FileExtension       string    `json:"file_extension"`
 	Author              string    `json:"author"`
-	Supported           bool      `json:"supported"`
 	WrapperMode         bool      `json:"wrapper"`
 	Wrapped             bool      `json:"wrapped"`
 	Note                string    `json:"note"`

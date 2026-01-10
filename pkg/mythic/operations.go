@@ -24,7 +24,6 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 			AdminID             int       `graphql:"admin_id"`
 			BannerText          string    `graphql:"banner_text"`
 			BannerColor         string    `graphql:"banner_color"`
-			DisplayName         string    `graphql:"display_name"`
 			Icon                string    `graphql:"icon"`
 			IconURL             string    `graphql:"icon_url"`
 			IconEmoji           string    `graphql:"icon_emoji"`
@@ -55,7 +54,6 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 			AdminID:             op.AdminID,
 			BannerText:          op.BannerText,
 			BannerColor:         op.BannerColor,
-			DisplayName:         op.DisplayName,
 			Icon:                op.Icon,
 			IconURL:             op.IconURL,
 			IconEmoji:           op.IconEmoji,
@@ -89,7 +87,6 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 			AdminID             int       `graphql:"admin_id"`
 			BannerText          string    `graphql:"banner_text"`
 			BannerColor         string    `graphql:"banner_color"`
-			DisplayName         string    `graphql:"display_name"`
 			Icon                string    `graphql:"icon"`
 			IconURL             string    `graphql:"icon_url"`
 			IconEmoji           string    `graphql:"icon_emoji"`
@@ -127,7 +124,6 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 		AdminID:             op.AdminID,
 		BannerText:          op.BannerText,
 		BannerColor:         op.BannerColor,
-		DisplayName:         op.DisplayName,
 		Icon:                op.Icon,
 		IconURL:             op.IconURL,
 		IconEmoji:           op.IconEmoji,
@@ -284,10 +280,9 @@ func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) (
 
 	var query struct {
 		OperatorOperation []struct {
-			ID          int    `graphql:"id"`
-			OperationID int    `graphql:"operation_id"`
-			OperatorID  int    `graphql:"operator_id"`
-			ViewMode    string `graphql:"view_mode"`
+			ID          int `graphql:"id"`
+			OperationID int `graphql:"operation_id"`
+			OperatorID  int `graphql:"operator_id"`
 			Operator    struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -311,7 +306,6 @@ func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) (
 			ID:          opOp.ID,
 			OperationID: opOp.OperationID,
 			OperatorID:  opOp.OperatorID,
-			ViewMode:    types.OperatorViewMode(opOp.ViewMode),
 			Operator: &types.Operator{
 				ID:       opOp.Operator.ID,
 				Username: opOp.Operator.Username,
@@ -358,18 +352,12 @@ func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateO
 	var mutation struct {
 		UpdateOperatorOperation struct {
 			Status string `graphql:"status"`
-		} `graphql:"updateOperatorOperation(operator_id: $operator_id, operation_id: $operation_id, view_mode: $view_mode)"`
+		} `graphql:"updateOperatorOperation(operator_id: $operator_id, operation_id: $operation_id)"`
 	}
 
 	variables := map[string]interface{}{
 		"operator_id":  req.OperatorID,
 		"operation_id": req.OperationID,
-	}
-
-	if req.ViewMode != nil {
-		variables["view_mode"] = string(*req.ViewMode)
-	} else {
-		variables["view_mode"] = string(types.ViewModeOperator)
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

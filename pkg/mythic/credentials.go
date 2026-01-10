@@ -19,7 +19,7 @@ func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error
 			Type        string    `graphql:"type"`
 			Account     string    `graphql:"account"`
 			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential"`
+			Credential  string    `graphql:"credential_text"`
 			Comment     string    `graphql:"comment"`
 			OperationID int       `graphql:"operation_id"`
 			OperatorID  int       `graphql:"operator_id"`
@@ -72,7 +72,7 @@ func (c *Client) GetCredentialsByOperation(ctx context.Context, operationID int)
 			Type        string    `graphql:"type"`
 			Account     string    `graphql:"account"`
 			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential"`
+			Credential  string    `graphql:"credential_text"`
 			Comment     string    `graphql:"comment"`
 			OperationID int       `graphql:"operation_id"`
 			OperatorID  int       `graphql:"operator_id"`
@@ -147,7 +147,7 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 			Type        string    `graphql:"type"`
 			Account     string    `graphql:"account"`
 			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential"`
+			Credential  string    `graphql:"credential_text"`
 			Comment     string    `graphql:"comment"`
 			OperationID int       `graphql:"operation_id"`
 			OperatorID  int       `graphql:"operator_id"`
@@ -155,17 +155,17 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 			Timestamp   time.Time `graphql:"timestamp"`
 			Deleted     bool      `graphql:"deleted"`
 			Metadata    string    `graphql:"metadata"`
-		} `graphql:"createCredential(type: $type, account: $account, realm: $realm, credential: $credential, comment: $comment, task_id: $task_id, metadata: $metadata)"`
+		} `graphql:"createCredential(type: $type, account: $account, realm: $realm, credential_text: $credential_text, comment: $comment, task_id: $task_id, metadata: $metadata)"`
 	}
 
 	variables := map[string]interface{}{
-		"type":       req.Type,
-		"account":    req.Account,
-		"realm":      req.Realm,
-		"credential": req.Credential,
-		"comment":    req.Comment,
-		"task_id":    req.TaskID,
-		"metadata":   req.Metadata,
+		"type":            req.Type,
+		"account":         req.Account,
+		"realm":           req.Realm,
+		"credential_text": req.Credential,
+		"comment":         req.Comment,
+		"task_id":         req.TaskID,
+		"metadata":        req.Metadata,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -217,7 +217,7 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 		updates["realm"] = *req.Realm
 	}
 	if req.Credential != nil {
-		updates["credential"] = *req.Credential
+		updates["credential_text"] = *req.Credential
 	}
 	if req.Comment != nil {
 		updates["comment"] = *req.Comment
@@ -240,7 +240,7 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 				Type        string    `graphql:"type"`
 				Account     string    `graphql:"account"`
 				Realm       string    `graphql:"realm"`
-				Credential  string    `graphql:"credential"`
+				Credential  string    `graphql:"credential_text"`
 				Comment     string    `graphql:"comment"`
 				OperationID int       `graphql:"operation_id"`
 				OperatorID  int       `graphql:"operator_id"`
