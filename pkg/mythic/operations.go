@@ -149,7 +149,7 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 	return c.GetOperationByID(ctx, mutation.CreateOperation.OperationID)
 }
 
-// UpdateOperation updates an existing operation.
+// UpdateOperation updates an existing operation using the REST API webhook.
 func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperationRequest) (*types.Operation, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -166,28 +166,31 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
 	}
 
-	// Build variables - include ALL parameters declared in mutation (GraphQL requirement)
-	variables := map[string]interface{}{
+	// Build REST API request using Mythic's webhook format
+	requestData := map[string]interface{}{
 		"operation_id": req.OperationID,
-		"complete":     req.Complete,    // Pass pointer value (can be nil)
-		"webhook":      req.Webhook,     // Pass pointer value (can be nil)
 	}
 
-	// Use updateOperation mutation
-	var mutation struct {
-		UpdateOperation struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete, webhook: $webhook)"`
+	// Add fields that are being updated
+	if req.Complete != nil {
+		requestData["complete"] = *req.Complete
+	}
+	if req.Webhook != nil {
+		requestData["webhook"] = *req.Webhook
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	var response struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
+	}
+
+	err := c.executeRESTWebhook(ctx, "api/v1.4/update_operation_webhook", requestData, &response)
 	if err != nil {
-		return nil, WrapError("UpdateOperation", err, "failed to update operation")
+		return nil, WrapError("UpdateOperation", err, "failed to execute webhook")
 	}
 
-	if mutation.UpdateOperation.Status != "success" {
-		return nil, WrapError("UpdateOperation", ErrOperationFailed, mutation.UpdateOperation.Error)
+	if response.Status != "success" {
+		return nil, WrapError("UpdateOperation", ErrOperationFailed, response.Error)
 	}
 
 	// Fetch the updated operation

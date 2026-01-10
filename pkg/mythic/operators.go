@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -245,7 +244,7 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 	}, nil
 }
 
-// UpdateOperatorPreferences updates UI preferences for an operator.
+// UpdateOperatorPreferences updates UI preferences for an operator using the REST API webhook.
 func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.UpdateOperatorPreferencesRequest) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -259,32 +258,23 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 		return WrapError("UpdateOperatorPreferences", ErrInvalidInput, "preferences must not be empty")
 	}
 
-	// Marshal preferences to JSON string - jsonb type accepts JSON strings
-	prefsJSON, err := json.Marshal(req.Preferences)
+	// Build REST API request using Mythic's webhook format
+	requestData := map[string]interface{}{
+		"preferences": req.Preferences,
+	}
+
+	var response struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
+	}
+
+	err := c.executeRESTWebhook(ctx, "api/v1.4/operator_update_preferences_webhook", requestData, &response)
 	if err != nil {
-		return WrapError("UpdateOperatorPreferences", err, "failed to marshal preferences")
+		return WrapError("UpdateOperatorPreferences", err, "failed to execute webhook")
 	}
 
-	// updateOperatorPreferences operates on the current authenticated operator (no operator_id param)
-	var mutation struct {
-		UpdatePreferences struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updateOperatorPreferences(preferences: $preferences)"`
-	}
-
-	// Pass as string - Hasura's jsonb type will parse it
-	variables := map[string]interface{}{
-		"preferences": string(prefsJSON),
-	}
-
-	err = c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return WrapError("UpdateOperatorPreferences", err, "failed to update operator preferences")
-	}
-
-	if mutation.UpdatePreferences.Status != "success" {
-		return WrapError("UpdateOperatorPreferences", ErrOperationFailed, mutation.UpdatePreferences.Error)
+	if response.Status != "success" {
+		return WrapError("UpdateOperatorPreferences", ErrOperationFailed, response.Error)
 	}
 
 	return nil

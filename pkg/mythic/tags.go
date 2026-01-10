@@ -209,7 +209,7 @@ func (c *Client) DeleteTagType(ctx context.Context, tagTypeID int) error {
 	return nil
 }
 
-// CreateTag creates a tag on an object.
+// CreateTag creates a tag on an object using the REST API webhook.
 func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*types.Tag, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -219,212 +219,60 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 		return nil, WrapError("CreateTag", ErrInvalidInput, "tag type ID, source type, and source ID are required")
 	}
 
-	// Mythic uses specific parameters for each object type
-	// Execute the appropriate mutation based on source type
-	var tagID int
-	var err error
+	// Build REST API request using Mythic's webhook format
+	input := map[string]interface{}{
+		"tagtype_id": req.TagTypeID,
+		"source":     req.SourceType,
+		"data":       map[string]interface{}{},
+		"url":        "",
+	}
 
+	// Add the appropriate object ID parameter based on source type
 	switch req.SourceType {
 	case types.TagSourceArtifact:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, taskartifact_id: $taskartifact_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":      req.TagTypeID,
-			"source":          req.SourceType,
-			"url":             "",
-			"data":            map[string]interface{}{},
-			"taskartifact_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["taskartifact_id"] = req.SourceID
 	case types.TagSourceTask:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, task_id: $task_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id": req.TagTypeID,
-			"source":     req.SourceType,
-			"url":        "",
-			"data":       map[string]interface{}{},
-			"task_id":    req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["task_id"] = req.SourceID
 	case types.TagSourceCallback:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, callback_id: $callback_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":  req.TagTypeID,
-			"source":      req.SourceType,
-			"data":        map[string]interface{}{},
-			"callback_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["callback_id"] = req.SourceID
 	case types.TagSourceFile:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, filemeta_id: $filemeta_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":  req.TagTypeID,
-			"source":      req.SourceType,
-			"data":        map[string]interface{}{},
-			"filemeta_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["filemeta_id"] = req.SourceID
 	case types.TagSourcePayload:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, payload_id: $payload_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id": req.TagTypeID,
-			"source":     req.SourceType,
-			"data":       map[string]interface{}{},
-			"payload_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["payload_id"] = req.SourceID
 	case types.TagSourceProcess:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, mythictree_id: $mythictree_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":    req.TagTypeID,
-			"source":        req.SourceType,
-			"data":          map[string]interface{}{},
-			"mythictree_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["mythictree_id"] = req.SourceID
 	case types.TagSourceKeylog:
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, keylog_id: $keylog_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id": req.TagTypeID,
-			"source":     req.SourceType,
-			"data":       map[string]interface{}{},
-			"keylog_id":  req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["keylog_id"] = req.SourceID
 	case "credential":
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, credential_id: $credential_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":    req.TagTypeID,
-			"source":        req.SourceType,
-			"data":          map[string]interface{}{},
-			"credential_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["credential_id"] = req.SourceID
 	case "response":
-		var mutation struct {
-			CreateTag struct {
-				Status string `graphql:"status"`
-				Error  string `graphql:"error"`
-				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, response_id: $response_id)"`
-		}
-		variables := map[string]interface{}{
-			"tagtype_id":  req.TagTypeID,
-			"source":      req.SourceType,
-			"data":        map[string]interface{}{},
-			"response_id": req.SourceID,
-		}
-		err = c.executeMutation(ctx, &mutation, variables)
-		if err == nil && mutation.CreateTag.Status == "success" {
-			tagID = mutation.CreateTag.TagID
-		} else if err == nil {
-			err = WrapError("CreateTag", ErrOperationFailed, mutation.CreateTag.Error)
-		}
-
+		input["response_id"] = req.SourceID
 	default:
 		return nil, WrapError("CreateTag", ErrInvalidInput, "unsupported source type: "+req.SourceType)
 	}
+
+	// Call REST API webhook
+	requestData := map[string]interface{}{
+		"input": input,
+	}
+
+	var response struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
+		ID     int    `json:"id"`
+	}
+
+	err := c.executeRESTWebhook(ctx, "api/v1.4/tag_create_webhook", requestData, &response)
 	if err != nil {
-		return nil, err
+		return nil, WrapError("CreateTag", err, "failed to execute webhook")
+	}
+
+	if response.Status != "success" {
+		return nil, WrapError("CreateTag", ErrOperationFailed, response.Error)
 	}
 
 	// Fetch the created tag
-	return c.GetTagByID(ctx, tagID)
+	return c.GetTagByID(ctx, response.ID)
 }
 
 // GetTagByID retrieves a specific tag by ID.

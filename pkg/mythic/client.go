@@ -1,10 +1,12 @@
 package mythic
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
@@ -216,6 +218,63 @@ func (c *Client) getAuthHeaders() map[string]string {
 	}
 
 	return headers
+}
+
+// executeRESTWebhook executes a REST API webhook call with authentication.
+func (c *Client) executeRESTWebhook(ctx context.Context, endpoint string, requestData interface{}, response interface{}) error {
+	if !c.IsAuthenticated() {
+		return ErrNotAuthenticated
+	}
+
+	// Construct full URL
+	scheme := "https"
+	if !c.config.SSL {
+		scheme = "http"
+	}
+	url := fmt.Sprintf("%s://%s/%s", scheme, stripScheme(c.config.ServerURL), endpoint)
+
+	// Marshal request data
+	reqBytes, err := json.Marshal(requestData)
+	if err != nil {
+		return WrapError("executeRESTWebhook", err, "failed to marshal request data")
+	}
+
+	// Create request
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return WrapError("executeRESTWebhook", err, "failed to create request")
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	for key, value := range c.getAuthHeaders() {
+		req.Header.Set(key, value)
+	}
+
+	// Execute request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return WrapError("executeRESTWebhook", err, "failed to execute request")
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return WrapError("executeRESTWebhook", err, "failed to read response")
+	}
+
+	// Check status code
+	if resp.StatusCode >= 400 {
+		return WrapError("executeRESTWebhook", ErrAuthenticationFailed, fmt.Sprintf("request failed with status %d: %s", resp.StatusCode, string(respBytes)))
+	}
+
+	// Unmarshal response
+	if err := json.Unmarshal(respBytes, response); err != nil {
+		return WrapError("executeRESTWebhook", err, fmt.Sprintf("failed to unmarshal response: %s", string(respBytes)))
+	}
+
+	return nil
 }
 
 // stripScheme removes http:// or https:// from a URL if present.
