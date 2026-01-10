@@ -117,13 +117,11 @@ func TestC2ProfileTypes(t *testing.T) {
 		ID:            1,
 		Name:          "http",
 		Description:   "HTTP C2 Profile",
-		OperationID:   10,
 		CreationTime:  now,
 		Running:       true,
 		StartTime:     &startTime,
 		Deleted:       false,
 		IsP2P:         false,
-		ServerOnly:    true,
 		ContainerID:   "container123",
 		PayloadTypeID: &payloadTypeID,
 		Parameters: map[string]interface{}{
@@ -171,9 +169,6 @@ func TestC2ProfileWithoutOptionalFields(t *testing.T) {
 	}
 	if profile.PayloadTypeID != nil {
 		t.Error("PayloadTypeID should be nil")
-	}
-	if profile.Operation != nil {
-		t.Error("Operation should be nil")
 	}
 
 	str := profile.String()
@@ -291,19 +286,15 @@ func TestC2IOCTypes(t *testing.T) {
 // TestC2ProfileFlags tests C2Profile boolean flags
 func TestC2ProfileFlags(t *testing.T) {
 	profile := types.C2Profile{
-		ID:         1,
-		Name:       "test",
-		IsP2P:      true,
-		ServerOnly: false,
-		Running:    true,
-		Deleted:    false,
+		ID:      1,
+		Name:    "test",
+		IsP2P:   true,
+		Running: true,
+		Deleted: false,
 	}
 
 	if !profile.IsP2P {
 		t.Error("Expected IsP2P to be true")
-	}
-	if profile.ServerOnly {
-		t.Error("Expected ServerOnly to be false")
 	}
 	if !profile.IsRunning() {
 		t.Error("Expected profile to be running")

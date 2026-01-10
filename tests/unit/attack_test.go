@@ -9,8 +9,6 @@ import (
 
 // TestAttackString tests the Attack.String() method
 func TestAttackString(t *testing.T) {
-	now := time.Now()
-
 	tests := []struct {
 		name     string
 		attack   types.Attack
@@ -86,8 +84,6 @@ func TestAttackTypes(t *testing.T) {
 
 // TestAttackTaskString tests the AttackTask.String() method
 func TestAttackTaskString(t *testing.T) {
-	now := time.Now()
-
 	tests := []struct {
 		name       string
 		attackTask types.AttackTask
@@ -153,8 +149,6 @@ func TestAttackTaskTypes(t *testing.T) {
 
 // TestAttackCommandString tests the AttackCommand.String() method
 func TestAttackCommandString(t *testing.T) {
-	now := time.Now()
-
 	tests := []struct {
 		name          string
 		attackCommand types.AttackCommand
@@ -232,10 +226,9 @@ func TestAttackTechniqueNumbers(t *testing.T) {
 
 	for _, tNum := range techniques {
 		attack := types.Attack{
-			ID:        1,
-			TNum:      tNum,
-			Name:      "Test Technique",
-			Timestamp: time.Now(),
+			ID:   1,
+			TNum: tNum,
+			Name: "Test Technique",
 		}
 
 		if attack.TNum != tNum {
@@ -268,11 +261,10 @@ func TestAttackTactics(t *testing.T) {
 
 	for _, tactic := range tactics {
 		attack := types.Attack{
-			ID:        1,
-			TNum:      "T1000",
-			Name:      "Test Technique",
-			Tactic:    tactic,
-			Timestamp: time.Now(),
+			ID:     1,
+			TNum:   "T1000",
+			Name:   "Test Technique",
+			Tactic: tactic,
 		}
 
 		if attack.Tactic != tactic {
@@ -298,11 +290,10 @@ func TestAttackOS(t *testing.T) {
 
 	for _, os := range operatingSystems {
 		attack := types.Attack{
-			ID:        1,
-			TNum:      "T1000",
-			Name:      "Test Technique",
-			OS:        os,
-			Timestamp: time.Now(),
+			ID:   1,
+			TNum: "T1000",
+			Name: "Test Technique",
+			OS:   os,
 		}
 
 		if attack.OS != os {
