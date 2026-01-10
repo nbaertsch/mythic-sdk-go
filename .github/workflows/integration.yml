@@ -162,7 +162,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-results-$(echo '${{ matrix.test-group }}' | tr ' :+' '_')
+          name: integration-test-results-${{ strategy.job-index }}
           path: integration-test-output-*.log
           retention-days: 7
 
@@ -180,7 +180,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: mythic-failure-logs-$(echo '${{ matrix.test-group }}' | tr ' :+' '_')
+          name: mythic-failure-logs-${{ strategy.job-index }}
           path: |
             /tmp/mythic/mythic-logs.txt
             /tmp/mythic/docker-containers.txt

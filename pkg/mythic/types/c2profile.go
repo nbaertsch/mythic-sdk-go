@@ -10,7 +10,6 @@ type C2Profile struct {
 	ID            int                    `json:"id"`
 	Name          string                 `json:"name"`
 	Description   string                 `json:"description"`
-	OperationID   int                    `json:"operation_id"`
 	CreationTime  time.Time              `json:"creation_time"`
 	Running       bool                   `json:"running"`
 	StartTime     *time.Time             `json:"start_time,omitempty"`
@@ -24,7 +23,6 @@ type C2Profile struct {
 	IsP2P         bool                   `json:"is_p2p"`
 	ServerOnly    bool                   `json:"server_only"`
 	PayloadTypeID *int                   `json:"payload_type_id,omitempty"`
-	Operation     *Operation             `json:"operation,omitempty"`
 }
 
 // String returns a string representation of a C2Profile.

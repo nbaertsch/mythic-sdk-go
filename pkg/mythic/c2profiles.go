@@ -18,7 +18,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			ID            int       `graphql:"id"`
 			Name          string    `graphql:"name"`
 			Description   string    `graphql:"description"`
-			OperationID   int       `graphql:"operation_id"`
 			CreationTime  time.Time `graphql:"creation_time"`
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
@@ -40,7 +39,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			ID:            p.ID,
 			Name:          p.Name,
 			Description:   p.Description,
-			OperationID:   p.OperationID,
 			CreationTime:  p.CreationTime,
 			Running:       p.Running,
 			Deleted:       p.Deleted,
@@ -69,7 +67,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 			ID            int       `graphql:"id"`
 			Name          string    `graphql:"name"`
 			Description   string    `graphql:"description"`
-			OperationID   int       `graphql:"operation_id"`
 			CreationTime  time.Time `graphql:"creation_time"`
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
@@ -98,7 +95,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 		ID:            p.ID,
 		Name:          p.Name,
 		Description:   p.Description,
-		OperationID:   p.OperationID,
 		CreationTime:  p.CreationTime,
 		Running:       p.Running,
 		Deleted:       p.Deleted,

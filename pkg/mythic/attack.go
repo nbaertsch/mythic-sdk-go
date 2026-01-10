@@ -216,6 +216,7 @@ func (c *Client) GetAttacksByOperation(ctx context.Context, operationID int) ([]
 	}
 
 	// Query attacktask table joined with attack and task tables
+	// Note: distinct_on requires order_by to start with the same column
 	var query struct {
 		AttackTask []struct {
 			Attack struct {
@@ -225,7 +226,7 @@ func (c *Client) GetAttacksByOperation(ctx context.Context, operationID int) ([]
 				OS     string `graphql:"os"`
 				Tactic string `graphql:"tactic"`
 			} `graphql:"attack"`
-		} `graphql:"attacktask(where: {task: {operation_id: {_eq: $operation_id}}}, order_by: {attack: {t_num: asc}}, distinct_on: attack_id)"`
+		} `graphql:"attacktask(where: {task: {operation_id: {_eq: $operation_id}}}, order_by: {attack_id: asc}, distinct_on: attack_id)"`
 	}
 
 	variables := map[string]interface{}{
