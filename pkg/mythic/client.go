@@ -256,7 +256,7 @@ func (c *Client) executeRESTWebhook(ctx context.Context, endpoint string, reques
 	if err != nil {
 		return WrapError("executeRESTWebhook", err, "failed to execute request")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	// Read response
 	respBytes, err := io.ReadAll(resp.Body)
