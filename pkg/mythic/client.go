@@ -128,7 +128,7 @@ func (c *Client) Close() error {
 			subCtx.cancel()
 		}
 		if subCtx.closeFn != nil {
-			_ = subCtx.closeFn()
+			_ = subCtx.closeFn() //nolint:errcheck // Cleanup function, error not critical
 		}
 	}
 	c.activeSubscriptions = make(map[string]*subscriptionContext)
@@ -137,7 +137,7 @@ func (c *Client) Close() error {
 	// Close subscription client if initialized
 	c.subscriptionMutex.Lock()
 	if c.subscriptionClient != nil {
-		_ = c.subscriptionClient.Close()
+		_ = c.subscriptionClient.Close() //nolint:errcheck // Best effort cleanup
 		c.subscriptionClient = nil
 	}
 	c.subscriptionMutex.Unlock()
@@ -290,7 +290,7 @@ func (c *Client) getSubscriptionClient() *graphql.SubscriptionClient {
 	// Start the subscription client in background
 	go func() {
 		// Error is handled by OnError handler above
-		_ = c.subscriptionClient.Run()
+		_ = c.subscriptionClient.Run() //nolint:errcheck // Error handled by OnError callback
 	}()
 
 	return c.subscriptionClient

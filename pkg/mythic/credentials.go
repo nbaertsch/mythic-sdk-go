@@ -7,6 +7,28 @@ import (
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
+// parseTimestamp parses Mythic's timestamp format (RFC3339 without timezone)
+func parseCredentialTimestamp(ts string) (time.Time, error) {
+	// Try multiple formats that Mythic might use
+	formats := []string{
+		"2006-01-02T15:04:05.999999", // Microseconds, no timezone
+		"2006-01-02T15:04:05",        // No fractional seconds
+		time.RFC3339,                 // With timezone
+		time.RFC3339Nano,             // With nanoseconds and timezone
+	}
+
+	var lastErr error
+	for _, format := range formats {
+		t, err := time.Parse(format, ts)
+		if err == nil {
+			return t, nil
+		}
+		lastErr = err
+	}
+
+	return time.Time{}, lastErr
+}
+
 // GetCredentials retrieves all credentials for the current operation.
 func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
@@ -15,18 +37,18 @@ func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error
 
 	var query struct {
 		Credential []struct {
-			ID          int       `graphql:"id"`
-			Type        string    `graphql:"type"`
-			Account     string    `graphql:"account"`
-			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential_text"`
-			Comment     string    `graphql:"comment"`
-			OperationID int       `graphql:"operation_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			TaskID      *int      `graphql:"task_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
-			Deleted     bool      `graphql:"deleted"`
-			Metadata    string    `graphql:"metadata"`
+			ID          int    `graphql:"id"`
+			Type        string `graphql:"type"`
+			Account     string `graphql:"account"`
+			Realm       string `graphql:"realm"`
+			Credential  string `graphql:"credential_text"`
+			Comment     string `graphql:"comment"`
+			OperationID int    `graphql:"operation_id"`
+			OperatorID  int    `graphql:"operator_id"`
+			TaskID      *int   `graphql:"task_id"`
+			Timestamp   string `graphql:"timestamp"`
+			Deleted     bool   `graphql:"deleted"`
+			Metadata    string `graphql:"metadata"`
 		} `graphql:"credential(where: {deleted: {_eq: false}}, order_by: {timestamp: desc})"`
 	}
 
@@ -37,6 +59,11 @@ func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error
 
 	credentials := make([]*types.Credential, len(query.Credential))
 	for i, cred := range query.Credential {
+		timestamp, err := parseCredentialTimestamp(cred.Timestamp)
+		if err != nil {
+			return nil, WrapError("GetCredentials", err, "failed to parse credential timestamp")
+		}
+
 		credentials[i] = &types.Credential{
 			ID:          cred.ID,
 			Type:        cred.Type,
@@ -47,7 +74,7 @@ func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error
 			OperationID: cred.OperationID,
 			OperatorID:  cred.OperatorID,
 			TaskID:      cred.TaskID,
-			Timestamp:   cred.Timestamp,
+			Timestamp:   timestamp,
 			Deleted:     cred.Deleted,
 			Metadata:    cred.Metadata,
 		}
@@ -68,18 +95,18 @@ func (c *Client) GetCredentialsByOperation(ctx context.Context, operationID int)
 
 	var query struct {
 		Credential []struct {
-			ID          int       `graphql:"id"`
-			Type        string    `graphql:"type"`
-			Account     string    `graphql:"account"`
-			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential_text"`
-			Comment     string    `graphql:"comment"`
-			OperationID int       `graphql:"operation_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			TaskID      *int      `graphql:"task_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
-			Deleted     bool      `graphql:"deleted"`
-			Metadata    string    `graphql:"metadata"`
+			ID          int    `graphql:"id"`
+			Type        string `graphql:"type"`
+			Account     string `graphql:"account"`
+			Realm       string `graphql:"realm"`
+			Credential  string `graphql:"credential_text"`
+			Comment     string `graphql:"comment"`
+			OperationID int    `graphql:"operation_id"`
+			OperatorID  int    `graphql:"operator_id"`
+			TaskID      *int   `graphql:"task_id"`
+			Timestamp   string `graphql:"timestamp"`
+			Deleted     bool   `graphql:"deleted"`
+			Metadata    string `graphql:"metadata"`
 		} `graphql:"credential(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
 	}
 
@@ -94,6 +121,11 @@ func (c *Client) GetCredentialsByOperation(ctx context.Context, operationID int)
 
 	credentials := make([]*types.Credential, len(query.Credential))
 	for i, cred := range query.Credential {
+		timestamp, err := parseCredentialTimestamp(cred.Timestamp)
+		if err != nil {
+			return nil, WrapError("GetCredentialsByOperation", err, "failed to parse credential timestamp")
+		}
+
 		credentials[i] = &types.Credential{
 			ID:          cred.ID,
 			Type:        cred.Type,
@@ -104,7 +136,7 @@ func (c *Client) GetCredentialsByOperation(ctx context.Context, operationID int)
 			OperationID: cred.OperationID,
 			OperatorID:  cred.OperatorID,
 			TaskID:      cred.TaskID,
-			Timestamp:   cred.Timestamp,
+			Timestamp:   timestamp,
 			Deleted:     cred.Deleted,
 			Metadata:    cred.Metadata,
 		}

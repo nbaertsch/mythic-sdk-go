@@ -411,11 +411,9 @@ func (c *Client) GetHostNetworkMap(ctx context.Context, operationID int) (*types
 	// Calculate total active callbacks across all hosts
 	totalCallbacks := 0
 	for _, host := range hosts {
-		if host.Callbacks != nil {
-			for _, cb := range host.Callbacks {
-				if cb.Active {
-					totalCallbacks++
-				}
+		for _, cb := range host.Callbacks {
+			if cb.Active {
+				totalCallbacks++
 			}
 		}
 	}
