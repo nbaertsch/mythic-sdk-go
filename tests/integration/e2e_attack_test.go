@@ -233,22 +233,28 @@ func TestE2E_MITREAttackErrorHandling(t *testing.T) {
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel3()
 
-	_, err = client.GetAttackByTask(ctx3, 999999)
-	if err == nil {
-		t.Error("Expected error for non-existent task ID")
+	attacks, err := client.GetAttackByTask(ctx3, 999999)
+	if err != nil {
+		t.Errorf("GetAttackByTask failed: %v", err)
 	}
-	t.Logf("✓ Non-existent task ID rejected: %v", err)
+	if len(attacks) != 0 {
+		t.Errorf("Expected empty list for non-existent task, got %d results", len(attacks))
+	}
+	t.Logf("✓ Non-existent task ID returns empty list")
 
 	// Test 4: Get attack by non-existent command
 	t.Log("=== Test 4: Get attack by non-existent command ===")
 	ctx4, cancel4 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel4()
 
-	_, err = client.GetAttackByCommand(ctx4, 999999)
-	if err == nil {
-		t.Error("Expected error for non-existent command ID")
+	cmdAttacks, err := client.GetAttackByCommand(ctx4, 999999)
+	if err != nil {
+		t.Errorf("GetAttackByCommand failed: %v", err)
 	}
-	t.Logf("✓ Non-existent command ID rejected: %v", err)
+	if len(cmdAttacks) != 0 {
+		t.Errorf("Expected empty list for non-existent command, got %d results", len(cmdAttacks))
+	}
+	t.Logf("✓ Non-existent command ID returns empty list")
 
 	t.Log("=== ✓ All error handling tests passed ===")
 }

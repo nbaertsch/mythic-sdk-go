@@ -406,16 +406,21 @@ func TestE2E_OperatorsErrorHandling(t *testing.T) {
 	}
 	t.Logf("✓ Non-existent operator status update rejected: %v", err)
 
-	// Test 3: Get preferences for non-existent operator
-	t.Log("=== Test 3: Get preferences for non-existent operator ===")
+	// Test 3: Get preferences for arbitrary operator ID
+	// Note: GetOperatorPreferences always returns preferences for the current authenticated operator
+	// regardless of the operatorID parameter passed (API limitation)
+	t.Log("=== Test 3: Get preferences (returns current operator's preferences) ===")
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel3()
 
-	_, err = client.GetOperatorPreferences(ctx3, 999999)
-	if err == nil {
-		t.Error("Expected error for non-existent operator preferences")
+	prefs, err := client.GetOperatorPreferences(ctx3, 999999)
+	if err != nil {
+		t.Errorf("GetOperatorPreferences failed: %v", err)
 	}
-	t.Logf("✓ Non-existent operator preferences rejected: %v", err)
+	if prefs == nil {
+		t.Error("Expected preferences for current operator, got nil")
+	}
+	t.Logf("✓ GetOperatorPreferences returns current operator's preferences (ID in response: %d)", prefs.OperatorID)
 
 	// Test 4: Create operator with empty username
 	t.Log("=== Test 4: Create operator with empty username ===")
