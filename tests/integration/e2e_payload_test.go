@@ -188,7 +188,7 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 			t.Logf("Build stderr: %s", builtPayload.BuildStderr)
 		}
 	}
-	t.Logf("✓ Payload retrieved: %s (Status: %s)", builtPayload.FilenameText, builtPayload.BuildPhase)
+	t.Logf("✓ Payload retrieved: %s (Status: %s)", builtPayload.UUID, builtPayload.BuildPhase)
 
 	// Test 9: Verify payload appears in payload list
 	t.Log("=== Test 9: Verify payload in list ===")
@@ -203,7 +203,7 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 	for _, p := range allPayloads {
 		if p.UUID == testPayloadUUID {
 			found = true
-			t.Logf("✓ Payload found in list: %s", p.FilenameText)
+			t.Logf("✓ Payload found in list: %s", p.UUID)
 			break
 		}
 	}

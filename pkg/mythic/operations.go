@@ -24,7 +24,6 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 			AdminID             int       `graphql:"admin_id"`
 			BannerText          string    `graphql:"banner_text"`
 			BannerColor         string    `graphql:"banner_color"`
-			AESPSK              string    `graphql:"AESPSK"`
 			OperationEventLogID int       `graphql:"operation_event_log_id"`
 			Created             time.Time `graphql:"created"`
 			Admin               struct {
@@ -51,7 +50,6 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 			AdminID:             op.AdminID,
 			BannerText:          op.BannerText,
 			BannerColor:         op.BannerColor,
-			AESPSK:              op.AESPSK,
 			OperationEventLogID: op.OperationEventLogID,
 			Created:             op.Created,
 			Admin: &types.Operator{
@@ -81,7 +79,6 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 			AdminID             int       `graphql:"admin_id"`
 			BannerText          string    `graphql:"banner_text"`
 			BannerColor         string    `graphql:"banner_color"`
-			AESPSK              string    `graphql:"AESPSK"`
 			OperationEventLogID int       `graphql:"operation_event_log_id"`
 			Created             time.Time `graphql:"created"`
 			Admin               struct {
@@ -115,7 +112,6 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 		AdminID:             op.AdminID,
 		BannerText:          op.BannerText,
 		BannerColor:         op.BannerColor,
-		AESPSK:              op.AESPSK,
 		OperationEventLogID: op.OperationEventLogID,
 		Created:             op.Created,
 		Admin: &types.Operator{

@@ -90,7 +90,7 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 			Status     string `graphql:"status"`
 			Error      string `graphql:"error"`
 			ArtifactID int    `graphql:"id"`
-		} `graphql:"createArtifact(artifact_text: $artifact_text, base_artifact: $base_artifact, host: $host, task_id: $task_id)"`
+		} `graphql:"createArtifact(artifact: $artifact, base_artifact: $base_artifact, host: $host, task_id: $task_id)"`
 	}
 
 	baseArtifact := ""
@@ -109,7 +109,7 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 	}
 
 	variables := map[string]interface{}{
-		"artifact_text": req.Artifact,
+		"artifact":      req.Artifact,
 		"base_artifact": baseArtifact,
 		"host":          host,
 		"task_id":       taskID,

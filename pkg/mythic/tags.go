@@ -271,13 +271,13 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			TagID  int    `graphql:"id"`
-		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, object_id: $object_id)"`
+		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, id: $id)"`
 	}
 
 	variables := map[string]interface{}{
 		"tagtype_id": req.TagTypeID,
 		"source":     req.SourceType,
-		"object_id":  req.SourceID,
+		"id":         req.SourceID,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

@@ -15,14 +15,13 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 
 	var query struct {
 		C2Profile []struct {
-			ID            int       `graphql:"id"`
-			Name          string    `graphql:"name"`
-			Description   string    `graphql:"description"`
-			CreationTime  time.Time `graphql:"creation_time"`
-			Running       bool      `graphql:"running"`
-			Deleted       bool      `graphql:"deleted"`
-			IsP2P         bool      `graphql:"is_p2p"`
-			PayloadTypeID *int      `graphql:"payloadtype_id"`
+			ID           int       `graphql:"id"`
+			Name         string    `graphql:"name"`
+			Description  string    `graphql:"description"`
+			CreationTime time.Time `graphql:"creation_time"`
+			Running      bool      `graphql:"running"`
+			Deleted      bool      `graphql:"deleted"`
+			IsP2P        bool      `graphql:"is_p2p"`
 		} `graphql:"c2profile(where: {deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
@@ -34,14 +33,13 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 	profiles := make([]*types.C2Profile, len(query.C2Profile))
 	for i, p := range query.C2Profile {
 		profiles[i] = &types.C2Profile{
-			ID:            p.ID,
-			Name:          p.Name,
-			Description:   p.Description,
-			CreationTime:  p.CreationTime,
-			Running:       p.Running,
-			Deleted:       p.Deleted,
-			IsP2P:         p.IsP2P,
-			PayloadTypeID: p.PayloadTypeID,
+			ID:           p.ID,
+			Name:         p.Name,
+			Description:  p.Description,
+			CreationTime: p.CreationTime,
+			Running:      p.Running,
+			Deleted:      p.Deleted,
+			IsP2P:        p.IsP2P,
 		}
 	}
 
@@ -60,14 +58,13 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 
 	var query struct {
 		C2Profile []struct {
-			ID            int       `graphql:"id"`
-			Name          string    `graphql:"name"`
-			Description   string    `graphql:"description"`
-			CreationTime  time.Time `graphql:"creation_time"`
-			Running       bool      `graphql:"running"`
-			Deleted       bool      `graphql:"deleted"`
-			IsP2P         bool      `graphql:"is_p2p"`
-			PayloadTypeID *int      `graphql:"payloadtype_id"`
+			ID           int       `graphql:"id"`
+			Name         string    `graphql:"name"`
+			Description  string    `graphql:"description"`
+			CreationTime time.Time `graphql:"creation_time"`
+			Running      bool      `graphql:"running"`
+			Deleted      bool      `graphql:"deleted"`
+			IsP2P        bool      `graphql:"is_p2p"`
 		} `graphql:"c2profile(where: {id: {_eq: $profile_id}})"`
 	}
 
@@ -86,14 +83,13 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 
 	p := query.C2Profile[0]
 	return &types.C2Profile{
-		ID:            p.ID,
-		Name:          p.Name,
-		Description:   p.Description,
-		CreationTime:  p.CreationTime,
-		Running:       p.Running,
-		Deleted:       p.Deleted,
-		IsP2P:         p.IsP2P,
-		PayloadTypeID: p.PayloadTypeID,
+		ID:           p.ID,
+		Name:         p.Name,
+		Description:  p.Description,
+		CreationTime: p.CreationTime,
+		Running:      p.Running,
+		Deleted:      p.Deleted,
+		IsP2P:        p.IsP2P,
 	}, nil
 }
 
@@ -199,12 +195,17 @@ func (c *Client) StartStopProfile(ctx context.Context, profileID int, start bool
 		StartStopProfile struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"startStopProfile(id: $id, start: $start)"`
+		} `graphql:"startStopProfile(id: $id, action: $action)"`
+	}
+
+	action := "stop"
+	if start {
+		action = "start"
 	}
 
 	variables := map[string]interface{}{
-		"id":    profileID,
-		"start": start,
+		"id":     profileID,
+		"action": action,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

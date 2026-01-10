@@ -7,20 +7,19 @@ import (
 
 // C2Profile represents a C2 communication profile in Mythic.
 type C2Profile struct {
-	ID            int                    `json:"id"`
-	Name          string                 `json:"name"`
-	Description   string                 `json:"description"`
-	CreationTime  time.Time              `json:"creation_time"`
-	Running       bool                   `json:"running"`
-	StartTime     *time.Time             `json:"start_time,omitempty"`
-	StopTime      *time.Time             `json:"stop_time,omitempty"`
-	Output        string                 `json:"output,omitempty"`
-	StdErr        string                 `json:"std_err,omitempty"`
-	StdOut        string                 `json:"std_out,omitempty"`
-	Parameters    map[string]interface{} `json:"parameters,omitempty"`
-	Deleted       bool                   `json:"deleted"`
-	IsP2P         bool                   `json:"is_p2p"`
-	PayloadTypeID *int                   `json:"payload_type_id,omitempty"`
+	ID           int                    `json:"id"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description"`
+	CreationTime time.Time              `json:"creation_time"`
+	Running      bool                   `json:"running"`
+	StartTime    *time.Time             `json:"start_time,omitempty"`
+	StopTime     *time.Time             `json:"stop_time,omitempty"`
+	Output       string                 `json:"output,omitempty"`
+	StdErr       string                 `json:"std_err,omitempty"`
+	StdOut       string                 `json:"std_out,omitempty"`
+	Parameters   map[string]interface{} `json:"parameters,omitempty"`
+	Deleted      bool                   `json:"deleted"`
+	IsP2P        bool                   `json:"is_p2p"`
 }
 
 // String returns a string representation of a C2Profile.

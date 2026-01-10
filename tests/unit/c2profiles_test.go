@@ -111,18 +111,16 @@ func TestC2ProfileIsDeleted(t *testing.T) {
 func TestC2ProfileTypes(t *testing.T) {
 	now := time.Now()
 	startTime := now.Add(-1 * time.Hour)
-	payloadTypeID := 5
 
 	profile := types.C2Profile{
-		ID:            1,
-		Name:          "http",
-		Description:   "HTTP C2 Profile",
-		CreationTime:  now,
-		Running:       true,
-		StartTime:     &startTime,
-		Deleted:       false,
-		IsP2P:         false,
-		PayloadTypeID: &payloadTypeID,
+		ID:           1,
+		Name:         "http",
+		Description:  "HTTP C2 Profile",
+		CreationTime: now,
+		Running:      true,
+		StartTime:    &startTime,
+		Deleted:      false,
+		IsP2P:        false,
 		Parameters: map[string]interface{}{
 			"port": 8080,
 			"host": "0.0.0.0",
@@ -144,9 +142,6 @@ func TestC2ProfileTypes(t *testing.T) {
 	if profile.StartTime == nil {
 		t.Error("Expected StartTime to be set")
 	}
-	if profile.PayloadTypeID == nil || *profile.PayloadTypeID != 5 {
-		t.Error("Expected PayloadTypeID to be 5")
-	}
 	if profile.Parameters == nil {
 		t.Error("Expected Parameters to be set")
 	}
@@ -165,9 +160,6 @@ func TestC2ProfileWithoutOptionalFields(t *testing.T) {
 	}
 	if profile.StopTime != nil {
 		t.Error("StopTime should be nil")
-	}
-	if profile.PayloadTypeID != nil {
-		t.Error("PayloadTypeID should be nil")
 	}
 
 	str := profile.String()
