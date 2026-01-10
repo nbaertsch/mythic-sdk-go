@@ -53,9 +53,9 @@ func (c *Client) GetFileBrowserObjects(ctx context.Context) ([]*types.FileBrowse
 
 	objects := make([]*types.FileBrowserObject, len(query.FileBrowserObjects))
 	for i, obj := range query.FileBrowserObjects {
-		accessTime, _ := parseTime(obj.AccessTime)
-		modifyTime, _ := parseTime(obj.ModifyTime)
-		timestamp, _ := parseTime(obj.Timestamp)
+		accessTime, _ := parseTime(obj.AccessTime) //nolint:errcheck // Timestamp parse errors not critical
+		modifyTime, _ := parseTime(obj.ModifyTime) //nolint:errcheck // Timestamp parse errors not critical
+		timestamp, _ := parseTime(obj.Timestamp)   //nolint:errcheck // Timestamp parse errors not critical
 
 		objects[i] = &types.FileBrowserObject{
 			ID:            obj.ID,
@@ -134,9 +134,9 @@ func (c *Client) GetFileBrowserObjectsByHost(ctx context.Context, host string) (
 
 	objects := make([]*types.FileBrowserObject, len(query.FileBrowserObjects))
 	for i, obj := range query.FileBrowserObjects {
-		accessTime, _ := parseTime(obj.AccessTime)
-		modifyTime, _ := parseTime(obj.ModifyTime)
-		timestamp, _ := parseTime(obj.Timestamp)
+		accessTime, _ := parseTime(obj.AccessTime) //nolint:errcheck // Timestamp parse errors not critical
+		modifyTime, _ := parseTime(obj.ModifyTime) //nolint:errcheck // Timestamp parse errors not critical
+		timestamp, _ := parseTime(obj.Timestamp)   //nolint:errcheck // Timestamp parse errors not critical
 
 		objects[i] = &types.FileBrowserObject{
 			ID:            obj.ID,
@@ -215,9 +215,9 @@ func (c *Client) GetFileBrowserObjectsByCallback(ctx context.Context, callbackID
 
 	objects := make([]*types.FileBrowserObject, len(query.FileBrowserObjects))
 	for i, obj := range query.FileBrowserObjects {
-		accessTime, _ := parseTime(obj.AccessTime)
-		modifyTime, _ := parseTime(obj.ModifyTime)
-		timestamp, _ := parseTime(obj.Timestamp)
+		accessTime, _ := parseTime(obj.AccessTime) //nolint:errcheck // Timestamp parse errors not critical
+		modifyTime, _ := parseTime(obj.ModifyTime) //nolint:errcheck // Timestamp parse errors not critical
+		timestamp, _ := parseTime(obj.Timestamp)   //nolint:errcheck // Timestamp parse errors not critical
 
 		objects[i] = &types.FileBrowserObject{
 			ID:            obj.ID,

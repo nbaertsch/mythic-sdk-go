@@ -40,7 +40,7 @@ func (c *Client) GetBuildParameters(ctx context.Context) ([]*types.BuildParamete
 
 	parameters := make([]*types.BuildParameterType, len(query.BuildParameters))
 	for i, param := range query.BuildParameters {
-		creationTime, _ := parseTime(param.CreationTime)
+		creationTime, _ := parseTime(param.CreationTime) //nolint:errcheck // Timestamp parse errors not critical
 
 		parameters[i] = &types.BuildParameterType{
 			ID:                 param.ID,
@@ -105,7 +105,7 @@ func (c *Client) GetBuildParametersByPayloadType(ctx context.Context, payloadTyp
 
 	parameters := make([]*types.BuildParameterType, len(query.BuildParameters))
 	for i, param := range query.BuildParameters {
-		creationTime, _ := parseTime(param.CreationTime)
+		creationTime, _ := parseTime(param.CreationTime) //nolint:errcheck // Timestamp parse errors not critical
 
 		parameters[i] = &types.BuildParameterType{
 			ID:                 param.ID,
@@ -163,7 +163,7 @@ func (c *Client) GetBuildParameterInstances(ctx context.Context) ([]*types.Build
 
 	instances := make([]*types.BuildParameterInstance, len(query.Instances))
 	for i, inst := range query.Instances {
-		creationTime, _ := parseTime(inst.CreationTime)
+		creationTime, _ := parseTime(inst.CreationTime) //nolint:errcheck // Timestamp parse errors not critical
 
 		instances[i] = &types.BuildParameterInstance{
 			ID:               inst.ID,
@@ -220,7 +220,7 @@ func (c *Client) GetBuildParameterInstancesByPayload(ctx context.Context, payloa
 
 	instances := make([]*types.BuildParameterInstance, len(query.Instances))
 	for i, inst := range query.Instances {
-		creationTime, _ := parseTime(inst.CreationTime)
+		creationTime, _ := parseTime(inst.CreationTime) //nolint:errcheck // Timestamp parse errors not critical
 
 		instances[i] = &types.BuildParameterInstance{
 			ID:               inst.ID,

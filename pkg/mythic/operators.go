@@ -389,8 +389,8 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 
 	links := make([]*types.InviteLink, len(query.InviteLinks.Links))
 	for i, link := range query.InviteLinks.Links {
-		expiresAt, _ := parseTime(link.ExpiresAt)
-		createdAt, _ := parseTime(link.CreatedAt)
+		expiresAt, _ := parseTime(link.ExpiresAt) //nolint:errcheck // Timestamp parse errors not critical
+		createdAt, _ := parseTime(link.CreatedAt) //nolint:errcheck // Timestamp parse errors not critical
 
 		links[i] = &types.InviteLink{
 			ID:          link.ID,
