@@ -84,7 +84,7 @@ func (c *Client) Login(ctx context.Context) error {
 	if err != nil {
 		return WrapError("Login", err, "failed to execute login request")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
@@ -294,7 +294,7 @@ func (c *Client) RefreshAccessToken(ctx context.Context) error {
 	if err != nil {
 		return WrapError("RefreshAccessToken", err, "failed to execute refresh request")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)

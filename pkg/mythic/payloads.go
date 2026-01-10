@@ -501,7 +501,7 @@ func (c *Client) DownloadPayload(ctx context.Context, uuid string) ([]byte, erro
 	if err != nil {
 		return nil, WrapError("DownloadPayload", err, "failed to download payload")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	if resp.StatusCode != http.StatusOK {
 		body, readErr := io.ReadAll(resp.Body)

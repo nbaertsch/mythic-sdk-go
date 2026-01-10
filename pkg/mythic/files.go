@@ -402,7 +402,7 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 	if err != nil {
 		return "", WrapError("UploadFile", err, "failed to execute upload request")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	// Read response
 	respBody, err := io.ReadAll(resp.Body)
@@ -461,7 +461,7 @@ func (c *Client) DownloadFile(ctx context.Context, agentFileID string) ([]byte, 
 	if err != nil {
 		return nil, WrapError("DownloadFile", err, "failed to execute download request")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body) //nolint:errcheck // Best effort to read error message

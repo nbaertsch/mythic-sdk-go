@@ -275,10 +275,8 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 	}
 
 	// Add filter parameters if provided
-	if filter != nil {
-		for k, v := range filter {
-			variables[k] = v
-		}
+	for k, v := range filter {
+		variables[k] = v
 	}
 
 	// Build query based on subscription type
