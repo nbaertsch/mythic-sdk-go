@@ -123,7 +123,7 @@ func (c *Client) Subscribe(ctx context.Context, config *types.SubscriptionConfig
 	go func() {
 		defer func() {
 			// Clean up on exit
-			sub.Close()
+			sub.Close() //nolint:errcheck // Cleanup function, error not critical
 			cancel()
 
 			// Remove from active subscriptions
@@ -248,7 +248,7 @@ func (c *Client) Unsubscribe(ctx context.Context, subscription *types.Subscripti
 
 	if !exists {
 		// Already unsubscribed or never existed
-		subscription.Close()
+		subscription.Close() //nolint:errcheck // Best effort cleanup
 		return nil
 	}
 
@@ -258,7 +258,7 @@ func (c *Client) Unsubscribe(ctx context.Context, subscription *types.Subscripti
 	}
 
 	// Close subscription object
-	subscription.Close()
+	subscription.Close() //nolint:errcheck // Best effort cleanup
 
 	return nil
 }
