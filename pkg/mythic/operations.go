@@ -16,17 +16,16 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 
 	var query struct {
 		Operation []struct {
-			ID                  int       `graphql:"id"`
-			Name                string    `graphql:"name"`
-			Complete            bool      `graphql:"complete"`
-			Webhook             string    `graphql:"webhook"`
-			Channel             string    `graphql:"channel"`
-			AdminID             int       `graphql:"admin_id"`
-			BannerText          string    `graphql:"banner_text"`
-			BannerColor         string    `graphql:"banner_color"`
-			OperationEventLogID int       `graphql:"operation_event_log_id"`
-			Created             time.Time `graphql:"created"`
-			Admin               struct {
+			ID          int       `graphql:"id"`
+			Name        string    `graphql:"name"`
+			Complete    bool      `graphql:"complete"`
+			Webhook     string    `graphql:"webhook"`
+			Channel     string    `graphql:"channel"`
+			AdminID     int       `graphql:"admin_id"`
+			BannerText  string    `graphql:"banner_text"`
+			BannerColor string    `graphql:"banner_color"`
+			Created     time.Time `graphql:"created"`
+			Admin       struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
 				Admin    bool   `graphql:"admin"`
@@ -42,16 +41,15 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 	operations := make([]*types.Operation, len(query.Operation))
 	for i, op := range query.Operation {
 		operations[i] = &types.Operation{
-			ID:                  op.ID,
-			Name:                op.Name,
-			Complete:            op.Complete,
-			Webhook:             op.Webhook,
-			Channel:             op.Channel,
-			AdminID:             op.AdminID,
-			BannerText:          op.BannerText,
-			BannerColor:         op.BannerColor,
-			OperationEventLogID: op.OperationEventLogID,
-			Created:             op.Created,
+			ID:          op.ID,
+			Name:        op.Name,
+			Complete:    op.Complete,
+			Webhook:     op.Webhook,
+			Channel:     op.Channel,
+			AdminID:     op.AdminID,
+			BannerText:  op.BannerText,
+			BannerColor: op.BannerColor,
+			Created:     op.Created,
 			Admin: &types.Operator{
 				ID:       op.Admin.ID,
 				Username: op.Admin.Username,
@@ -71,17 +69,16 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 
 	var query struct {
 		Operation []struct {
-			ID                  int       `graphql:"id"`
-			Name                string    `graphql:"name"`
-			Complete            bool      `graphql:"complete"`
-			Webhook             string    `graphql:"webhook"`
-			Channel             string    `graphql:"channel"`
-			AdminID             int       `graphql:"admin_id"`
-			BannerText          string    `graphql:"banner_text"`
-			BannerColor         string    `graphql:"banner_color"`
-			OperationEventLogID int       `graphql:"operation_event_log_id"`
-			Created             time.Time `graphql:"created"`
-			Admin               struct {
+			ID          int       `graphql:"id"`
+			Name        string    `graphql:"name"`
+			Complete    bool      `graphql:"complete"`
+			Webhook     string    `graphql:"webhook"`
+			Channel     string    `graphql:"channel"`
+			AdminID     int       `graphql:"admin_id"`
+			BannerText  string    `graphql:"banner_text"`
+			BannerColor string    `graphql:"banner_color"`
+			Created     time.Time `graphql:"created"`
+			Admin       struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
 				Admin    bool   `graphql:"admin"`
@@ -104,16 +101,15 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 
 	op := query.Operation[0]
 	return &types.Operation{
-		ID:                  op.ID,
-		Name:                op.Name,
-		Complete:            op.Complete,
-		Webhook:             op.Webhook,
-		Channel:             op.Channel,
-		AdminID:             op.AdminID,
-		BannerText:          op.BannerText,
-		BannerColor:         op.BannerColor,
-		OperationEventLogID: op.OperationEventLogID,
-		Created:             op.Created,
+		ID:          op.ID,
+		Name:        op.Name,
+		Complete:    op.Complete,
+		Webhook:     op.Webhook,
+		Channel:     op.Channel,
+		AdminID:     op.AdminID,
+		BannerText:  op.BannerText,
+		BannerColor: op.BannerColor,
+		Created:     op.Created,
 		Admin: &types.Operator{
 			ID:       op.Admin.ID,
 			Username: op.Admin.Username,

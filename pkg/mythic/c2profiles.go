@@ -235,8 +235,6 @@ func (c *Client) GetProfileOutput(ctx context.Context, profileID int) (*types.C2
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			Output string `graphql:"output"`
-			StdOut string `graphql:"stdout"`
-			StdErr string `graphql:"stderr"`
 		} `graphql:"getProfileOutput(id: $id)"`
 	}
 
@@ -255,8 +253,8 @@ func (c *Client) GetProfileOutput(ctx context.Context, profileID int) (*types.C2
 
 	return &types.C2ProfileOutput{
 		Output: query.GetProfileOutput.Output,
-		StdOut: query.GetProfileOutput.StdOut,
-		StdErr: query.GetProfileOutput.StdErr,
+		StdOut: "",
+		StdErr: "",
 	}, nil
 }
 

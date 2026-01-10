@@ -79,6 +79,10 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 		return nil, WrapError("CreateArtifact", ErrInvalidInput, "artifact value is required")
 	}
 
+	if req.BaseArtifact == nil || *req.BaseArtifact == "" {
+		return nil, WrapError("CreateArtifact", ErrInvalidInput, "base artifact is required")
+	}
+
 	// Use current operation
 	operationID := c.GetCurrentOperation()
 	if operationID == nil {
@@ -93,10 +97,7 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 		} `graphql:"createArtifact(artifact: $artifact, base_artifact: $base_artifact, host: $host, task_id: $task_id)"`
 	}
 
-	baseArtifact := ""
-	if req.BaseArtifact != nil {
-		baseArtifact = *req.BaseArtifact
-	}
+	baseArtifact := *req.BaseArtifact
 
 	host := ""
 	if req.Host != nil {

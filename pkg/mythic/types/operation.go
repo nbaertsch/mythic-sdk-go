@@ -7,17 +7,16 @@ import (
 
 // Operation represents a Mythic operation (engagement/campaign).
 type Operation struct {
-	ID                  int       `json:"id"`
-	Name                string    `json:"name"`
-	Complete            bool      `json:"complete"`
-	Webhook             string    `json:"webhook"`
-	Channel             string    `json:"channel"`
-	AdminID             int       `json:"admin_id"`
-	BannerText          string    `json:"banner_text"`
-	BannerColor         string    `json:"banner_color"`
-	OperationEventLogID int       `json:"operation_event_log_id"`
-	Created             time.Time `json:"created"`
-	Admin               *Operator `json:"admin,omitempty"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Complete    bool      `json:"complete"`
+	Webhook     string    `json:"webhook"`
+	Channel     string    `json:"channel"`
+	AdminID     int       `json:"admin_id"`
+	BannerText  string    `json:"banner_text"`
+	BannerColor string    `json:"banner_color"`
+	Created     time.Time `json:"created"`
+	Admin       *Operator `json:"admin,omitempty"`
 }
 
 // OperationOperator represents the relationship between an operation and an operator.
