@@ -287,7 +287,6 @@ func TestPayloadTypeTypes(t *testing.T) {
 		Name:                "poseidon",
 		FileExtension:       "bin",
 		Author:              "Test Author",
-		Supported:           true,
 		WrapperMode:         false,
 		Wrapped:             false,
 		Note:                "Test note",
@@ -305,9 +304,6 @@ func TestPayloadTypeTypes(t *testing.T) {
 	}
 	if payloadType.Name != "poseidon" {
 		t.Errorf("Expected Name 'poseidon', got %q", payloadType.Name)
-	}
-	if !payloadType.Supported {
-		t.Error("Expected payload type to be supported")
 	}
 	if payloadType.WrapperMode {
 		t.Error("Expected wrapper mode to be false")

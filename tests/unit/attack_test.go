@@ -2,7 +2,6 @@ package unit
 
 import (
 	"testing"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
