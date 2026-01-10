@@ -40,7 +40,7 @@ func TestE2E_C2ProfileOperations(t *testing.T) {
 		t.Fatalf("GetC2Profiles failed: %v", err)
 	}
 	if len(profiles) == 0 {
-		t.Fatal("No C2 profiles found - Mythic should have at least HTTP profile")
+		t.Skip("No C2 profiles found - install at least one C2 profile (e.g., HTTP) to run this test")
 	}
 	t.Logf("✓ Found %d C2 profiles", len(profiles))
 

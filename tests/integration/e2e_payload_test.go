@@ -43,7 +43,7 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 		t.Fatalf("GetPayloadTypes failed: %v", err)
 	}
 	if len(payloadTypes) == 0 {
-		t.Fatal("No payload types found")
+		t.Skip("No payload types found - install at least one payload type (e.g., Apollo, Athena) to run this test")
 	}
 	t.Logf("✓ Found %d payload types", len(payloadTypes))
 
