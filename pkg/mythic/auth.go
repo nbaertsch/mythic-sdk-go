@@ -37,9 +37,22 @@ func (c *Client) Login(ctx context.Context) error {
 	c.authMutex.Lock()
 	defer c.authMutex.Unlock()
 
-	// If API token is provided, we don't need to login
+	// If API token is provided, validate it by making a test query
 	if c.config.APIToken != "" {
 		c.authenticated = true
+		// Unlock before making test query to avoid deadlock
+		c.authMutex.Unlock()
+
+		// Validate the token by calling GetMe
+		_, err := c.GetMe(ctx)
+
+		// Re-lock before modifying state
+		c.authMutex.Lock()
+
+		if err != nil {
+			c.authenticated = false
+			return WrapError("Login", ErrAuthenticationFailed, "invalid API token")
+		}
 		return nil
 	}
 

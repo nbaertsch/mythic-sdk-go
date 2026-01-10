@@ -265,14 +265,15 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 		return WrapError("UpdateOperatorPreferences", err, "failed to serialize preferences")
 	}
 
+	// Use direct table update since custom mutation doesn't exist
 	var mutation struct {
-		UpdatePreferences struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updateCurrentOperatorPreferences(preferences: $preferences)"`
+		UpdateOperator struct {
+			Affected int `graphql:"affected_rows"`
+		} `graphql:"update_operator(where: {id: {_eq: $operator_id}}, _set: {preferences: $preferences})"`
 	}
 
 	variables := map[string]interface{}{
+		"operator_id": req.OperatorID,
 		"preferences": string(prefsJSON),
 	}
 
@@ -281,8 +282,8 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 		return WrapError("UpdateOperatorPreferences", err, "failed to update operator preferences")
 	}
 
-	if mutation.UpdatePreferences.Status != "success" {
-		return WrapError("UpdateOperatorPreferences", ErrOperationFailed, mutation.UpdatePreferences.Error)
+	if mutation.UpdateOperator.Affected == 0 {
+		return WrapError("UpdateOperatorPreferences", ErrNotFound, "operator not found or preferences not updated")
 	}
 
 	return nil

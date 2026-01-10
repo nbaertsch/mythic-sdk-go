@@ -126,8 +126,9 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 
 	var mutation struct {
 		CreateOperation struct {
-			ID   int    `graphql:"id"`
-			Name string `graphql:"name"`
+			Status      string `graphql:"status"`
+			Error       string `graphql:"error"`
+			OperationID int    `graphql:"operation_id"`
 		} `graphql:"createOperation(name: $name)"`
 	}
 
@@ -140,8 +141,12 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 		return nil, WrapError("CreateOperation", err, "failed to create operation")
 	}
 
+	if mutation.CreateOperation.Status != "success" {
+		return nil, WrapError("CreateOperation", ErrOperationFailed, mutation.CreateOperation.Error)
+	}
+
 	// Fetch the full operation details
-	return c.GetOperationByID(ctx, mutation.CreateOperation.ID)
+	return c.GetOperationByID(ctx, mutation.CreateOperation.OperationID)
 }
 
 // UpdateOperation updates an existing operation.
