@@ -265,16 +265,15 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 		return WrapError("UpdateOperatorPreferences", err, "failed to serialize preferences")
 	}
 
-	// Try updateOperatorPreferences mutation (similar to getOperatorPreferences query pattern)
+	// updateOperatorPreferences operates on the current authenticated operator (no operator_id param)
 	var mutation struct {
 		UpdatePreferences struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"updateOperatorPreferences(operator_id: $operator_id, preferences: $preferences)"`
+		} `graphql:"updateOperatorPreferences(preferences: $preferences)"`
 	}
 
 	variables := map[string]interface{}{
-		"operator_id": req.OperatorID,
 		"preferences": string(prefsJSON),
 	}
 
