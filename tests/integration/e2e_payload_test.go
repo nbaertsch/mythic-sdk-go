@@ -416,12 +416,10 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 		t.Fatalf("GetPayloads after deletion failed: %v", err)
 	}
 
-	deletedFound := false
 	for _, p := range finalPayloads {
 		if p.UUID == rebuildPayload.UUID {
 			if p.Deleted {
 				t.Logf("✓ Deleted payload marked as deleted in list")
-				deletedFound = true
 			} else {
 				t.Error("Deleted payload still active in list")
 			}

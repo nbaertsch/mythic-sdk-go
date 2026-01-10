@@ -191,9 +191,9 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	defer cancel8()
 
 	newDesc := "E2E Test Callback - Updated"
-	updateReq := &types.UpdateCallbackRequest{
-		CallbackID:  callbackID,
-		Description: &newDesc,
+	updateReq := &types.CallbackUpdateRequest{
+		CallbackDisplayID: callbackID,
+		Description:       &newDesc,
 	}
 
 	err = setup.Client.UpdateCallback(ctx8, updateReq)
@@ -323,7 +323,7 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	ctx15, cancel15 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel15()
 
-	hosts, err := setup.Client.GetHosts(ctx15)
+	hosts, err := setup.Client.GetHosts(ctx15, setup.OperationID)
 	if err != nil {
 		t.Fatalf("GetHosts failed: %v", err)
 	}
@@ -331,7 +331,7 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 
 	// Test 22: Find callback's host
 	t.Log("=== Test 22: Find callback's host ===")
-	var callbackHost *types.Host
+	var callbackHost *types.HostInfo
 	for _, h := range hosts {
 		if h.Hostname == callback.Host {
 			callbackHost = h
@@ -377,7 +377,7 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	ctx18, cancel18 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel18()
 
-	callbackTasks, err := setup.Client.GetTasksForCallback(ctx18, callbackID)
+	callbackTasks, err := setup.Client.GetTasksForCallback(ctx18, callbackID, 100)
 	if err != nil {
 		t.Fatalf("GetTasksForCallback failed: %v", err)
 	}
@@ -388,7 +388,7 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	ctx19, cancel19 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel19()
 
-	completedTasks, err := setup.Client.GetTasksByStatus(ctx19, "completed")
+	completedTasks, err := setup.Client.GetTasksByStatus(ctx19, callbackID, mythic.TaskStatusCompleted, 100)
 	if err != nil {
 		t.Fatalf("GetTasksByStatus failed: %v", err)
 	}
@@ -399,13 +399,11 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	ctx20, cancel20 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel20()
 
-	comment := "E2E Test Comment"
-	updateTaskReq := &types.UpdateTaskRequest{
-		TaskID:  task.ID,
-		Comment: &comment,
+	taskUpdates := map[string]interface{}{
+		"comment": "E2E Test Comment",
 	}
 
-	err = setup.Client.UpdateTask(ctx20, updateTaskReq)
+	err = setup.Client.UpdateTask(ctx20, taskDisplayID, taskUpdates)
 	if err != nil {
 		t.Fatalf("UpdateTask failed: %v", err)
 	}
@@ -514,7 +512,7 @@ func TestE2E_CallbackTaskErrorHandling(t *testing.T) {
 	ctx4, cancel4 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel4()
 
-	_, err = client.GetTasksForCallback(ctx4, 999999)
+	_, err = client.GetTasksForCallback(ctx4, 999999, 100)
 	if err == nil {
 		t.Error("Expected error for tasks of non-existent callback")
 	}

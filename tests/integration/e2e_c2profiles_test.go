@@ -75,7 +75,11 @@ func TestE2E_C2ProfileOperations(t *testing.T) {
 	if profile.ID != testProfileID {
 		t.Errorf("Profile ID mismatch: expected %d, got %d", testProfileID, profile.ID)
 	}
-	t.Logf("✓ Profile retrieved: %s (Container: %s)", profile.Name, profile.ContainerRunning)
+	runningStatus := "stopped"
+	if profile.Running {
+		runningStatus = "running"
+	}
+	t.Logf("✓ Profile retrieved: %s (Status: %s)", profile.Name, runningStatus)
 
 	// Test 4: Get profile output/logs
 	t.Log("=== Test 4: Get profile output/logs ===")
@@ -220,8 +224,8 @@ func TestE2E_C2ProfileCreation(t *testing.T) {
 
 	// Use minimal parameters for HTTP profile
 	instanceReq := &types.CreateC2InstanceRequest{
-		C2ProfileID: httpProfile.ID,
-		Parameters:  map[string]interface{}{},
+		Name:       "E2E-Test-HTTP-Instance",
+		Parameters: map[string]interface{}{},
 	}
 
 	newInstance, err := client.CreateC2Instance(ctx2, instanceReq)

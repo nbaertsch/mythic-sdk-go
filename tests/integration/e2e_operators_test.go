@@ -337,7 +337,7 @@ func TestE2E_OperatorManagement(t *testing.T) {
 		t.Fatal("No current operation set")
 	}
 
-	viewMode := types.OperatorViewModeOperator
+	viewMode := types.ViewModeOperator
 	assignReq := &types.UpdateOperatorOperationRequest{
 		OperatorID:  testOperatorID,
 		OperationID: *operationID,
