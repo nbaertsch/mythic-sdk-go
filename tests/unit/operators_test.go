@@ -500,7 +500,6 @@ func TestOperatorFields(t *testing.T) {
 		Active:             true,
 		Deleted:            false,
 		CurrentOperationID: &currentOpID,
-		ViewMode:           string(types.ViewModeOperator),
 		AccountType:        types.AccountTypeUser,
 		FailedLoginCount:   0,
 	}
@@ -522,9 +521,6 @@ func TestOperatorFields(t *testing.T) {
 	}
 	if operator.CurrentOperationID == nil || *operator.CurrentOperationID != 5 {
 		t.Error("Expected CurrentOperationID to be 5")
-	}
-	if operator.ViewMode != string(types.ViewModeOperator) {
-		t.Errorf("Expected ViewMode 'operator', got %q", operator.ViewMode)
 	}
 	if operator.AccountType != types.AccountTypeUser {
 		t.Errorf("Expected AccountType 'user', got %q", operator.AccountType)

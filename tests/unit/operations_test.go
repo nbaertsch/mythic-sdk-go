@@ -89,7 +89,6 @@ func TestOperationTypes(t *testing.T) {
 		AdminID:     1,
 		BannerText:  "Active Engagement",
 		BannerColor: "#ff0000",
-		DisplayName: "Red Team",
 		Created:     time.Now(),
 	}
 
@@ -110,7 +109,6 @@ func TestOperationOperatorTypes(t *testing.T) {
 		ID:          1,
 		OperationID: 1,
 		OperatorID:  2,
-		ViewMode:    types.ViewModeOperator,
 	}
 
 	if opOp.OperationID != 1 {
@@ -118,41 +116,6 @@ func TestOperationOperatorTypes(t *testing.T) {
 	}
 	if opOp.OperatorID != 2 {
 		t.Errorf("OperationOperator.OperatorID = %d, want 2", opOp.OperatorID)
-	}
-	if opOp.ViewMode != types.ViewModeOperator {
-		t.Errorf("OperationOperator.ViewMode = %q, want %q", opOp.ViewMode, types.ViewModeOperator)
-	}
-}
-
-func TestOperatorViewModeConstants(t *testing.T) {
-	tests := []struct {
-		name     string
-		viewMode types.OperatorViewMode
-		expected string
-	}{
-		{
-			name:     "operator",
-			viewMode: types.ViewModeOperator,
-			expected: "operator",
-		},
-		{
-			name:     "spectator",
-			viewMode: types.ViewModeSpectator,
-			expected: "spectator",
-		},
-		{
-			name:     "lead",
-			viewMode: types.ViewModeLead,
-			expected: "lead",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if string(tt.viewMode) != tt.expected {
-				t.Errorf("ViewMode = %q, want %q", tt.viewMode, tt.expected)
-			}
-		})
 	}
 }
 
@@ -194,11 +157,9 @@ func TestUpdateOperationRequest(t *testing.T) {
 }
 
 func TestUpdateOperatorOperationRequest(t *testing.T) {
-	viewMode := types.ViewModeLead
 	req := &types.UpdateOperatorOperationRequest{
 		OperatorID:  1,
 		OperationID: 2,
-		ViewMode:    &viewMode,
 		Remove:      false,
 	}
 
@@ -207,9 +168,6 @@ func TestUpdateOperatorOperationRequest(t *testing.T) {
 	}
 	if req.OperationID != 2 {
 		t.Errorf("UpdateOperatorOperationRequest.OperationID = %d, want 2", req.OperationID)
-	}
-	if req.ViewMode == nil || *req.ViewMode != types.ViewModeLead {
-		t.Errorf("UpdateOperatorOperationRequest.ViewMode = %v, want %q", req.ViewMode, types.ViewModeLead)
 	}
 	if req.Remove {
 		t.Error("UpdateOperatorOperationRequest.Remove = true, want false")
@@ -248,7 +206,6 @@ func TestOperatorTypes(t *testing.T) {
 		CurrentOperationID: &currentOpID,
 		ViewUTCTime:        false,
 		Deleted:            false,
-		ViewMode:           "operator",
 	}
 
 	if operator.ID != 1 {
