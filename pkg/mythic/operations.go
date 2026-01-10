@@ -160,32 +160,26 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 	}
 
 	// Check if there are any fields to update
-	hasUpdates := req.Complete != nil || req.Webhook != nil || req.Channel != nil ||
-		req.AdminID != nil || req.BannerText != nil || req.BannerColor != nil
+	hasUpdates := req.Complete != nil || req.Webhook != nil
 
 	if !hasUpdates {
-		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
+		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update (only 'complete' and 'webhook' are supported)")
 	}
 
-	// Build variables map - all variables must be provided for GraphQL
-	// Use pointer values directly, GraphQL client handles nil properly
+	// Build variables map - only use parameters that Mythic's GraphQL schema supports
+	// Based on testing, only webhook and complete are supported
 	variables := map[string]interface{}{
 		"operation_id": req.OperationID,
 		"complete":     req.Complete,
 		"webhook":      req.Webhook,
-		"channel":      req.Channel,
-		"admin_id":     req.AdminID,
-		"banner_text":  req.BannerText,
-		"banner_color": req.BannerColor,
 	}
 
-	// Try updateOperation mutation with all possible parameters
-	// Note: GraphQL will ignore parameters not defined in the schema
+	// Use updateOperation mutation with only supported parameters
 	var mutation struct {
 		UpdateOperation struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete, webhook: $webhook, channel: $channel, admin_id: $admin_id, banner_text: $banner_text, banner_color: $banner_color)"`
+		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete, webhook: $webhook)"`
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
