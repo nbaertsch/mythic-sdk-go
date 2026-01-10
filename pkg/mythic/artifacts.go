@@ -7,6 +7,28 @@ import (
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
+// parseTimestamp parses Mythic's timestamp format (RFC3339 without timezone)
+func parseTimestamp(ts string) (time.Time, error) {
+	// Try multiple formats that Mythic might use
+	formats := []string{
+		"2006-01-02T15:04:05.999999",     // Microseconds, no timezone
+		"2006-01-02T15:04:05",            // No fractional seconds
+		time.RFC3339,                     // With timezone
+		time.RFC3339Nano,                 // With nanoseconds and timezone
+	}
+
+	var lastErr error
+	for _, format := range formats {
+		t, err := time.Parse(format, ts)
+		if err == nil {
+			return t, nil
+		}
+		lastErr = err
+	}
+
+	return time.Time{}, lastErr
+}
+
 // GetArtifacts retrieves all artifacts (IOCs) for the current operation.
 func (c *Client) GetArtifacts(ctx context.Context) ([]*types.Artifact, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
@@ -34,13 +56,13 @@ func (c *Client) GetArtifactsByOperation(ctx context.Context, operationID int) (
 
 	var query struct {
 		TaskArtifact []struct {
-			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact_text"`
-			BaseArtifact string    `graphql:"base_artifact"`
-			Host         string    `graphql:"host"`
-			OperationID  int       `graphql:"operation_id"`
-			TaskID       *int      `graphql:"task_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
+			ID           int    `graphql:"id"`
+			Artifact     string `graphql:"artifact_text"`
+			BaseArtifact string `graphql:"base_artifact"`
+			Host         string `graphql:"host"`
+			OperationID  int    `graphql:"operation_id"`
+			TaskID       *int   `graphql:"task_id"`
+			Timestamp    string `graphql:"timestamp"`
 		} `graphql:"taskartifact(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
 	}
 
@@ -55,6 +77,11 @@ func (c *Client) GetArtifactsByOperation(ctx context.Context, operationID int) (
 
 	artifacts := make([]*types.Artifact, len(query.TaskArtifact))
 	for i, a := range query.TaskArtifact {
+		ts, err := parseTimestamp(a.Timestamp)
+		if err != nil {
+			return nil, WrapError("GetArtifactsByOperation", err, "failed to parse timestamp")
+		}
+
 		artifacts[i] = &types.Artifact{
 			ID:           a.ID,
 			Artifact:     a.Artifact,
@@ -62,7 +89,7 @@ func (c *Client) GetArtifactsByOperation(ctx context.Context, operationID int) (
 			Host:         a.Host,
 			OperationID:  a.OperationID,
 			TaskID:       a.TaskID,
-			Timestamp:    a.Timestamp,
+			Timestamp:    ts,
 		}
 	}
 
@@ -93,8 +120,9 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 		} `graphql:"createArtifact(artifact: $artifact, base_artifact: $base_artifact, host: $host, task_id: $task_id)"`
 	}
 
-	baseArtifact := ""
-	if req.BaseArtifact != nil {
+	// Default base_artifact to artifact value if not provided
+	baseArtifact := req.Artifact
+	if req.BaseArtifact != nil && *req.BaseArtifact != "" {
 		baseArtifact = *req.BaseArtifact
 	}
 
@@ -140,13 +168,13 @@ func (c *Client) GetArtifactByID(ctx context.Context, artifactID int) (*types.Ar
 
 	var query struct {
 		TaskArtifact []struct {
-			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact_text"`
-			BaseArtifact string    `graphql:"base_artifact"`
-			Host         string    `graphql:"host"`
-			OperationID  int       `graphql:"operation_id"`
-			TaskID       *int      `graphql:"task_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
+			ID           int    `graphql:"id"`
+			Artifact     string `graphql:"artifact_text"`
+			BaseArtifact string `graphql:"base_artifact"`
+			Host         string `graphql:"host"`
+			OperationID  int    `graphql:"operation_id"`
+			TaskID       *int   `graphql:"task_id"`
+			Timestamp    string `graphql:"timestamp"`
 		} `graphql:"taskartifact(where: {id: {_eq: $artifact_id}})"`
 	}
 
@@ -164,6 +192,11 @@ func (c *Client) GetArtifactByID(ctx context.Context, artifactID int) (*types.Ar
 	}
 
 	a := query.TaskArtifact[0]
+	ts, err := parseTimestamp(a.Timestamp)
+	if err != nil {
+		return nil, WrapError("GetArtifactByID", err, "failed to parse timestamp")
+	}
+
 	return &types.Artifact{
 		ID:           a.ID,
 		Artifact:     a.Artifact,
@@ -171,7 +204,7 @@ func (c *Client) GetArtifactByID(ctx context.Context, artifactID int) (*types.Ar
 		Host:         a.Host,
 		OperationID:  a.OperationID,
 		TaskID:       a.TaskID,
-		Timestamp:    a.Timestamp,
+		Timestamp:    ts,
 	}, nil
 }
 
@@ -271,13 +304,13 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 
 	var query struct {
 		TaskArtifact []struct {
-			ID           int       `graphql:"id"`
-			Artifact     string    `graphql:"artifact_text"`
-			BaseArtifact string    `graphql:"base_artifact"`
-			Host         string    `graphql:"host"`
-			OperationID  int       `graphql:"operation_id"`
-			TaskID       *int      `graphql:"task_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
+			ID           int    `graphql:"id"`
+			Artifact     string `graphql:"artifact_text"`
+			BaseArtifact string `graphql:"base_artifact"`
+			Host         string `graphql:"host"`
+			OperationID  int    `graphql:"operation_id"`
+			TaskID       *int   `graphql:"task_id"`
+			Timestamp    string `graphql:"timestamp"`
 		} `graphql:"taskartifact(where: {operation_id: {_eq: $operation_id}, host: {_eq: $host}}, order_by: {timestamp: desc})"`
 	}
 
@@ -293,6 +326,11 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 
 	artifacts := make([]*types.Artifact, len(query.TaskArtifact))
 	for i, a := range query.TaskArtifact {
+		ts, err := parseTimestamp(a.Timestamp)
+		if err != nil {
+			return nil, WrapError("GetArtifactsByHost", err, "failed to parse timestamp")
+		}
+
 		artifacts[i] = &types.Artifact{
 			ID:           a.ID,
 			Artifact:     a.Artifact,
@@ -300,7 +338,7 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 			Host:         a.Host,
 			OperationID:  a.OperationID,
 			TaskID:       a.TaskID,
-			Timestamp:    a.Timestamp,
+			Timestamp:    ts,
 		}
 	}
 
