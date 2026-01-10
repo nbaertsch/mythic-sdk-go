@@ -51,11 +51,9 @@ func TestE2E_TagManagement(t *testing.T) {
 	defer cancel0()
 
 	testHost := "tag-test-host"
-	artifactType := types.ArtifactTypeFile
 	testArtifact := &types.CreateArtifactRequest{
-		Artifact:     "/tmp/test_tagged_file.txt",
-		Host:         &testHost,
-		ArtifactType: &artifactType,
+		Artifact: "/tmp/test_tagged_file.txt",
+		Host:     &testHost,
 	}
 
 	createdArtifact, err := client.CreateArtifact(ctx0, testArtifact)

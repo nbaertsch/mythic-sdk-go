@@ -51,7 +51,7 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 	t.Log("=== Test 2: Find Poseidon payload type ===")
 	var poseidonType *types.PayloadType
 	for _, pt := range payloadTypes {
-		t.Logf("  - %s (ID: %d, Running: %v, Supported: %v)", pt.Name, pt.ID, pt.ContainerRunning, pt.Supported)
+		t.Logf("  - %s (ID: %d, Running: %v)", pt.Name, pt.ID, pt.ContainerRunning)
 		if pt.Name == "poseidon" {
 			poseidonType = pt
 			break

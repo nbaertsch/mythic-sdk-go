@@ -443,11 +443,11 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 		t.Fatalf("GetArtifacts after delete failed: %v", err)
 	}
 
-	// Check that deleted artifacts are not in the active list (or marked deleted)
+	// Check that deleted artifacts are not in the active list (hard delete means they shouldn't exist)
 	for _, artifact := range finalArtifacts {
 		for _, deletedID := range createdArtifactIDs {
-			if artifact.ID == deletedID && !artifact.Deleted {
-				t.Errorf("Artifact %d still active after deletion", deletedID)
+			if artifact.ID == deletedID {
+				t.Errorf("Artifact %d still exists after deletion (should be hard deleted)", deletedID)
 			}
 		}
 	}
@@ -504,10 +504,10 @@ func TestE2E_CredentialsArtifactsErrorHandling(t *testing.T) {
 	ctx4, cancel4 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel4()
 
-	metadata := "test"
+	testHost := "test"
 	artifactUpdateReq := &types.UpdateArtifactRequest{
-		ID:       999999,
-		Metadata: &metadata,
+		ID:   999999,
+		Host: &testHost,
 	}
 
 	_, err = client.UpdateArtifact(ctx4, artifactUpdateReq)

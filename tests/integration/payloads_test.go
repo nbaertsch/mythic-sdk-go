@@ -94,17 +94,17 @@ func TestPayloads_CreateAndManagePayload(t *testing.T) {
 		t.Skip("No payload types available for testing")
 	}
 
-	// Find a supported payload type
+	// Find a running payload type
 	var selectedType *types.PayloadType
 	for _, pt := range payloadTypes {
-		if pt.Supported && pt.ContainerRunning {
+		if pt.ContainerRunning {
 			selectedType = pt
 			break
 		}
 	}
 
 	if selectedType == nil {
-		t.Skip("No supported and running payload types available")
+		t.Skip("No running payload types available")
 	}
 
 	t.Logf("Using payload type: %s", selectedType.Name)
@@ -390,17 +390,17 @@ func TestPayloads_DeletePayload(t *testing.T) {
 		t.Skip("Cannot create test payload for deletion")
 	}
 
-	// Find a supported type
+	// Find a running type
 	var selectedType *types.PayloadType
 	for _, pt := range payloadTypes {
-		if pt.Supported && pt.ContainerRunning {
+		if pt.ContainerRunning {
 			selectedType = pt
 			break
 		}
 	}
 
 	if selectedType == nil {
-		t.Skip("No supported payload types available")
+		t.Skip("No running payload types available")
 	}
 
 	// Create a simple payload to delete

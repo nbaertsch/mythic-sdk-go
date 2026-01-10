@@ -279,14 +279,11 @@ func TestOperations_GetOperatorsByOperation(t *testing.T) {
 	if opOp.OperationID != operations[0].ID {
 		t.Errorf("Expected operation ID %d, got %d", operations[0].ID, opOp.OperationID)
 	}
-	if opOp.ViewMode == "" {
-		t.Error("View mode should not be empty")
-	}
 
 	t.Logf("Found %d operator(s) in operation %s", len(operators), operations[0].Name)
 	for _, op := range operators {
 		if op.Operator != nil {
-			t.Logf("  - Operator %s (ID: %d) with view mode: %s", op.Operator.Username, op.OperatorID, op.ViewMode)
+			t.Logf("  - Operator %s (ID: %d)", op.Operator.Username, op.OperatorID)
 		}
 	}
 }
