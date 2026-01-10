@@ -121,10 +121,11 @@ jobs:
 
           # Run tests and capture exit code
           set +e
+          TEST_LOG_FILE="integration-test-output-$(echo '${{ matrix.test-group }}' | tr ' :+' '_').log"
           go test -v -tags=integration ./tests/integration/... \
             -run "${{ matrix.test-pattern }}" \
             -timeout 10m \
-            2>&1 | tee integration-test-output-${{ matrix.test-group }}.log
+            2>&1 | tee "$TEST_LOG_FILE"
 
           TEST_EXIT_CODE=$?
           set -e
@@ -133,9 +134,9 @@ jobs:
 
           # Parse test results
           echo "::group::Test Results Summary"
-          PASSED=$(grep -c "^=== RUN" integration-test-output-${{ matrix.test-group }}.log || echo "0")
-          FAILED=$(grep -c "^--- FAIL:" integration-test-output-${{ matrix.test-group }}.log || echo "0")
-          SKIPPED=$(grep -c "^--- SKIP:" integration-test-output-${{ matrix.test-group }}.log || echo "0")
+          PASSED=$(grep -c "^=== RUN" "$TEST_LOG_FILE" || echo "0")
+          FAILED=$(grep -c "^--- FAIL:" "$TEST_LOG_FILE" || echo "0")
+          SKIPPED=$(grep -c "^--- SKIP:" "$TEST_LOG_FILE" || echo "0")
 
           echo "📊 Test Results for ${{ matrix.test-group }}:"
           echo "   Tests Run: $PASSED"
@@ -161,8 +162,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-results-${{ matrix.test-group }}
-          path: integration-test-output-${{ matrix.test-group }}.log
+          name: integration-test-results-$(echo '${{ matrix.test-group }}' | tr ' :+' '_')
+          path: integration-test-output-*.log
           retention-days: 7
 
       - name: Collect Mythic Logs on Failure
@@ -179,7 +180,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: mythic-failure-logs-${{ matrix.test-group }}
+          name: mythic-failure-logs-$(echo '${{ matrix.test-group }}' | tr ' :+' '_')
           path: |
             /tmp/mythic/mythic-logs.txt
             /tmp/mythic/docker-containers.txt
