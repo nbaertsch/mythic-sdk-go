@@ -19,23 +19,21 @@ func TestArtifactString(t *testing.T) {
 		{
 			name: "with host and artifact",
 			artifact: types.Artifact{
-				ID:           1,
-				Artifact:     "C:\\Windows\\Temp\\malware.exe",
-				Host:         "WORKSTATION-01",
-				ArtifactType: types.ArtifactTypeFile,
-				Timestamp:    now,
+				ID:        1,
+				Artifact:  "C:\\Windows\\Temp\\malware.exe",
+				Host:      "WORKSTATION-01",
+				Timestamp: now,
 			},
-			contains: []string{"malware.exe", "WORKSTATION-01", types.ArtifactTypeFile},
+			contains: []string{"malware.exe", "WORKSTATION-01"},
 		},
 		{
 			name: "with artifact only",
 			artifact: types.Artifact{
-				ID:           2,
-				Artifact:     "192.168.1.100:4444",
-				ArtifactType: types.ArtifactTypeNetwork,
-				Timestamp:    now,
+				ID:        2,
+				Artifact:  "192.168.1.100:4444",
+				Timestamp: now,
 			},
-			contains: []string{"192.168.1.100:4444", types.ArtifactTypeNetwork},
+			contains: []string{"192.168.1.100:4444"},
 		},
 		{
 			name: "with ID only",
@@ -62,27 +60,7 @@ func TestArtifactString(t *testing.T) {
 	}
 }
 
-// TestArtifactIsDeleted tests the Artifact.IsDeleted() method
-func TestArtifactIsDeleted(t *testing.T) {
-	tests := []struct {
-		name     string
-		deleted  bool
-		expected bool
-	}{
-		{"deleted artifact", true, true},
-		{"active artifact", false, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			artifact := types.Artifact{Deleted: tt.deleted}
-			result := artifact.IsDeleted()
-			if result != tt.expected {
-				t.Errorf("IsDeleted() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
+// TestArtifactIsDeleted tests removed - taskartifact table doesn't support soft delete
 
 // TestArtifactHasTask tests the Artifact.HasTask() method
 func TestArtifactHasTask(t *testing.T) {
@@ -120,13 +98,9 @@ func TestArtifactTypes(t *testing.T) {
 		Artifact:     "C:\\Windows\\System32\\evil.dll",
 		BaseArtifact: "C:\\Windows\\System32",
 		Host:         "SERVER-01",
-		ArtifactType: types.ArtifactTypeFile,
 		OperationID:  5,
-		OperatorID:   10,
 		TaskID:       &taskID,
 		Timestamp:    now,
-		Deleted:      false,
-		Metadata:     `{"size": 12345, "hash": "abc123"}`,
 	}
 
 	if artifact.ID != 1 {
@@ -138,9 +112,6 @@ func TestArtifactTypes(t *testing.T) {
 	if !artifact.HasTask() {
 		t.Error("Expected artifact to have a task")
 	}
-	if artifact.IsDeleted() {
-		t.Error("Expected artifact to not be deleted")
-	}
 	if artifact.TaskID == nil || *artifact.TaskID != 123 {
 		t.Error("Expected TaskID to be 123")
 	}
@@ -150,17 +121,13 @@ func TestArtifactTypes(t *testing.T) {
 func TestCreateArtifactRequest(t *testing.T) {
 	baseArtifact := "C:\\Windows\\Temp"
 	host := "WORKSTATION-01"
-	artifactType := types.ArtifactTypeFile
 	taskID := 42
-	metadata := `{"hash": "sha256:abc123"}`
 
 	req := types.CreateArtifactRequest{
 		Artifact:     "C:\\Windows\\Temp\\payload.exe",
 		BaseArtifact: &baseArtifact,
 		Host:         &host,
-		ArtifactType: &artifactType,
 		TaskID:       &taskID,
-		Metadata:     &metadata,
 	}
 
 	if req.Artifact != "C:\\Windows\\Temp\\payload.exe" {
@@ -172,9 +139,6 @@ func TestCreateArtifactRequest(t *testing.T) {
 	if req.Host == nil || *req.Host != host {
 		t.Error("Expected Host to be 'WORKSTATION-01'")
 	}
-	if req.ArtifactType == nil || *req.ArtifactType != artifactType {
-		t.Error("Expected ArtifactType to be 'file'")
-	}
 	if req.TaskID == nil || *req.TaskID != taskID {
 		t.Error("Expected TaskID to be 42")
 	}
@@ -183,14 +147,10 @@ func TestCreateArtifactRequest(t *testing.T) {
 // TestUpdateArtifactRequest tests UpdateArtifactRequest structure
 func TestUpdateArtifactRequest(t *testing.T) {
 	host := "NEW-HOST"
-	deleted := true
-	metadata := `{"updated": true}`
 
 	req := types.UpdateArtifactRequest{
-		ID:       5,
-		Host:     &host,
-		Deleted:  &deleted,
-		Metadata: &metadata,
+		ID:   5,
+		Host: &host,
 	}
 
 	if req.ID != 5 {
@@ -198,12 +158,6 @@ func TestUpdateArtifactRequest(t *testing.T) {
 	}
 	if req.Host == nil || *req.Host != host {
 		t.Error("Expected Host to be 'NEW-HOST'")
-	}
-	if req.Deleted == nil || !*req.Deleted {
-		t.Error("Expected Deleted to be true")
-	}
-	if req.Metadata == nil || *req.Metadata != metadata {
-		t.Error("Expected Metadata to be set")
 	}
 }
 
@@ -266,14 +220,9 @@ func TestArtifactFileTypes(t *testing.T) {
 
 	for _, file := range fileArtifacts {
 		artifact := types.Artifact{
-			ID:           1,
-			Artifact:     file,
-			ArtifactType: types.ArtifactTypeFile,
-			Timestamp:    time.Now(),
-		}
-
-		if artifact.ArtifactType != types.ArtifactTypeFile {
-			t.Errorf("Expected ArtifactType 'file', got %q", artifact.ArtifactType)
+			ID:        1,
+			Artifact:  file,
+			Timestamp: time.Now(),
 		}
 
 		str := artifact.String()
@@ -294,14 +243,9 @@ func TestArtifactNetworkTypes(t *testing.T) {
 
 	for _, network := range networkArtifacts {
 		artifact := types.Artifact{
-			ID:           1,
-			Artifact:     network,
-			ArtifactType: types.ArtifactTypeNetwork,
-			Timestamp:    time.Now(),
-		}
-
-		if artifact.ArtifactType != types.ArtifactTypeNetwork {
-			t.Errorf("Expected ArtifactType 'network', got %q", artifact.ArtifactType)
+			ID:        1,
+			Artifact:  network,
+			Timestamp: time.Now(),
 		}
 
 		str := artifact.String()
@@ -320,14 +264,9 @@ func TestArtifactRegistryTypes(t *testing.T) {
 
 	for _, registry := range registryArtifacts {
 		artifact := types.Artifact{
-			ID:           1,
-			Artifact:     registry,
-			ArtifactType: types.ArtifactTypeRegistry,
-			Timestamp:    time.Now(),
-		}
-
-		if artifact.ArtifactType != types.ArtifactTypeRegistry {
-			t.Errorf("Expected ArtifactType 'registry', got %q", artifact.ArtifactType)
+			ID:        1,
+			Artifact:  registry,
+			Timestamp: time.Now(),
 		}
 
 		str := artifact.String()
@@ -337,23 +276,7 @@ func TestArtifactRegistryTypes(t *testing.T) {
 	}
 }
 
-// TestArtifactMetadata tests metadata handling
-func TestArtifactMetadata(t *testing.T) {
-	artifact := types.Artifact{
-		ID:       1,
-		Artifact: "test.exe",
-		Metadata: `{"hash": "sha256:abc123", "size": 12345, "signed": false}`,
-	}
-
-	if artifact.Metadata == "" {
-		t.Error("Metadata should not be empty")
-	}
-
-	// Verify metadata is a string (JSON)
-	if len(artifact.Metadata) == 0 {
-		t.Error("Metadata length should be greater than 0")
-	}
-}
+// TestArtifactMetadata removed - taskartifact table doesn't have metadata field
 
 // TestArtifactTimestamp tests timestamp handling
 func TestArtifactTimestamp(t *testing.T) {
