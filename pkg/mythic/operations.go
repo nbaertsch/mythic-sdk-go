@@ -159,22 +159,45 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 		return nil, WrapError("UpdateOperation", ErrInvalidInput, "operation ID is required")
 	}
 
-	// Simplified: only support updating complete status for now
-	if req.Complete == nil {
-		return nil, WrapError("UpdateOperation", ErrInvalidInput, "currently only complete field updates are supported")
+	// Check if there are any fields to update
+	hasUpdates := req.Complete != nil || req.Webhook != nil || req.Channel != nil ||
+		req.AdminID != nil || req.BannerText != nil || req.BannerColor != nil
+
+	if !hasUpdates {
+		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
 	}
 
-	// Try updateOperation mutation (follows same pattern as createOperation)
+	// Build variables map with only provided fields
+	variables := map[string]interface{}{
+		"operation_id": req.OperationID,
+	}
+
+	if req.Complete != nil {
+		variables["complete"] = *req.Complete
+	}
+	if req.Webhook != nil {
+		variables["webhook"] = *req.Webhook
+	}
+	if req.Channel != nil {
+		variables["channel"] = *req.Channel
+	}
+	if req.AdminID != nil {
+		variables["admin_id"] = *req.AdminID
+	}
+	if req.BannerText != nil {
+		variables["banner_text"] = *req.BannerText
+	}
+	if req.BannerColor != nil {
+		variables["banner_color"] = *req.BannerColor
+	}
+
+	// Try updateOperation mutation with all possible parameters
+	// Note: GraphQL will ignore parameters not defined in the schema
 	var mutation struct {
 		UpdateOperation struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete)"`
-	}
-
-	variables := map[string]interface{}{
-		"operation_id": req.OperationID,
-		"complete":     *req.Complete,
+		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete, webhook: $webhook, channel: $channel, admin_id: $admin_id, banner_text: $banner_text, banner_color: $banner_color)"`
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

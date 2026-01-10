@@ -83,6 +83,68 @@ func (c *Client) GetCredentials(ctx context.Context) ([]*types.Credential, error
 	return credentials, nil
 }
 
+// GetCredentialByID retrieves a specific credential by ID.
+func (c *Client) GetCredentialByID(ctx context.Context, credentialID int) (*types.Credential, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if credentialID == 0 {
+		return nil, WrapError("GetCredentialByID", ErrInvalidInput, "credential ID is required")
+	}
+
+	var query struct {
+		Credential []struct {
+			ID          int    `graphql:"id"`
+			Type        string `graphql:"type"`
+			Account     string `graphql:"account"`
+			Realm       string `graphql:"realm"`
+			Credential  string `graphql:"credential_text"`
+			Comment     string `graphql:"comment"`
+			OperationID int    `graphql:"operation_id"`
+			OperatorID  int    `graphql:"operator_id"`
+			TaskID      *int   `graphql:"task_id"`
+			Timestamp   string `graphql:"timestamp"`
+			Deleted     bool   `graphql:"deleted"`
+			Metadata    string `graphql:"metadata"`
+		} `graphql:"credential(where: {id: {_eq: $id}})"`
+	}
+
+	variables := map[string]interface{}{
+		"id": credentialID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetCredentialByID", err, "failed to query credential")
+	}
+
+	if len(query.Credential) == 0 {
+		return nil, WrapError("GetCredentialByID", ErrNotFound, "credential not found")
+	}
+
+	cred := query.Credential[0]
+	timestamp, err := parseCredentialTimestamp(cred.Timestamp)
+	if err != nil {
+		return nil, WrapError("GetCredentialByID", err, "failed to parse credential timestamp")
+	}
+
+	return &types.Credential{
+		ID:          cred.ID,
+		Type:        cred.Type,
+		Account:     cred.Account,
+		Realm:       cred.Realm,
+		Credential:  cred.Credential,
+		Comment:     cred.Comment,
+		OperationID: cred.OperationID,
+		OperatorID:  cred.OperatorID,
+		TaskID:      cred.TaskID,
+		Timestamp:   timestamp,
+		Deleted:     cred.Deleted,
+		Metadata:    cred.Metadata,
+	}, nil
+}
+
 // GetCredentialsByOperation retrieves credentials for a specific operation.
 func (c *Client) GetCredentialsByOperation(ctx context.Context, operationID int) ([]*types.Credential, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
@@ -271,7 +333,8 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 			return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
 		}
 
-		return &types.Credential{ID: req.ID}, nil
+		// Fetch and return the updated credential
+		return c.GetCredentialByID(ctx, req.ID)
 	}
 
 	// Otherwise update comment
@@ -295,9 +358,8 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 		return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
 	}
 
-	// Note: Fetching updated credential would require implementing GetCredentialByID
-	// For now, return a minimal success credential
-	return &types.Credential{ID: req.ID}, nil
+	// Fetch and return the updated credential
+	return c.GetCredentialByID(ctx, req.ID)
 }
 
 // DeleteCredential marks a credential as deleted.
