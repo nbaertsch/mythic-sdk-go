@@ -224,12 +224,12 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			TagID  int    `graphql:"id"`
-		} `graphql:"createTag(tagtype_id: $tagtype_id, source_id: $source_id, source: $source)"`
+		} `graphql:"createTag(tagtype_id: $tagtype_id, object_id: $object_id, source: $source)"`
 	}
 
 	variables := map[string]interface{}{
 		"tagtype_id": req.TagTypeID,
-		"source_id":  req.SourceID,
+		"object_id":  req.SourceID,
 		"source":     req.SourceType,
 	}
 
