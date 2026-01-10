@@ -19,8 +19,8 @@ import (
 func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	// This test requires Poseidon agent deployment
 	// Skip if running in environments without Mythic server
-	if os.Getenv("SKIP_AGENT_TESTS") != "" {
-		t.Skip("Skipping agent-dependent test (SKIP_AGENT_TESTS set)")
+	if os.Getenv("SKIP_AGENT_TESTS") == "true" {
+		t.Skip("Skipping agent-dependent test (SKIP_AGENT_TESTS=true)")
 	}
 
 	setup := SetupE2ETest(t)

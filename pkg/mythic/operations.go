@@ -16,15 +16,14 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 
 	var query struct {
 		Operation []struct {
-			ID          int       `graphql:"id"`
-			Name        string    `graphql:"name"`
-			Complete    bool      `graphql:"complete"`
-			Webhook     string    `graphql:"webhook"`
-			Channel     string    `graphql:"channel"`
-			AdminID     int       `graphql:"admin_id"`
-			BannerText  string    `graphql:"banner_text"`
-			BannerColor string    `graphql:"banner_color"`
-			Created     time.Time `graphql:"created"`
+			ID          int    `graphql:"id"`
+			Name        string `graphql:"name"`
+			Complete    bool   `graphql:"complete"`
+			Webhook     string `graphql:"webhook"`
+			Channel     string `graphql:"channel"`
+			AdminID     int    `graphql:"admin_id"`
+			BannerText  string `graphql:"banner_text"`
+			BannerColor string `graphql:"banner_color"`
 			Admin       struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -49,7 +48,6 @@ func (c *Client) GetOperations(ctx context.Context) ([]*types.Operation, error) 
 			AdminID:     op.AdminID,
 			BannerText:  op.BannerText,
 			BannerColor: op.BannerColor,
-			Created:     op.Created,
 			Admin: &types.Operator{
 				ID:       op.Admin.ID,
 				Username: op.Admin.Username,
@@ -69,15 +67,14 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 
 	var query struct {
 		Operation []struct {
-			ID          int       `graphql:"id"`
-			Name        string    `graphql:"name"`
-			Complete    bool      `graphql:"complete"`
-			Webhook     string    `graphql:"webhook"`
-			Channel     string    `graphql:"channel"`
-			AdminID     int       `graphql:"admin_id"`
-			BannerText  string    `graphql:"banner_text"`
-			BannerColor string    `graphql:"banner_color"`
-			Created     time.Time `graphql:"created"`
+			ID          int    `graphql:"id"`
+			Name        string `graphql:"name"`
+			Complete    bool   `graphql:"complete"`
+			Webhook     string `graphql:"webhook"`
+			Channel     string `graphql:"channel"`
+			AdminID     int    `graphql:"admin_id"`
+			BannerText  string `graphql:"banner_text"`
+			BannerColor string `graphql:"banner_color"`
 			Admin       struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -109,7 +106,6 @@ func (c *Client) GetOperationByID(ctx context.Context, operationID int) (*types.
 		AdminID:     op.AdminID,
 		BannerText:  op.BannerText,
 		BannerColor: op.BannerColor,
-		Created:     op.Created,
 		Admin: &types.Operator{
 			ID:       op.Admin.ID,
 			Username: op.Admin.Username,

@@ -89,7 +89,6 @@ func TestOperationTypes(t *testing.T) {
 		AdminID:     1,
 		BannerText:  "Active Engagement",
 		BannerColor: "#ff0000",
-		Created:     time.Now(),
 	}
 
 	if op.ID != 1 {
