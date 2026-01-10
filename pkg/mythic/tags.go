@@ -34,12 +34,11 @@ func (c *Client) GetTagTypesByOperation(ctx context.Context, operationID int) ([
 
 	var query struct {
 		TagType []struct {
-			ID          int       `graphql:"id"`
-			Name        string    `graphql:"name"`
-			Description string    `graphql:"description"`
-			Color       string    `graphql:"color"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID          int    `graphql:"id"`
+			Name        string `graphql:"name"`
+			Description string `graphql:"description"`
+			Color       string `graphql:"color"`
+			OperationID int    `graphql:"operation_id"`
 		} `graphql:"tagtype(where: {operation_id: {_eq: $operation_id}}, order_by: {name: asc})"`
 	}
 
@@ -60,7 +59,6 @@ func (c *Client) GetTagTypesByOperation(ctx context.Context, operationID int) ([
 			Description: tt.Description,
 			Color:       tt.Color,
 			OperationID: tt.OperationID,
-			Timestamp:   tt.Timestamp,
 		}
 	}
 
@@ -79,12 +77,11 @@ func (c *Client) GetTagTypeByID(ctx context.Context, tagTypeID int) (*types.TagT
 
 	var query struct {
 		TagType []struct {
-			ID          int       `graphql:"id"`
-			Name        string    `graphql:"name"`
-			Description string    `graphql:"description"`
-			Color       string    `graphql:"color"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			ID          int    `graphql:"id"`
+			Name        string `graphql:"name"`
+			Description string `graphql:"description"`
+			Color       string `graphql:"color"`
+			OperationID int    `graphql:"operation_id"`
 		} `graphql:"tagtype(where: {id: {_eq: $tagtype_id}})"`
 	}
 
@@ -105,10 +102,9 @@ func (c *Client) GetTagTypeByID(ctx context.Context, tagTypeID int) (*types.TagT
 	return &types.TagType{
 		ID:          tt.ID,
 		Name:        tt.Name,
-		Description: tt.Description,
+		Description:tt.Description,
 		Color:       tt.Color,
 		OperationID: tt.OperationID,
-		Timestamp:   tt.Timestamp,
 	}, nil
 }
 
