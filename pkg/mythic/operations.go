@@ -160,20 +160,21 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 	}
 
 	// Simplified: only support updating complete status for now
-	// Note: Full multi-field updates require a different GraphQL approach
 	if req.Complete == nil {
 		return nil, WrapError("UpdateOperation", ErrInvalidInput, "currently only complete field updates are supported")
 	}
 
+	// Try updateOperation mutation (follows same pattern as createOperation)
 	var mutation struct {
 		UpdateOperation struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_operation(where: {id: {_eq: $id}}, _set: {complete: $complete})"`
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"updateOperation(operation_id: $operation_id, complete: $complete)"`
 	}
 
 	variables := map[string]interface{}{
-		"id":       req.OperationID,
-		"complete": *req.Complete,
+		"operation_id": req.OperationID,
+		"complete":     *req.Complete,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -181,8 +182,8 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 		return nil, WrapError("UpdateOperation", err, "failed to update operation")
 	}
 
-	if mutation.UpdateOperation.Affected == 0 {
-		return nil, WrapError("UpdateOperation", ErrNotFound, fmt.Sprintf("operation %d not found", req.OperationID))
+	if mutation.UpdateOperation.Status != "success" {
+		return nil, WrapError("UpdateOperation", ErrOperationFailed, mutation.UpdateOperation.Error)
 	}
 
 	// Fetch the updated operation
