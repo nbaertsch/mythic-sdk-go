@@ -266,12 +266,10 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 	defer cancel2()
 
 	testHost := "testhost.example.com"
-	fileType := types.ArtifactTypeFile
 	fileArtifact := &types.CreateArtifactRequest{
 		Artifact:     "/tmp/malicious_payload.exe",
 		BaseArtifact: &testHost,
 		Host:         &testHost,
-		ArtifactType: &fileType,
 	}
 
 	createdFile, err := client.CreateArtifact(ctx2, fileArtifact)
@@ -289,12 +287,10 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel3()
 
-	regType := types.ArtifactTypeRegistry
 	registryArtifact := &types.CreateArtifactRequest{
 		Artifact:     "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Malware",
 		BaseArtifact: &testHost,
 		Host:         &testHost,
-		ArtifactType: &regType,
 	}
 
 	createdRegistry, err := client.CreateArtifact(ctx3, registryArtifact)
@@ -309,12 +305,10 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 	ctx4, cancel4 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel4()
 
-	procType := types.ArtifactTypeProcess
 	processArtifact := &types.CreateArtifactRequest{
 		Artifact:     "notepad.exe",
 		BaseArtifact: &testHost,
 		Host:         &testHost,
-		ArtifactType: &procType,
 	}
 
 	createdProcess, err := client.CreateArtifact(ctx4, processArtifact)
@@ -372,7 +366,7 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 		for _, createdID := range createdArtifactIDs {
 			if artifact.ID == createdID {
 				found++
-				t.Logf("  ✓ Found artifact %d: %s (%s)", artifact.ID, artifact.Artifact, artifact.ArtifactType)
+				t.Logf("  ✓ Found artifact %d: %s", artifact.ID, artifact.Artifact)
 			}
 		}
 	}
@@ -380,56 +374,32 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 		t.Errorf("Expected to find %d artifacts for host, found %d", len(createdArtifactIDs), found)
 	}
 
-	// Test 8: Get artifacts by type
-	t.Log("=== Test 8: Get artifacts by type (file) ===")
+	// Test 8: Update artifact host
+	t.Log("=== Test 8: Update artifact (change host) ===")
 	ctx8, cancel8 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel8()
 
-	fileArtifacts, err := client.GetArtifactsByType(ctx8, types.ArtifactTypeFile)
-	if err != nil {
-		t.Fatalf("GetArtifactsByType failed: %v", err)
-	}
-	t.Logf("✓ Found %d file artifacts", len(fileArtifacts))
-
-	// Verify our file artifact is in the results
-	foundFile := false
-	for _, artifact := range fileArtifacts {
-		if artifact.ID == createdFile.ID {
-			foundFile = true
-			t.Logf("  ✓ Found our file artifact: %s", artifact.Artifact)
-			break
-		}
-	}
-	if !foundFile {
-		t.Error("Could not find our created file artifact in file type results")
-	}
-
-	// Test 9: Update artifact (mark reviewed with metadata)
-	t.Log("=== Test 9: Update artifact (add metadata) ===")
-	ctx9, cancel9 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel9()
-
-	metadata := "reviewed=true,severity=high"
+	newHost := "newhost.example.com"
 	updateReq := &types.UpdateArtifactRequest{
-		ID:       createdFile.ID,
-		Metadata: &metadata,
+		ID:   createdFile.ID,
+		Host: &newHost,
 	}
 
-	updatedArtifact, err := client.UpdateArtifact(ctx9, updateReq)
+	updatedArtifact, err := client.UpdateArtifact(ctx8, updateReq)
 	if err != nil {
 		t.Fatalf("UpdateArtifact failed: %v", err)
 	}
-	if updatedArtifact.Metadata != metadata {
-		t.Errorf("Metadata not updated: expected %s, got %s", metadata, updatedArtifact.Metadata)
+	if updatedArtifact.Host != newHost {
+		t.Errorf("Host not updated: expected %s, got %s", newHost, updatedArtifact.Host)
 	}
-	t.Logf("✓ Artifact %d updated: metadata = %s", updatedArtifact.ID, updatedArtifact.Metadata)
+	t.Logf("✓ Artifact %d updated: host = %s", updatedArtifact.ID, updatedArtifact.Host)
 
-	// Test 10: Verify update persisted
-	t.Log("=== Test 10: Verify update persisted ===")
-	ctx10, cancel10 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel10()
+	// Test 9: Verify update persisted
+	t.Log("=== Test 9: Verify update persisted ===")
+	ctx9, cancel9 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel9()
 
-	allArtifactsAfterUpdate, err := client.GetArtifacts(ctx10)
+	allArtifactsAfterUpdate, err := client.GetArtifacts(ctx9)
 	if err != nil {
 		t.Fatalf("GetArtifacts after update failed: %v", err)
 	}
@@ -438,10 +408,10 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 	for _, artifact := range allArtifactsAfterUpdate {
 		if artifact.ID == createdFile.ID {
 			foundUpdated = true
-			if artifact.Metadata != metadata {
-				t.Errorf("Update did not persist: expected %s, got %s", metadata, artifact.Metadata)
+			if artifact.Host != newHost {
+				t.Errorf("Update did not persist: expected %s, got %s", newHost, artifact.Host)
 			} else {
-				t.Logf("✓ Update verified: artifact %d has metadata %s", artifact.ID, artifact.Metadata)
+				t.Logf("✓ Update verified: artifact %d has host %s", artifact.ID, artifact.Host)
 			}
 			break
 		}
@@ -450,7 +420,7 @@ func TestE2E_ArtifactManagement(t *testing.T) {
 		t.Error("Could not find updated artifact to verify")
 	}
 
-	// Test 11: Delete artifacts
+	// Test 10: Delete artifacts
 	t.Log("=== Test 11: Delete artifacts ===")
 	for _, artifactID := range createdArtifactIDs {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
