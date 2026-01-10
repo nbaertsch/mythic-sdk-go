@@ -40,10 +40,8 @@ func TestArtifacts_GetArtifacts(t *testing.T) {
 		t.Logf("First artifact: %s", a.String())
 		t.Logf("  - ID: %d", a.ID)
 		t.Logf("  - Artifact: %s", a.Artifact)
-		t.Logf("  - Type: %s", a.ArtifactType)
 		t.Logf("  - Host: %s", a.Host)
 		t.Logf("  - Has Task: %v", a.HasTask())
-		t.Logf("  - Deleted: %v", a.IsDeleted())
 	}
 }
 
@@ -58,15 +56,11 @@ func TestArtifacts_CreateAndRetrieve(t *testing.T) {
 	artifactValue := "C:\\Windows\\Temp\\test-artifact-" + time.Now().Format("20060102150405") + ".exe"
 	baseArtifact := "C:\\Windows\\Temp"
 	host := "TEST-WORKSTATION"
-	artifactType := types.ArtifactTypeFile
-	metadata := `{"test": true, "created_by": "integration_test"}`
 
 	req := &types.CreateArtifactRequest{
 		Artifact:     artifactValue,
 		BaseArtifact: &baseArtifact,
 		Host:         &host,
-		ArtifactType: &artifactType,
-		Metadata:     &metadata,
 	}
 
 	artifact, err := client.CreateArtifact(ctx, req)
@@ -83,7 +77,6 @@ func TestArtifacts_CreateAndRetrieve(t *testing.T) {
 	t.Logf("  - Artifact: %s", artifact.Artifact)
 	t.Logf("  - BaseArtifact: %s", artifact.BaseArtifact)
 	t.Logf("  - Host: %s", artifact.Host)
-	t.Logf("  - Type: %s", artifact.ArtifactType)
 
 	// Verify created artifact
 	if artifact.Artifact != artifactValue {
@@ -91,9 +84,6 @@ func TestArtifacts_CreateAndRetrieve(t *testing.T) {
 	}
 	if artifact.Host != host {
 		t.Errorf("Expected host %q, got %q", host, artifact.Host)
-	}
-	if artifact.ArtifactType != artifactType {
-		t.Errorf("Expected type %q, got %q", artifactType, artifact.ArtifactType)
 	}
 
 	// Retrieve the artifact by ID
@@ -174,12 +164,10 @@ func TestArtifacts_UpdateArtifact(t *testing.T) {
 	// Create a test artifact first
 	artifactValue := "C:\\Windows\\Temp\\test-update-" + time.Now().Format("20060102150405") + ".exe"
 	host := "OLD-HOST"
-	artifactType := types.ArtifactTypeFile
 
 	artifact, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     artifactValue,
-		Host:         &host,
-		ArtifactType: &artifactType,
+		Artifact: artifactValue,
+		Host:     &host,
 	})
 	if err != nil {
 		t.Fatalf("CreateArtifact failed: %v", err)
@@ -189,11 +177,9 @@ func TestArtifacts_UpdateArtifact(t *testing.T) {
 
 	// Update the artifact
 	newHost := "NEW-HOST"
-	newMetadata := `{"updated": true}`
 	updated, err := client.UpdateArtifact(ctx, &types.UpdateArtifactRequest{
-		ID:       artifact.ID,
-		Host:     &newHost,
-		Metadata: &newMetadata,
+		ID:   artifact.ID,
+		Host: &newHost,
 	})
 	if err != nil {
 		t.Fatalf("UpdateArtifact failed: %v", err)
@@ -201,9 +187,6 @@ func TestArtifacts_UpdateArtifact(t *testing.T) {
 
 	if updated.Host != newHost {
 		t.Errorf("Expected host %q, got %q", newHost, updated.Host)
-	}
-	if updated.Metadata != newMetadata {
-		t.Errorf("Expected metadata %q, got %q", newMetadata, updated.Metadata)
 	}
 
 	t.Logf("Successfully updated artifact")
@@ -226,11 +209,9 @@ func TestArtifacts_DeleteArtifact(t *testing.T) {
 
 	// Create a test artifact
 	artifactValue := "C:\\Windows\\Temp\\test-delete-" + time.Now().Format("20060102150405") + ".exe"
-	artifactType := types.ArtifactTypeFile
 
 	artifact, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     artifactValue,
-		ArtifactType: &artifactType,
+		Artifact: artifactValue,
 	})
 	if err != nil {
 		t.Fatalf("CreateArtifact failed: %v", err)
@@ -246,20 +227,15 @@ func TestArtifacts_DeleteArtifact(t *testing.T) {
 
 	t.Log("Successfully deleted artifact")
 
-	// Verify deletion
-	deleted, err := client.GetArtifactByID(ctx, artifact.ID)
+	// Verify deletion - artifact should not be retrievable after hard delete
+	_, err = client.GetArtifactByID(ctx, artifact.ID)
 	if err != nil {
-		// If it's not found, that's acceptable
+		// If it's not found, that's expected for hard delete
 		t.Logf("Artifact not found after deletion (expected): %v", err)
 		return
 	}
 
-	// If we can still retrieve it, verify it's marked as deleted
-	if deleted != nil && !deleted.IsDeleted() {
-		t.Error("Artifact should be marked as deleted")
-	} else if deleted != nil {
-		t.Logf("Artifact marked as deleted: %v", deleted.IsDeleted())
-	}
+	t.Error("Artifact should not be retrievable after deletion")
 }
 
 func TestArtifacts_GetArtifactsByHost(t *testing.T) {
@@ -271,21 +247,18 @@ func TestArtifacts_GetArtifactsByHost(t *testing.T) {
 
 	// Create test artifacts on a specific host
 	testHost := "TEST-HOST-" + time.Now().Format("20060102150405")
-	artifactType := types.ArtifactTypeFile
 
 	artifact1, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     "C:\\test1.exe",
-		Host:         &testHost,
-		ArtifactType: &artifactType,
+		Artifact: "C:\\test1.exe",
+		Host:     &testHost,
 	})
 	if err != nil {
 		t.Fatalf("CreateArtifact 1 failed: %v", err)
 	}
 
 	artifact2, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     "C:\\test2.dll",
-		Host:         &testHost,
-		ArtifactType: &artifactType,
+		Artifact: "C:\\test2.dll",
+		Host:     &testHost,
 	})
 	if err != nil {
 		t.Fatalf("CreateArtifact 2 failed: %v", err)
@@ -315,64 +288,6 @@ func TestArtifacts_GetArtifactsByHost(t *testing.T) {
 	// Clean up
 	_ = client.DeleteArtifact(ctx, artifact1.ID)
 	_ = client.DeleteArtifact(ctx, artifact2.ID)
-}
-
-func TestArtifacts_GetArtifactsByType(t *testing.T) {
-
-	client := AuthenticateTestClient(t)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	// Create test artifacts of different types
-	testSuffix := time.Now().Format("20060102150405")
-
-	fileType := types.ArtifactTypeFile
-	fileArtifact, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     "C:\\test-file-" + testSuffix + ".exe",
-		ArtifactType: &fileType,
-	})
-	if err != nil {
-		t.Fatalf("CreateArtifact (file) failed: %v", err)
-	}
-
-	networkType := types.ArtifactTypeNetwork
-	networkArtifact, err := client.CreateArtifact(ctx, &types.CreateArtifactRequest{
-		Artifact:     "192.168.1.100:" + testSuffix[:4],
-		ArtifactType: &networkType,
-	})
-	if err != nil {
-		t.Fatalf("CreateArtifact (network) failed: %v", err)
-	}
-
-	t.Log("Created artifacts of different types")
-
-	// Get artifacts by type
-	fileArtifacts, err := client.GetArtifactsByType(ctx, types.ArtifactTypeFile)
-	if err != nil {
-		t.Fatalf("GetArtifactsByType (file) failed: %v", err)
-	}
-
-	// Verify all artifacts are of the correct type
-	for _, a := range fileArtifacts {
-		if a.ArtifactType != types.ArtifactTypeFile {
-			t.Errorf("Expected type %q, got %q", types.ArtifactTypeFile, a.ArtifactType)
-		}
-	}
-
-	t.Logf("Found %d file artifacts", len(fileArtifacts))
-
-	// Get network artifacts
-	networkArtifacts, err := client.GetArtifactsByType(ctx, types.ArtifactTypeNetwork)
-	if err != nil {
-		t.Fatalf("GetArtifactsByType (network) failed: %v", err)
-	}
-
-	t.Logf("Found %d network artifacts", len(networkArtifacts))
-
-	// Clean up
-	_ = client.DeleteArtifact(ctx, fileArtifact.ID)
-	_ = client.DeleteArtifact(ctx, networkArtifact.ID)
 }
 
 func TestArtifacts_TimestampOrdering(t *testing.T) {
@@ -405,34 +320,6 @@ func TestArtifacts_TimestampOrdering(t *testing.T) {
 	if len(artifacts) > 0 {
 		t.Logf("  - Newest: %s", artifacts[0].Timestamp.Format("2006-01-02 15:04:05"))
 		t.Logf("  - Oldest: %s", artifacts[len(artifacts)-1].Timestamp.Format("2006-01-02 15:04:05"))
-	}
-}
-
-func TestArtifacts_ArtifactTypes(t *testing.T) {
-
-	client := AuthenticateTestClient(t)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	artifacts, err := client.GetArtifacts(ctx)
-	if err != nil {
-		t.Fatalf("GetArtifacts failed: %v", err)
-	}
-
-	if len(artifacts) == 0 {
-		t.Skip("No artifacts available for testing")
-	}
-
-	// Count artifact types
-	typeCounts := make(map[string]int)
-	for _, a := range artifacts {
-		typeCounts[a.ArtifactType]++
-	}
-
-	t.Log("Artifact type distribution:")
-	for artifactType, count := range typeCounts {
-		t.Logf("  - %s: %d", artifactType, count)
 	}
 }
 
@@ -470,8 +357,8 @@ func TestArtifacts_GetArtifactsByOperation(t *testing.T) {
 
 		// Log first few artifacts
 		if i < 5 {
-			t.Logf("  - Artifact %d: %s (type: %s, host: %s)",
-				i, artifact.Artifact, artifact.ArtifactType, artifact.Host)
+			t.Logf("  - Artifact %d: %s (host: %s)",
+				i, artifact.Artifact, artifact.Host)
 		}
 	}
 
