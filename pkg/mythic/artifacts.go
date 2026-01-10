@@ -11,10 +11,10 @@ import (
 func parseTimestamp(ts string) (time.Time, error) {
 	// Try multiple formats that Mythic might use
 	formats := []string{
-		"2006-01-02T15:04:05.999999",     // Microseconds, no timezone
-		"2006-01-02T15:04:05",            // No fractional seconds
-		time.RFC3339,                     // With timezone
-		time.RFC3339Nano,                 // With nanoseconds and timezone
+		"2006-01-02T15:04:05.999999", // Microseconds, no timezone
+		"2006-01-02T15:04:05",        // No fractional seconds
+		time.RFC3339,                 // With timezone
+		time.RFC3339Nano,             // With nanoseconds and timezone
 	}
 
 	var lastErr error

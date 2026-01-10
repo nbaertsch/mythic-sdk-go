@@ -102,7 +102,7 @@ func (c *Client) GetTagTypeByID(ctx context.Context, tagTypeID int) (*types.TagT
 	return &types.TagType{
 		ID:          tt.ID,
 		Name:        tt.Name,
-		Description:tt.Description,
+		Description: tt.Description,
 		Color:       tt.Color,
 		OperationID: tt.OperationID,
 	}, nil
