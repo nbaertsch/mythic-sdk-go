@@ -218,25 +218,19 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 		return nil, WrapError("UpdateArtifact", ErrInvalidInput, "artifact ID is required")
 	}
 
-	// Build update fields
-	updates := make(map[string]interface{})
-	if req.Host != nil {
-		updates["host"] = *req.Host
-	}
-
-	if len(updates) == 0 {
+	if req.Host == nil {
 		return nil, WrapError("UpdateArtifact", ErrInvalidInput, "no fields to update")
 	}
 
 	var mutation struct {
 		UpdateTaskArtifact struct {
 			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_taskartifact(where: {id: {_eq: $artifact_id}}, _set: $updates)"`
+		} `graphql:"update_taskartifact(where: {id: {_eq: $artifact_id}}, _set: {host: $host})"`
 	}
 
 	variables := map[string]interface{}{
 		"artifact_id": req.ID,
-		"updates":     updates,
+		"host":        *req.Host,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -253,7 +247,6 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 }
 
 // DeleteArtifact deletes an artifact by ID.
-// Note: Mythic's taskartifact table doesn't support soft delete.
 func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -264,10 +257,9 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	}
 
 	var mutation struct {
-		DeleteArtifact struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"deleteArtifact(artifact_id: $artifact_id)"`
+		DeleteTaskArtifact struct {
+			Affected int `graphql:"affected_rows"`
+		} `graphql:"delete_taskartifact(where: {id: {_eq: $artifact_id}})"`
 	}
 
 	variables := map[string]interface{}{
@@ -279,8 +271,8 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 		return WrapError("DeleteArtifact", err, "failed to delete artifact")
 	}
 
-	if mutation.DeleteArtifact.Status != "success" {
-		return WrapError("DeleteArtifact", ErrOperationFailed, mutation.DeleteArtifact.Error)
+	if mutation.DeleteTaskArtifact.Affected == 0 {
+		return WrapError("DeleteArtifact", ErrNotFound, "artifact not found")
 	}
 
 	return nil

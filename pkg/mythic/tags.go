@@ -39,9 +39,8 @@ func (c *Client) GetTagTypesByOperation(ctx context.Context, operationID int) ([
 			Description string    `graphql:"description"`
 			Color       string    `graphql:"color"`
 			OperationID int       `graphql:"operation_id"`
-			Deleted     bool      `graphql:"deleted"`
 			Timestamp   time.Time `graphql:"timestamp"`
-		} `graphql:"tagtype(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
+		} `graphql:"tagtype(where: {operation_id: {_eq: $operation_id}}, order_by: {name: asc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -61,7 +60,6 @@ func (c *Client) GetTagTypesByOperation(ctx context.Context, operationID int) ([
 			Description: tt.Description,
 			Color:       tt.Color,
 			OperationID: tt.OperationID,
-			Deleted:     tt.Deleted,
 			Timestamp:   tt.Timestamp,
 		}
 	}
@@ -86,7 +84,6 @@ func (c *Client) GetTagTypeByID(ctx context.Context, tagTypeID int) (*types.TagT
 			Description string    `graphql:"description"`
 			Color       string    `graphql:"color"`
 			OperationID int       `graphql:"operation_id"`
-			Deleted     bool      `graphql:"deleted"`
 			Timestamp   time.Time `graphql:"timestamp"`
 		} `graphql:"tagtype(where: {id: {_eq: $tagtype_id}})"`
 	}
@@ -111,7 +108,6 @@ func (c *Client) GetTagTypeByID(ctx context.Context, tagTypeID int) (*types.TagT
 		Description: tt.Description,
 		Color:       tt.Color,
 		OperationID: tt.OperationID,
-		Deleted:     tt.Deleted,
 		Timestamp:   tt.Timestamp,
 	}, nil
 }
@@ -180,34 +176,28 @@ func (c *Client) UpdateTagType(ctx context.Context, req *types.UpdateTagTypeRequ
 		return nil, WrapError("UpdateTagType", ErrInvalidInput, "tag type ID is required")
 	}
 
-	// Build update fields
-	updates := make(map[string]interface{})
-	if req.Name != nil {
-		updates["name"] = *req.Name
-	}
-	if req.Description != nil {
-		updates["description"] = *req.Description
-	}
-	if req.Color != nil {
-		updates["color"] = *req.Color
-	}
-	if req.Deleted != nil {
-		updates["deleted"] = *req.Deleted
+	// Check if there are any fields to update
+	hasUpdates := req.Name != nil || req.Description != nil || req.Color != nil
+
+	if !hasUpdates {
+		return nil, WrapError("UpdateTagType", ErrInvalidInput, "no fields to update")
 	}
 
-	if len(updates) == 0 {
-		return nil, WrapError("UpdateTagType", ErrInvalidInput, "no fields to update")
+	// Simplified: only support updating name for now
+	// Note: Full multi-field updates require a different GraphQL approach
+	if req.Name == nil {
+		return nil, WrapError("UpdateTagType", ErrInvalidInput, "currently only name field updates are supported")
 	}
 
 	var mutation struct {
 		UpdateTagtype struct {
 			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_tagtype(where: {id: {_eq: $tagtype_id}}, _set: $updates)"`
+		} `graphql:"update_tagtype(where: {id: {_eq: $tagtype_id}}, _set: {name: $name})"`
 	}
 
 	variables := map[string]interface{}{
 		"tagtype_id": req.ID,
-		"updates":    updates,
+		"name":       *req.Name,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
