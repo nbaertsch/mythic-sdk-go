@@ -10,9 +10,23 @@ on:
 
 jobs:
   integration-test:
-    name: Integration Tests with Mythic
+    name: E2E Tests - ${{ matrix.test-group }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group:
+          - "Phase 1+2: Core APIs"
+          - "Phase 3: Agent Tests"
+        include:
+          - test-group: "Phase 1+2: Core APIs"
+            test-pattern: "TestE2E_Auth|TestE2E_Operations|TestE2E_File|TestE2E_Credential|TestE2E_Artifact|TestE2E_Tag|TestE2E_Operator|TestE2E_C2Profile|TestE2E_MITREAttack|TestE2E_Payload"
+            skip-agent: "true"
+          - test-group: "Phase 3: Agent Tests"
+            test-pattern: "TestE2E_Callback"
+            skip-agent: "false"
 
     steps:
       - name: Checkout SDK
@@ -24,37 +38,54 @@ jobs:
           go-version: '1.23'
           cache: true
 
+      - name: Verify Test Compilation
+        run: |
+          echo "::group::Compiling integration tests"
+          if ! go test -c -tags=integration ./tests/integration/... -o /tmp/integration.test; then
+            echo "::error::❌ Integration tests failed to compile"
+            exit 1
+          fi
+          echo "✅ Integration tests compiled successfully"
+          echo "::endgroup::"
+
       - name: Clone Mythic Framework
         run: |
+          echo "::group::Cloning Mythic"
           git clone --depth 1 https://github.com/its-a-feature/Mythic.git /tmp/mythic
           cd /tmp/mythic
           echo "Mythic version: $(cat VERSION)"
+          echo "::endgroup::"
 
       - name: Build Mythic CLI
         run: |
+          echo "::group::Building Mythic CLI"
           cd /tmp/mythic
           sudo make
           sudo chmod +x mythic-cli
+          echo "::endgroup::"
 
       - name: Configure Mythic
         run: |
+          echo "::group::Configuring Mythic"
           cd /tmp/mythic
-          # Disable jupyter to avoid startup issues
           sudo ./mythic-cli config set jupyter_bind_localhost_only false || true
+          echo "::endgroup::"
 
       - name: Start Mythic
         run: |
+          echo "::group::Starting Mythic services"
           cd /tmp/mythic
           sudo ./mythic-cli start
+          echo "::endgroup::"
 
       - name: Wait for Mythic Ready
         run: |
-          echo "Waiting for Mythic to be ready..."
+          echo "::group::Waiting for Mythic to be ready"
           timeout=180
           attempt=0
           while [ $attempt -lt $timeout ]; do
             if curl -k -s https://127.0.0.1:7443 > /dev/null 2>&1; then
-              echo "✓ Mythic is ready after $attempt seconds"
+              echo "✅ Mythic is ready after $attempt seconds"
               break
             fi
             sleep 5
@@ -62,11 +93,12 @@ jobs:
           done
 
           if [ $attempt -ge $timeout ]; then
-            echo "✗ Mythic failed to start within timeout"
+            echo "::error::❌ Mythic failed to start within timeout"
             cd /tmp/mythic
             sudo ./mythic-cli status
             exit 1
           fi
+          echo "::endgroup::"
 
       - name: Extract Mythic Credentials
         id: mythic-creds
@@ -75,37 +107,79 @@ jobs:
           echo "::add-mask::$PASSWORD"
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
-      - name: Run Integration Tests
+      - name: Run Integration Tests - ${{ matrix.test-group }}
         env:
           MYTHIC_URL: "https://127.0.0.1:7443"
           MYTHIC_USERNAME: "mythic_admin"
           MYTHIC_PASSWORD: ${{ steps.mythic-creds.outputs.password }}
           MYTHIC_SKIP_TLS_VERIFY: "true"
+          SKIP_AGENT_TESTS: ${{ matrix.skip-agent }}
         run: |
+          echo "::group::Running ${{ matrix.test-group }}"
+          echo "Test Pattern: ${{ matrix.test-pattern }}"
+          echo "Skip Agent Tests: ${{ matrix.skip-agent }}"
+
+          # Run tests and capture exit code
+          set +e
           go test -v -tags=integration ./tests/integration/... \
+            -run "${{ matrix.test-pattern }}" \
             -timeout 10m \
-            2>&1 | tee integration-test-output.log
+            2>&1 | tee integration-test-output-${{ matrix.test-group }}.log
+
+          TEST_EXIT_CODE=$?
+          set -e
+
+          echo "::endgroup::"
+
+          # Parse test results
+          echo "::group::Test Results Summary"
+          PASSED=$(grep -c "^=== RUN" integration-test-output-${{ matrix.test-group }}.log || echo "0")
+          FAILED=$(grep -c "^--- FAIL:" integration-test-output-${{ matrix.test-group }}.log || echo "0")
+          SKIPPED=$(grep -c "^--- SKIP:" integration-test-output-${{ matrix.test-group }}.log || echo "0")
+
+          echo "📊 Test Results for ${{ matrix.test-group }}:"
+          echo "   Tests Run: $PASSED"
+          echo "   Failed: $FAILED"
+          echo "   Skipped: $SKIPPED"
+
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::error::❌ Tests failed with exit code $TEST_EXIT_CODE"
+            echo "::endgroup::"
+            exit $TEST_EXIT_CODE
+          fi
+
+          if [ $FAILED -gt 0 ]; then
+            echo "::error::❌ $FAILED test(s) failed"
+            echo "::endgroup::"
+            exit 1
+          fi
+
+          echo "✅ All tests passed!"
+          echo "::endgroup::"
 
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-results
-          path: integration-test-output.log
+          name: integration-test-results-${{ matrix.test-group }}
+          path: integration-test-output-${{ matrix.test-group }}.log
           retention-days: 7
 
       - name: Collect Mythic Logs on Failure
         if: failure()
         run: |
+          echo "::group::Collecting Mythic logs"
           cd /tmp/mythic
           sudo ./mythic-cli logs > mythic-logs.txt 2>&1 || true
           sudo docker ps -a > docker-containers.txt || true
+          sudo ./mythic-cli status || true
+          echo "::endgroup::"
 
       - name: Upload Mythic Logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: mythic-failure-logs
+          name: mythic-failure-logs-${{ matrix.test-group }}
           path: |
             /tmp/mythic/mythic-logs.txt
             /tmp/mythic/docker-containers.txt
@@ -114,6 +188,27 @@ jobs:
       - name: Cleanup Mythic
         if: always()
         run: |
+          echo "::group::Cleaning up Mythic"
           cd /tmp/mythic
           sudo ./mythic-cli stop || true
           sudo docker system prune -af || true
+          echo "::endgroup::"
+
+  # Summary job that requires all matrix jobs to pass
+  integration-test-summary:
+    name: Integration Tests - Summary
+    runs-on: ubuntu-latest
+    needs: integration-test
+    if: always()
+
+    steps:
+      - name: Check Integration Test Results
+        run: |
+          echo "::group::Integration Test Summary"
+          if [ "${{ needs.integration-test.result }}" != "success" ]; then
+            echo "::error::❌ Some integration tests failed or were cancelled"
+            echo "Check the individual test group results above for details"
+            exit 1
+          fi
+          echo "✅ All integration test groups passed!"
+          echo "::endgroup::"

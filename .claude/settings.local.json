@@ -33,7 +33,11 @@
       "Bash(grep:*)",
       "Bash(ls:*)",
       "Bash(while read f)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git commit:*)",
+      "Bash(gh run watch:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
