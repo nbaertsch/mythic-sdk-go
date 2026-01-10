@@ -167,28 +167,16 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
 	}
 
-	// Build variables map with only provided fields
+	// Build variables map - all variables must be provided for GraphQL
+	// Use pointer values directly, GraphQL client handles nil properly
 	variables := map[string]interface{}{
 		"operation_id": req.OperationID,
-	}
-
-	if req.Complete != nil {
-		variables["complete"] = *req.Complete
-	}
-	if req.Webhook != nil {
-		variables["webhook"] = *req.Webhook
-	}
-	if req.Channel != nil {
-		variables["channel"] = *req.Channel
-	}
-	if req.AdminID != nil {
-		variables["admin_id"] = *req.AdminID
-	}
-	if req.BannerText != nil {
-		variables["banner_text"] = *req.BannerText
-	}
-	if req.BannerColor != nil {
-		variables["banner_color"] = *req.BannerColor
+		"complete":     req.Complete,
+		"webhook":      req.Webhook,
+		"channel":      req.Channel,
+		"admin_id":     req.AdminID,
+		"banner_text":  req.BannerText,
+		"banner_color": req.BannerColor,
 	}
 
 	// Try updateOperation mutation with all possible parameters
