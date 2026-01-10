@@ -149,31 +149,21 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "operator ID is required")
 	}
 
-	// Build the update set
-	set := make(map[string]interface{})
-	if req.Active != nil {
-		set["active"] = *req.Active
-	}
-	if req.Admin != nil {
-		set["admin"] = *req.Admin
-	}
-	if req.Deleted != nil {
-		set["deleted"] = *req.Deleted
-	}
-
-	if len(set) == 0 {
-		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "at least one field must be updated")
+	// Simplified: only support updating active status for now
+	// Note: Full multi-field updates require a different GraphQL approach
+	if req.Active == nil {
+		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "currently only active field updates are supported")
 	}
 
 	var mutation struct {
 		UpdateOperator struct {
 			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_operator(where: {id: {_eq: $operator_id}}, _set: $set)"`
+		} `graphql:"update_operator(where: {id: {_eq: $operator_id}}, _set: {active: $active})"`
 	}
 
 	variables := map[string]interface{}{
 		"operator_id": req.OperatorID,
-		"set":         set,
+		"active":      *req.Active,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -258,11 +248,11 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 			Status      string `graphql:"status"`
 			Error       string `graphql:"error"`
 			Preferences string `graphql:"preferences"`
-		} `graphql:"getOperatorPreferences(id: $id)"`
+		} `graphql:"getOperatorPreferences(operator_id: $operator_id)"`
 	}
 
 	variables := map[string]interface{}{
-		"id": operatorID,
+		"operator_id": operatorID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)

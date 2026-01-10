@@ -174,11 +174,11 @@ func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequ
 			UUID   string `graphql:"uuid"`
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"createPayload(definition: $definition)"`
+		} `graphql:"createPayload(payload: $payload)"`
 	}
 
 	variables := map[string]interface{}{
-		"definition": string(payloadConfig),
+		"payload": string(payloadConfig),
 	}
 
 	err = c.executeMutation(ctx, &mutation, variables)
@@ -204,33 +204,21 @@ func (c *Client) UpdatePayload(ctx context.Context, req *types.UpdatePayloadRequ
 		return nil, WrapError("UpdatePayload", ErrInvalidInput, "UUID is required")
 	}
 
-	// Build the update fields
-	setFields := make(map[string]interface{})
-	if req.Description != nil {
-		setFields["description"] = *req.Description
-	}
-	if req.CallbackAlert != nil {
-		setFields["callback_alert"] = *req.CallbackAlert
-	}
-	if req.Deleted != nil {
-		setFields["deleted"] = *req.Deleted
-	}
-
-	if len(setFields) == 0 {
-		return nil, WrapError("UpdatePayload", ErrInvalidInput, "no fields to update")
+	// Simplified: only support updating description for now
+	// Note: Full multi-field updates require a different GraphQL approach
+	if req.Description == nil {
+		return nil, WrapError("UpdatePayload", ErrInvalidInput, "currently only description field updates are supported")
 	}
 
 	var mutation struct {
 		UpdatePayload struct {
-			Returning []struct {
-				UUID string `graphql:"uuid"`
-			} `graphql:"returning"`
-		} `graphql:"update_payload(where: {uuid: {_eq: $uuid}}, _set: $set)"`
+			Affected int `graphql:"affected_rows"`
+		} `graphql:"update_payload(where: {uuid: {_eq: $uuid}}, _set: {description: $description})"`
 	}
 
 	variables := map[string]interface{}{
-		"uuid": req.UUID,
-		"set":  setFields,
+		"uuid":        req.UUID,
+		"description": *req.Description,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -238,7 +226,7 @@ func (c *Client) UpdatePayload(ctx context.Context, req *types.UpdatePayloadRequ
 		return nil, WrapError("UpdatePayload", err, "failed to update payload")
 	}
 
-	if len(mutation.UpdatePayload.Returning) == 0 {
+	if mutation.UpdatePayload.Affected == 0 {
 		return nil, WrapError("UpdatePayload", ErrNotFound, fmt.Sprintf("payload %s not found", req.UUID))
 	}
 

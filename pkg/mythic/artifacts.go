@@ -246,7 +246,8 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 	return c.GetArtifactByID(ctx, req.ID)
 }
 
-// DeleteArtifact deletes an artifact by ID.
+// DeleteArtifact is not supported by Mythic's GraphQL API.
+// Artifacts cannot be deleted once created.
 func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -256,26 +257,9 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 		return WrapError("DeleteArtifact", ErrInvalidInput, "artifact ID is required")
 	}
 
-	var mutation struct {
-		DeleteTaskArtifact struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"delete_taskartifact(where: {id: {_eq: $artifact_id}})"`
-	}
-
-	variables := map[string]interface{}{
-		"artifact_id": artifactID,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return WrapError("DeleteArtifact", err, "failed to delete artifact")
-	}
-
-	if mutation.DeleteTaskArtifact.Affected == 0 {
-		return WrapError("DeleteArtifact", ErrNotFound, "artifact not found")
-	}
-
-	return nil
+	// Mythic does not provide a delete mutation for taskartifact
+	// Artifacts are permanent once created
+	return WrapError("DeleteArtifact", ErrOperationFailed, "artifact deletion is not supported by Mythic API")
 }
 
 // GetArtifactsByHost retrieves artifacts for a specific host.

@@ -143,26 +143,17 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 
 	var mutation struct {
 		CreateCredential struct {
-			ID          int       `graphql:"id"`
-			Type        string    `graphql:"type"`
-			Account     string    `graphql:"account"`
-			Realm       string    `graphql:"realm"`
-			Credential  string    `graphql:"credential_text"`
-			Comment     string    `graphql:"comment"`
-			OperationID int       `graphql:"operation_id"`
-			OperatorID  int       `graphql:"operator_id"`
-			TaskID      *int      `graphql:"task_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
-			Deleted     bool      `graphql:"deleted"`
-			Metadata    string    `graphql:"metadata"`
-		} `graphql:"createCredential(type: $type, account: $account, realm: $realm, credential_text: $credential_text, comment: $comment, metadata: $metadata)"`
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			ID     int    `graphql:"id"`
+		} `graphql:"createCredential(credential_type: $credential_type, account: $account, realm: $realm, credential: $credential, comment: $comment, metadata: $metadata)"`
 	}
 
 	variables := map[string]interface{}{
-		"type":            req.Type,
+		"credential_type": req.Type,
 		"account":         req.Account,
 		"realm":           req.Realm,
-		"credential_text": req.Credential,
+		"credential":      req.Credential,
 		"comment":         req.Comment,
 		"metadata":        req.Metadata,
 	}
@@ -172,19 +163,19 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 		return nil, WrapError("CreateCredential", err, "failed to create credential")
 	}
 
+	if mutation.CreateCredential.Status != "success" {
+		return nil, WrapError("CreateCredential", ErrOperationFailed, mutation.CreateCredential.Error)
+	}
+
+	// Return credential with the provided data
 	credential := &types.Credential{
-		ID:          mutation.CreateCredential.ID,
-		Type:        mutation.CreateCredential.Type,
-		Account:     mutation.CreateCredential.Account,
-		Realm:       mutation.CreateCredential.Realm,
-		Credential:  mutation.CreateCredential.Credential,
-		Comment:     mutation.CreateCredential.Comment,
-		OperationID: mutation.CreateCredential.OperationID,
-		OperatorID:  mutation.CreateCredential.OperatorID,
-		TaskID:      mutation.CreateCredential.TaskID,
-		Timestamp:   mutation.CreateCredential.Timestamp,
-		Deleted:     mutation.CreateCredential.Deleted,
-		Metadata:    mutation.CreateCredential.Metadata,
+		ID:         mutation.CreateCredential.ID,
+		Type:       req.Type,
+		Account:    req.Account,
+		Realm:      req.Realm,
+		Credential: req.Credential,
+		Comment:    req.Comment,
+		Metadata:   req.Metadata,
 	}
 
 	return credential, nil
