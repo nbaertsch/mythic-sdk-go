@@ -231,11 +231,12 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, taskartifact_id: $taskartifact_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, taskartifact_id: $taskartifact_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":      req.TagTypeID,
 			"source":          req.SourceType,
+			"url":             "",
 			"data":            map[string]interface{}{},
 			"taskartifact_id": req.SourceID,
 		}
@@ -252,11 +253,12 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, task_id: $task_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, task_id: $task_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id": req.TagTypeID,
 			"source":     req.SourceType,
+			"url":        "",
 			"data":       map[string]interface{}{},
 			"task_id":    req.SourceID,
 		}
@@ -273,7 +275,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, callback_id: $callback_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, callback_id: $callback_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":  req.TagTypeID,
@@ -294,7 +296,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, filemeta_id: $filemeta_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, filemeta_id: $filemeta_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":  req.TagTypeID,
@@ -315,7 +317,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, payload_id: $payload_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, payload_id: $payload_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id": req.TagTypeID,
@@ -336,7 +338,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, mythictree_id: $mythictree_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, mythictree_id: $mythictree_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":    req.TagTypeID,
@@ -357,7 +359,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, keylog_id: $keylog_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, keylog_id: $keylog_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id": req.TagTypeID,
@@ -378,7 +380,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, credential_id: $credential_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, credential_id: $credential_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":    req.TagTypeID,
@@ -399,7 +401,7 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 				Status string `graphql:"status"`
 				Error  string `graphql:"error"`
 				TagID  int    `graphql:"id"`
-			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, response_id: $response_id)"`
+			} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, url: $url, data: $data, response_id: $response_id)"`
 		}
 		variables := map[string]interface{}{
 			"tagtype_id":  req.TagTypeID,
