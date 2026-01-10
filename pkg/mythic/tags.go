@@ -219,18 +219,23 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 		return nil, WrapError("CreateTag", ErrInvalidInput, "tag type ID, source type, and source ID are required")
 	}
 
+	// Build input object for createTag mutation
+	input := map[string]interface{}{
+		"tagtype_id": req.TagTypeID,
+		"source_id":  req.SourceID,
+		"source":     req.SourceType,
+	}
+
 	var mutation struct {
 		CreateTag struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			TagID  int    `graphql:"id"`
-		} `graphql:"createTag(tagtype_id: $tagtype_id, object_id: $object_id, source: $source)"`
+		} `graphql:"createTag(input: $input)"`
 	}
 
 	variables := map[string]interface{}{
-		"tagtype_id": req.TagTypeID,
-		"object_id":  req.SourceID,
-		"source":     req.SourceType,
+		"input": input,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
