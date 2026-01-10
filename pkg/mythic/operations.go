@@ -126,20 +126,13 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 
 	var mutation struct {
 		CreateOperation struct {
-			ID      int    `graphql:"id"`
-			Name    string `graphql:"name"`
-			AdminID int    `graphql:"admin_id"`
-		} `graphql:"createOperation(name: $name, admin_id: $admin_id)"`
-	}
-
-	adminID := 0
-	if req.AdminID != nil {
-		adminID = *req.AdminID
+			ID   int    `graphql:"id"`
+			Name string `graphql:"name"`
+		} `graphql:"createOperation(name: $name)"`
 	}
 
 	variables := map[string]interface{}{
-		"name":     req.Name,
-		"admin_id": adminID,
+		"name": req.Name,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
