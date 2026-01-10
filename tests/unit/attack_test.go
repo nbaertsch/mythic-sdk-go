@@ -19,27 +19,24 @@ func TestAttackString(t *testing.T) {
 		{
 			name: "with name and technique number",
 			attack: types.Attack{
-				ID:        1,
-				TNum:      "T1003",
-				Name:      "OS Credential Dumping",
-				Timestamp: now,
+				ID:   1,
+				TNum: "T1003",
+				Name: "OS Credential Dumping",
 			},
 			contains: []string{"T1003", "OS Credential Dumping"},
 		},
 		{
 			name: "with technique number only",
 			attack: types.Attack{
-				ID:        2,
-				TNum:      "T1059",
-				Timestamp: now,
+				ID:   2,
+				TNum: "T1059",
 			},
 			contains: []string{"T1059"},
 		},
 		{
 			name: "with ID only",
 			attack: types.Attack{
-				ID:        3,
-				Timestamp: now,
+				ID: 3,
 			},
 			contains: []string{"Attack 3"},
 		},
@@ -62,15 +59,12 @@ func TestAttackString(t *testing.T) {
 
 // TestAttackTypes tests the Attack type structure
 func TestAttackTypes(t *testing.T) {
-	now := time.Now()
-
 	attack := types.Attack{
-		ID:        1,
-		TNum:      "T1003.001",
-		Name:      "LSASS Memory",
-		OS:        "Windows",
-		Tactic:    "Credential Access",
-		Timestamp: now,
+		ID:     1,
+		TNum:   "T1003.001",
+		Name:   "LSASS Memory",
+		OS:     "Windows",
+		Tactic: "Credential Access",
 	}
 
 	if attack.ID != 1 {
@@ -102,10 +96,9 @@ func TestAttackTaskString(t *testing.T) {
 		{
 			name: "with attack loaded",
 			attackTask: types.AttackTask{
-				ID:        1,
-				AttackID:  5,
-				TaskID:    42,
-				Timestamp: now,
+				ID:       1,
+				AttackID: 5,
+				TaskID:   42,
 				Attack: &types.Attack{
 					TNum: "T1003",
 					Name: "OS Credential Dumping",
@@ -116,10 +109,9 @@ func TestAttackTaskString(t *testing.T) {
 		{
 			name: "without attack loaded",
 			attackTask: types.AttackTask{
-				ID:        2,
-				AttackID:  10,
-				TaskID:    100,
-				Timestamp: now,
+				ID:       2,
+				AttackID: 10,
+				TaskID:   100,
 			},
 			contains: []string{"AttackTask 2", "Attack 10", "Task 100"},
 		},
@@ -142,13 +134,10 @@ func TestAttackTaskString(t *testing.T) {
 
 // TestAttackTaskTypes tests the AttackTask type structure
 func TestAttackTaskTypes(t *testing.T) {
-	now := time.Now()
-
 	attackTask := types.AttackTask{
-		ID:        1,
-		AttackID:  5,
-		TaskID:    42,
-		Timestamp: now,
+		ID:       1,
+		AttackID: 5,
+		TaskID:   42,
 	}
 
 	if attackTask.ID != 1 {
@@ -177,7 +166,6 @@ func TestAttackCommandString(t *testing.T) {
 				ID:        1,
 				AttackID:  5,
 				CommandID: 10,
-				Timestamp: now,
 				Attack: &types.Attack{
 					TNum: "T1059",
 					Name: "Command and Scripting Interpreter",
@@ -191,7 +179,6 @@ func TestAttackCommandString(t *testing.T) {
 				ID:        2,
 				AttackID:  15,
 				CommandID: 20,
-				Timestamp: now,
 			},
 			contains: []string{"AttackCommand 2", "Attack 15", "Command 20"},
 		},
@@ -214,13 +201,10 @@ func TestAttackCommandString(t *testing.T) {
 
 // TestAttackCommandTypes tests the AttackCommand type structure
 func TestAttackCommandTypes(t *testing.T) {
-	now := time.Now()
-
 	attackCommand := types.AttackCommand{
 		ID:        1,
 		AttackID:  5,
 		CommandID: 10,
-		Timestamp: now,
 	}
 
 	if attackCommand.ID != 1 {
@@ -234,20 +218,7 @@ func TestAttackCommandTypes(t *testing.T) {
 	}
 }
 
-// TestAttackTimestamp tests timestamp handling
-func TestAttackTimestamp(t *testing.T) {
-	specificTime := time.Date(2024, 1, 15, 14, 30, 0, 0, time.UTC)
-
-	attack := types.Attack{
-		ID:        1,
-		TNum:      "T1003",
-		Timestamp: specificTime,
-	}
-
-	if !attack.Timestamp.Equal(specificTime) {
-		t.Errorf("Expected timestamp %v, got %v", specificTime, attack.Timestamp)
-	}
-}
+// TestAttackTimestamp removed - attack table doesn't have timestamp field
 
 // TestAttackTechniqueNumbers tests various technique number formats
 func TestAttackTechniqueNumbers(t *testing.T) {
