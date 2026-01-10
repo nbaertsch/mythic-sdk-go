@@ -219,18 +219,53 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 		return nil, WrapError("CreateTag", ErrInvalidInput, "tag type ID, source type, and source ID are required")
 	}
 
+	// Mythic uses specific parameters for each object type, not a generic source_id
+	// Build variables with the appropriate object ID parameter
 	var mutation struct {
 		CreateTag struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			TagID  int    `graphql:"id"`
-		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, source_id: $source_id)"`
+		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, data: $data, taskartifact_id: $taskartifact_id, task_id: $task_id, callback_id: $callback_id, filemeta_id: $filemeta_id, payload_id: $payload_id, mythictree_id: $mythictree_id, keylog_id: $keylog_id, credential_id: $credential_id, response_id: $response_id)"`
 	}
 
 	variables := map[string]interface{}{
-		"tagtype_id": req.TagTypeID,
-		"source":     req.SourceType,
-		"source_id":  req.SourceID,
+		"tagtype_id":       req.TagTypeID,
+		"source":           req.SourceType,
+		"data":             map[string]interface{}{},
+		"taskartifact_id":  nil,
+		"task_id":          nil,
+		"callback_id":      nil,
+		"filemeta_id":      nil,
+		"payload_id":       nil,
+		"mythictree_id":    nil,
+		"keylog_id":        nil,
+		"credential_id":    nil,
+		"response_id":      nil,
+	}
+
+	// Set the appropriate object ID based on source type
+	switch req.SourceType {
+	case types.TagSourceArtifact:
+		variables["taskartifact_id"] = req.SourceID
+	case types.TagSourceTask:
+		variables["task_id"] = req.SourceID
+	case types.TagSourceCallback:
+		variables["callback_id"] = req.SourceID
+	case types.TagSourceFile:
+		variables["filemeta_id"] = req.SourceID
+	case types.TagSourcePayload:
+		variables["payload_id"] = req.SourceID
+	case types.TagSourceProcess:
+		variables["mythictree_id"] = req.SourceID
+	case types.TagSourceKeylog:
+		variables["keylog_id"] = req.SourceID
+	case "credential":
+		variables["credential_id"] = req.SourceID
+	case "response":
+		variables["response_id"] = req.SourceID
+	default:
+		return nil, WrapError("CreateTag", ErrInvalidInput, "unsupported source type: "+req.SourceType)
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
