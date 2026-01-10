@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -15,12 +14,11 @@ func (c *Client) GetAttackTechniques(ctx context.Context) ([]*types.Attack, erro
 
 	var query struct {
 		Attack []struct {
-			ID        int       `graphql:"id"`
-			TNum      string    `graphql:"t_num"`
-			Name      string    `graphql:"name"`
-			OS        string    `graphql:"os"`
-			Tactic    string    `graphql:"tactic"`
-			Timestamp time.Time `graphql:"timestamp"`
+			ID     int    `graphql:"id"`
+			TNum   string `graphql:"t_num"`
+			Name   string `graphql:"name"`
+			OS     string `graphql:"os"`
+			Tactic string `graphql:"tactic"`
 		} `graphql:"attack(order_by: {t_num: asc})"`
 	}
 
@@ -32,12 +30,11 @@ func (c *Client) GetAttackTechniques(ctx context.Context) ([]*types.Attack, erro
 	attacks := make([]*types.Attack, len(query.Attack))
 	for i, a := range query.Attack {
 		attacks[i] = &types.Attack{
-			ID:        a.ID,
-			TNum:      a.TNum,
-			Name:      a.Name,
-			OS:        a.OS,
-			Tactic:    a.Tactic,
-			Timestamp: a.Timestamp,
+			ID:     a.ID,
+			TNum:   a.TNum,
+			Name:   a.Name,
+			OS:     a.OS,
+			Tactic: a.Tactic,
 		}
 	}
 
@@ -56,12 +53,11 @@ func (c *Client) GetAttackTechniqueByID(ctx context.Context, attackID int) (*typ
 
 	var query struct {
 		Attack []struct {
-			ID        int       `graphql:"id"`
-			TNum      string    `graphql:"t_num"`
-			Name      string    `graphql:"name"`
-			OS        string    `graphql:"os"`
-			Tactic    string    `graphql:"tactic"`
-			Timestamp time.Time `graphql:"timestamp"`
+			ID     int    `graphql:"id"`
+			TNum   string `graphql:"t_num"`
+			Name   string `graphql:"name"`
+			OS     string `graphql:"os"`
+			Tactic string `graphql:"tactic"`
 		} `graphql:"attack(where: {id: {_eq: $attack_id}})"`
 	}
 
@@ -80,12 +76,11 @@ func (c *Client) GetAttackTechniqueByID(ctx context.Context, attackID int) (*typ
 
 	a := query.Attack[0]
 	return &types.Attack{
-		ID:        a.ID,
-		TNum:      a.TNum,
-		Name:      a.Name,
-		OS:        a.OS,
-		Tactic:    a.Tactic,
-		Timestamp: a.Timestamp,
+		ID:     a.ID,
+		TNum:   a.TNum,
+		Name:   a.Name,
+		OS:     a.OS,
+		Tactic: a.Tactic,
 	}, nil
 }
 
@@ -101,12 +96,11 @@ func (c *Client) GetAttackTechniqueByTNum(ctx context.Context, tNum string) (*ty
 
 	var query struct {
 		Attack []struct {
-			ID        int       `graphql:"id"`
-			TNum      string    `graphql:"t_num"`
-			Name      string    `graphql:"name"`
-			OS        string    `graphql:"os"`
-			Tactic    string    `graphql:"tactic"`
-			Timestamp time.Time `graphql:"timestamp"`
+			ID     int    `graphql:"id"`
+			TNum   string `graphql:"t_num"`
+			Name   string `graphql:"name"`
+			OS     string `graphql:"os"`
+			Tactic string `graphql:"tactic"`
 		} `graphql:"attack(where: {t_num: {_eq: $t_num}})"`
 	}
 
@@ -125,12 +119,11 @@ func (c *Client) GetAttackTechniqueByTNum(ctx context.Context, tNum string) (*ty
 
 	a := query.Attack[0]
 	return &types.Attack{
-		ID:        a.ID,
-		TNum:      a.TNum,
-		Name:      a.Name,
-		OS:        a.OS,
-		Tactic:    a.Tactic,
-		Timestamp: a.Timestamp,
+		ID:     a.ID,
+		TNum:   a.TNum,
+		Name:   a.Name,
+		OS:     a.OS,
+		Tactic: a.Tactic,
 	}, nil
 }
 
@@ -146,11 +139,10 @@ func (c *Client) GetAttackByTask(ctx context.Context, taskID int) ([]*types.Atta
 
 	var query struct {
 		AttackTask []struct {
-			ID        int       `graphql:"id"`
-			AttackID  int       `graphql:"attack_id"`
-			TaskID    int       `graphql:"task_id"`
-			Timestamp time.Time `graphql:"timestamp"`
-		} `graphql:"attacktask(where: {task_id: {_eq: $task_id}}, order_by: {timestamp: desc})"`
+			ID       int `graphql:"id"`
+			AttackID int `graphql:"attack_id"`
+			TaskID   int `graphql:"task_id"`
+		} `graphql:"attacktask(where: {task_id: {_eq: $task_id}})"`
 	}
 
 	variables := map[string]interface{}{
@@ -165,10 +157,9 @@ func (c *Client) GetAttackByTask(ctx context.Context, taskID int) ([]*types.Atta
 	attackTasks := make([]*types.AttackTask, len(query.AttackTask))
 	for i, at := range query.AttackTask {
 		attackTasks[i] = &types.AttackTask{
-			ID:        at.ID,
-			AttackID:  at.AttackID,
-			TaskID:    at.TaskID,
-			Timestamp: at.Timestamp,
+			ID:       at.ID,
+			AttackID: at.AttackID,
+			TaskID:   at.TaskID,
 		}
 	}
 
@@ -187,11 +178,10 @@ func (c *Client) GetAttackByCommand(ctx context.Context, commandID int) ([]*type
 
 	var query struct {
 		AttackCommand []struct {
-			ID        int       `graphql:"id"`
-			AttackID  int       `graphql:"attack_id"`
-			CommandID int       `graphql:"command_id"`
-			Timestamp time.Time `graphql:"timestamp"`
-		} `graphql:"attackcommand(where: {command_id: {_eq: $command_id}}, order_by: {timestamp: desc})"`
+			ID        int `graphql:"id"`
+			AttackID  int `graphql:"attack_id"`
+			CommandID int `graphql:"command_id"`
+		} `graphql:"attackcommand(where: {command_id: {_eq: $command_id}})"`
 	}
 
 	variables := map[string]interface{}{
@@ -209,7 +199,6 @@ func (c *Client) GetAttackByCommand(ctx context.Context, commandID int) ([]*type
 			ID:        ac.ID,
 			AttackID:  ac.AttackID,
 			CommandID: ac.CommandID,
-			Timestamp: ac.Timestamp,
 		}
 	}
 
@@ -230,12 +219,11 @@ func (c *Client) GetAttacksByOperation(ctx context.Context, operationID int) ([]
 	var query struct {
 		AttackTask []struct {
 			Attack struct {
-				ID        int       `graphql:"id"`
-				TNum      string    `graphql:"t_num"`
-				Name      string    `graphql:"name"`
-				OS        string    `graphql:"os"`
-				Tactic    string    `graphql:"tactic"`
-				Timestamp time.Time `graphql:"timestamp"`
+				ID     int    `graphql:"id"`
+				TNum   string `graphql:"t_num"`
+				Name   string `graphql:"name"`
+				OS     string `graphql:"os"`
+				Tactic string `graphql:"tactic"`
 			} `graphql:"attack"`
 		} `graphql:"attacktask(where: {task: {operation_id: {_eq: $operation_id}}}, order_by: {attack: {t_num: asc}}, distinct_on: attack_id)"`
 	}
@@ -252,12 +240,11 @@ func (c *Client) GetAttacksByOperation(ctx context.Context, operationID int) ([]
 	attacks := make([]*types.Attack, len(query.AttackTask))
 	for i, at := range query.AttackTask {
 		attacks[i] = &types.Attack{
-			ID:        at.Attack.ID,
-			TNum:      at.Attack.TNum,
-			Name:      at.Attack.Name,
-			OS:        at.Attack.OS,
-			Tactic:    at.Attack.Tactic,
-			Timestamp: at.Attack.Timestamp,
+			ID:     at.Attack.ID,
+			TNum:   at.Attack.TNum,
+			Name:   at.Attack.Name,
+			OS:     at.Attack.OS,
+			Tactic: at.Attack.Tactic,
 		}
 	}
 

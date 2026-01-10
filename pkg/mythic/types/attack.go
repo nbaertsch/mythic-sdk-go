@@ -2,17 +2,15 @@ package types
 
 import (
 	"fmt"
-	"time"
 )
 
 // Attack represents a MITRE ATT&CK technique.
 type Attack struct {
-	ID        int       `json:"id"`
-	TNum      string    `json:"t_num"`
-	Name      string    `json:"name"`
-	OS        string    `json:"os"`
-	Tactic    string    `json:"tactic"`
-	Timestamp time.Time `json:"timestamp"`
+	ID     int    `json:"id"`
+	TNum   string `json:"t_num"`
+	Name   string `json:"name"`
+	OS     string `json:"os"`
+	Tactic string `json:"tactic"`
 }
 
 // String returns a string representation of an Attack technique.
@@ -28,11 +26,10 @@ func (a *Attack) String() string {
 
 // AttackTask represents the association between a task and MITRE ATT&CK technique.
 type AttackTask struct {
-	ID        int       `json:"id"`
-	AttackID  int       `json:"attack_id"`
-	TaskID    int       `json:"task_id"`
-	Timestamp time.Time `json:"timestamp"`
-	Attack    *Attack   `json:"attack,omitempty"`
+	ID       int     `json:"id"`
+	AttackID int     `json:"attack_id"`
+	TaskID   int     `json:"task_id"`
+	Attack   *Attack `json:"attack,omitempty"`
 }
 
 // String returns a string representation of an AttackTask.
@@ -45,11 +42,10 @@ func (at *AttackTask) String() string {
 
 // AttackCommand represents the association between a command and MITRE ATT&CK technique.
 type AttackCommand struct {
-	ID        int       `json:"id"`
-	AttackID  int       `json:"attack_id"`
-	CommandID int       `json:"command_id"`
-	Timestamp time.Time `json:"timestamp"`
-	Attack    *Attack   `json:"attack,omitempty"`
+	ID        int     `json:"id"`
+	AttackID  int     `json:"attack_id"`
+	CommandID int     `json:"command_id"`
+	Attack    *Attack `json:"attack,omitempty"`
 }
 
 // String returns a string representation of an AttackCommand.
