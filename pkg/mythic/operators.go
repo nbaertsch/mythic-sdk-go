@@ -258,11 +258,11 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 			Status      string `graphql:"status"`
 			Error       string `graphql:"error"`
 			Preferences string `graphql:"preferences"`
-		} `graphql:"getOperatorPreferences(operator_id: $operator_id)"`
+		} `graphql:"getOperatorPreferences(id: $id)"`
 	}
 
 	variables := map[string]interface{}{
-		"operator_id": operatorID,
+		"id": operatorID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)

@@ -18,7 +18,6 @@ type C2Profile struct {
 	StdErr        string                 `json:"std_err,omitempty"`
 	StdOut        string                 `json:"std_out,omitempty"`
 	Parameters    map[string]interface{} `json:"parameters,omitempty"`
-	ContainerID   string                 `json:"container_id,omitempty"`
 	Deleted       bool                   `json:"deleted"`
 	IsP2P         bool                   `json:"is_p2p"`
 	PayloadTypeID *int                   `json:"payload_type_id,omitempty"`

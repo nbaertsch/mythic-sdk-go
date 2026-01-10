@@ -22,7 +22,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
 			IsP2P         bool      `graphql:"is_p2p"`
-			ContainerID   string    `graphql:"container_id"`
 			PayloadTypeID *int      `graphql:"payloadtype_id"`
 		} `graphql:"c2profile(where: {deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
@@ -42,7 +41,6 @@ func (c *Client) GetC2Profiles(ctx context.Context) ([]*types.C2Profile, error) 
 			Running:       p.Running,
 			Deleted:       p.Deleted,
 			IsP2P:         p.IsP2P,
-			ContainerID:   p.ContainerID,
 			PayloadTypeID: p.PayloadTypeID,
 		}
 	}
@@ -69,7 +67,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 			Running       bool      `graphql:"running"`
 			Deleted       bool      `graphql:"deleted"`
 			IsP2P         bool      `graphql:"is_p2p"`
-			ContainerID   string    `graphql:"container_id"`
 			PayloadTypeID *int      `graphql:"payloadtype_id"`
 		} `graphql:"c2profile(where: {id: {_eq: $profile_id}})"`
 	}
@@ -96,7 +93,6 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 		Running:       p.Running,
 		Deleted:       p.Deleted,
 		IsP2P:         p.IsP2P,
-		ContainerID:   p.ContainerID,
 		PayloadTypeID: p.PayloadTypeID,
 	}, nil
 }
@@ -203,12 +199,12 @@ func (c *Client) StartStopProfile(ctx context.Context, profileID int, start bool
 		StartStopProfile struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"startStopProfile(profile_id: $profile_id, start: $start)"`
+		} `graphql:"startStopProfile(id: $id, start: $start)"`
 	}
 
 	variables := map[string]interface{}{
-		"profile_id": profileID,
-		"start":      start,
+		"id":    profileID,
+		"start": start,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -240,11 +236,11 @@ func (c *Client) GetProfileOutput(ctx context.Context, profileID int) (*types.C2
 			Output string `graphql:"output"`
 			StdOut string `graphql:"stdout"`
 			StdErr string `graphql:"stderr"`
-		} `graphql:"getProfileOutput(profile_id: $profile_id)"`
+		} `graphql:"getProfileOutput(id: $id)"`
 	}
 
 	variables := map[string]interface{}{
-		"profile_id": profileID,
+		"id": profileID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)

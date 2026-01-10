@@ -122,7 +122,6 @@ func TestC2ProfileTypes(t *testing.T) {
 		StartTime:     &startTime,
 		Deleted:       false,
 		IsP2P:         false,
-		ContainerID:   "container123",
 		PayloadTypeID: &payloadTypeID,
 		Parameters: map[string]interface{}{
 			"port": 8080,

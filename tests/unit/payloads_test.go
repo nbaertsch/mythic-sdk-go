@@ -288,7 +288,6 @@ func TestPayloadTypeTypes(t *testing.T) {
 		FileExtension:       "bin",
 		Author:              "Test Author",
 		WrapperMode:         false,
-		Wrapped:             false,
 		Note:                "Test note",
 		SupportsDynamicLoad: true,
 		BuildURL:            "https://example.com/build",

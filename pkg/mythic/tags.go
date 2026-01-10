@@ -237,11 +237,11 @@ func (c *Client) DeleteTagType(ctx context.Context, tagTypeID int) error {
 		DeleteTagtype struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"deleteTagtype(tagtype_id: $tagtype_id)"`
+		} `graphql:"deleteTagtype(id: $id)"`
 	}
 
 	variables := map[string]interface{}{
-		"tagtype_id": tagTypeID,
+		"id": tagTypeID,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
@@ -271,13 +271,13 @@ func (c *Client) CreateTag(ctx context.Context, req *types.CreateTagRequest) (*t
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			TagID  int    `graphql:"id"`
-		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, source_id: $source_id)"`
+		} `graphql:"createTag(tagtype_id: $tagtype_id, source: $source, object_id: $object_id)"`
 	}
 
 	variables := map[string]interface{}{
 		"tagtype_id": req.TagTypeID,
 		"source":     req.SourceType,
-		"source_id":  req.SourceID,
+		"object_id":  req.SourceID,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

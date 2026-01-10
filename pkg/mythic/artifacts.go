@@ -90,7 +90,7 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 			Status     string `graphql:"status"`
 			Error      string `graphql:"error"`
 			ArtifactID int    `graphql:"id"`
-		} `graphql:"createArtifact(artifact_text: $artifact_text, base_artifact: $base_artifact, host: $host, operation_id: $operation_id, task_id: $task_id)"`
+		} `graphql:"createArtifact(artifact_text: $artifact_text, base_artifact: $base_artifact, host: $host, task_id: $task_id)"`
 	}
 
 	baseArtifact := ""
@@ -112,7 +112,6 @@ func (c *Client) CreateArtifact(ctx context.Context, req *types.CreateArtifactRe
 		"artifact_text": req.Artifact,
 		"base_artifact": baseArtifact,
 		"host":          host,
-		"operation_id":  *operationID,
 		"task_id":       taskID,
 	}
 
@@ -232,9 +231,10 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	}
 
 	var mutation struct {
-		DeleteTaskArtifact struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"delete_taskartifact(where: {id: {_eq: $artifact_id}})"`
+		DeleteArtifact struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+		} `graphql:"deleteArtifact(artifact_id: $artifact_id)"`
 	}
 
 	variables := map[string]interface{}{
@@ -246,8 +246,8 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 		return WrapError("DeleteArtifact", err, "failed to delete artifact")
 	}
 
-	if mutation.DeleteTaskArtifact.Affected == 0 {
-		return WrapError("DeleteArtifact", ErrNotFound, "artifact not found")
+	if mutation.DeleteArtifact.Status != "success" {
+		return WrapError("DeleteArtifact", ErrOperationFailed, mutation.DeleteArtifact.Error)
 	}
 
 	return nil

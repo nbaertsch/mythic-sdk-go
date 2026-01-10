@@ -15,9 +15,6 @@ type Operation struct {
 	AdminID             int       `json:"admin_id"`
 	BannerText          string    `json:"banner_text"`
 	BannerColor         string    `json:"banner_color"`
-	Icon                string    `json:"icon"`
-	IconURL             string    `json:"icon_url"`
-	IconEmoji           string    `json:"icon_emoji"`
 	AESPSK              string    `json:"AESPSK"`
 	OperationEventLogID int       `json:"operation_event_log_id"`
 	Created             time.Time `json:"created"`

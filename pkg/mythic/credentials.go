@@ -155,7 +155,7 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 			Timestamp   time.Time `graphql:"timestamp"`
 			Deleted     bool      `graphql:"deleted"`
 			Metadata    string    `graphql:"metadata"`
-		} `graphql:"createCredential(type: $type, account: $account, realm: $realm, credential_text: $credential_text, comment: $comment, task_id: $task_id, metadata: $metadata)"`
+		} `graphql:"createCredential(type: $type, account: $account, realm: $realm, credential_text: $credential_text, comment: $comment, metadata: $metadata)"`
 	}
 
 	variables := map[string]interface{}{
@@ -164,7 +164,6 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 		"realm":           req.Realm,
 		"credential_text": req.Credential,
 		"comment":         req.Comment,
-		"task_id":         req.TaskID,
 		"metadata":        req.Metadata,
 	}
 
