@@ -124,42 +124,9 @@ func (c *Client) CreateTagType(ctx context.Context, req *types.CreateTagTypeRequ
 		return nil, WrapError("CreateTagType", ErrInvalidInput, "no current operation set")
 	}
 
-	var mutation struct {
-		CreateTagType struct {
-			Status    string `graphql:"status"`
-			Error     string `graphql:"error"`
-			TagtypeID int    `graphql:"id"`
-		} `graphql:"createTagType(name: $name, description: $description, color: $color, operation_id: $operation_id)"`
-	}
-
-	description := ""
-	if req.Description != nil {
-		description = *req.Description
-	}
-
-	color := ""
-	if req.Color != nil {
-		color = *req.Color
-	}
-
-	variables := map[string]interface{}{
-		"name":         req.Name,
-		"description":  description,
-		"color":        color,
-		"operation_id": *operationID,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return nil, WrapError("CreateTagType", err, "failed to create tag type")
-	}
-
-	if mutation.CreateTagType.Status != "success" {
-		return nil, WrapError("CreateTagType", ErrOperationFailed, mutation.CreateTagType.Error)
-	}
-
-	// Fetch the created tag type
-	return c.GetTagTypeByID(ctx, mutation.CreateTagType.TagtypeID)
+	// Mythic does not provide a createTagType mutation in GraphQL
+	// Tag types must be managed through the admin interface
+	return nil, WrapError("CreateTagType", ErrOperationFailed, "tag type creation not supported via GraphQL API")
 }
 
 // UpdateTagType updates a tag type's properties.

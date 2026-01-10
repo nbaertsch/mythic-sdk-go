@@ -129,8 +129,7 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 			ID      int    `graphql:"id"`
 			Name    string `graphql:"name"`
 			AdminID int    `graphql:"admin_id"`
-			Channel string `graphql:"channel"`
-		} `graphql:"createOperation(name: $name, admin_id: $admin_id, channel: $channel)"`
+		} `graphql:"createOperation(name: $name, admin_id: $admin_id)"`
 	}
 
 	adminID := 0
@@ -141,7 +140,6 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 	variables := map[string]interface{}{
 		"name":     req.Name,
 		"admin_id": adminID,
-		"channel":  req.Channel,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
