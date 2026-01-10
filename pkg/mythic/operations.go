@@ -163,18 +163,17 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 	hasUpdates := req.Complete != nil || req.Webhook != nil
 
 	if !hasUpdates {
-		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update (only 'complete' and 'webhook' are supported)")
+		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
 	}
 
-	// Build variables map - only use parameters that Mythic's GraphQL schema supports
-	// Based on testing, only webhook and complete are supported
+	// Build variables - include ALL parameters declared in mutation (GraphQL requirement)
 	variables := map[string]interface{}{
 		"operation_id": req.OperationID,
-		"complete":     req.Complete,
-		"webhook":      req.Webhook,
+		"complete":     req.Complete,    // Pass pointer value (can be nil)
+		"webhook":      req.Webhook,     // Pass pointer value (can be nil)
 	}
 
-	// Use updateOperation mutation with only supported parameters
+	// Use updateOperation mutation
 	var mutation struct {
 		UpdateOperation struct {
 			Status string `graphql:"status"`

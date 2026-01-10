@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -259,13 +258,8 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 		return WrapError("UpdateOperatorPreferences", ErrInvalidInput, "preferences must not be empty")
 	}
 
-	// Marshal preferences to JSON for jsonb parameter
-	prefsJSON, err := json.Marshal(req.Preferences)
-	if err != nil {
-		return WrapError("UpdateOperatorPreferences", err, "failed to marshal preferences")
-	}
-
 	// updateOperatorPreferences operates on the current authenticated operator (no operator_id param)
+	// Pass preferences directly as map - GraphQL client will handle serialization
 	var mutation struct {
 		UpdatePreferences struct {
 			Status string `graphql:"status"`
@@ -274,10 +268,10 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 	}
 
 	variables := map[string]interface{}{
-		"preferences": json.RawMessage(prefsJSON),
+		"preferences": req.Preferences,
 	}
 
-	err = c.executeMutation(ctx, &mutation, variables)
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("UpdateOperatorPreferences", err, "failed to update operator preferences")
 	}
