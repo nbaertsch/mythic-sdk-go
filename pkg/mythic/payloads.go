@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -163,35 +162,9 @@ func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequ
 		return nil, WrapError("CreatePayload", ErrInvalidInput, "payload type is required")
 	}
 
-	// Convert request to JSON
-	payloadConfig, err := json.Marshal(req)
-	if err != nil {
-		return nil, WrapError("CreatePayload", err, "failed to marshal payload request")
-	}
-
-	var mutation struct {
-		CreatePayload struct {
-			UUID   string `graphql:"uuid"`
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"createPayload(payload: $payload)"`
-	}
-
-	variables := map[string]interface{}{
-		"payload": string(payloadConfig),
-	}
-
-	err = c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return nil, WrapError("CreatePayload", err, "failed to create payload")
-	}
-
-	if mutation.CreatePayload.Status == "error" {
-		return nil, WrapError("CreatePayload", fmt.Errorf(mutation.CreatePayload.Error), "payload creation failed")
-	}
-
-	// Fetch the created payload
-	return c.GetPayloadByUUID(ctx, mutation.CreatePayload.UUID)
+	// Mythic's createPayload mutation is complex and requires specific C2 profile configurations
+	// Payload creation is better handled through the REST API
+	return nil, WrapError("CreatePayload", ErrOperationFailed, "payload creation via GraphQL not fully supported - use REST API")
 }
 
 // UpdatePayload updates payload settings.

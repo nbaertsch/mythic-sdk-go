@@ -149,33 +149,9 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "operator ID is required")
 	}
 
-	// Simplified: only support updating active status for now
-	// Note: Full multi-field updates require a different GraphQL approach
-	if req.Active == nil {
-		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "currently only active field updates are supported")
-	}
-
-	var mutation struct {
-		UpdateOperator struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_operator(where: {id: {_eq: $operator_id}}, _set: {active: $active})"`
-	}
-
-	variables := map[string]interface{}{
-		"operator_id": req.OperatorID,
-		"active":      *req.Active,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return WrapError("UpdateOperatorStatus", err, "failed to update operator status")
-	}
-
-	if mutation.UpdateOperator.Affected == 0 {
-		return WrapError("UpdateOperatorStatus", ErrNotFound, "operator not found")
-	}
-
-	return nil
+	// Mythic does not provide a direct GraphQL mutation for updating operator status
+	// Operator status updates require using the REST API or admin interface
+	return WrapError("UpdateOperatorStatus", ErrOperationFailed, "operator status updates not supported via GraphQL API")
 }
 
 // UpdatePasswordAndEmail updates an operator's password and/or email.
@@ -248,12 +224,10 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 			Status      string `graphql:"status"`
 			Error       string `graphql:"error"`
 			Preferences string `graphql:"preferences"`
-		} `graphql:"getOperatorPreferences(operator_id: $operator_id)"`
+		} `graphql:"getOperatorPreferences"`
 	}
 
-	variables := map[string]interface{}{
-		"operator_id": operatorID,
-	}
+	variables := map[string]interface{}{}
 
 	err := c.executeQuery(ctx, &query, variables)
 	if err != nil {

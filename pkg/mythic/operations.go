@@ -130,8 +130,7 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 			Name    string `graphql:"name"`
 			AdminID int    `graphql:"admin_id"`
 			Channel string `graphql:"channel"`
-			Webhook string `graphql:"webhook"`
-		} `graphql:"createOperation(name: $name, admin_id: $admin_id, channel: $channel, webhook: $webhook)"`
+		} `graphql:"createOperation(name: $name, admin_id: $admin_id, channel: $channel)"`
 	}
 
 	adminID := 0
@@ -143,7 +142,6 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 		"name":     req.Name,
 		"admin_id": adminID,
 		"channel":  req.Channel,
-		"webhook":  req.Webhook,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

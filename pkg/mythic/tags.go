@@ -125,11 +125,11 @@ func (c *Client) CreateTagType(ctx context.Context, req *types.CreateTagTypeRequ
 	}
 
 	var mutation struct {
-		CreateTagtype struct {
+		CreateTagType struct {
 			Status    string `graphql:"status"`
 			Error     string `graphql:"error"`
 			TagtypeID int    `graphql:"id"`
-		} `graphql:"createTagtype(name: $name, description: $description, color: $color, operation_id: $operation_id)"`
+		} `graphql:"createTagType(name: $name, description: $description, color: $color, operation_id: $operation_id)"`
 	}
 
 	description := ""
@@ -154,12 +154,12 @@ func (c *Client) CreateTagType(ctx context.Context, req *types.CreateTagTypeRequ
 		return nil, WrapError("CreateTagType", err, "failed to create tag type")
 	}
 
-	if mutation.CreateTagtype.Status != "success" {
-		return nil, WrapError("CreateTagType", ErrOperationFailed, mutation.CreateTagtype.Error)
+	if mutation.CreateTagType.Status != "success" {
+		return nil, WrapError("CreateTagType", ErrOperationFailed, mutation.CreateTagType.Error)
 	}
 
 	// Fetch the created tag type
-	return c.GetTagTypeByID(ctx, mutation.CreateTagtype.TagtypeID)
+	return c.GetTagTypeByID(ctx, mutation.CreateTagType.TagtypeID)
 }
 
 // UpdateTagType updates a tag type's properties.

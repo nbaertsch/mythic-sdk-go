@@ -146,7 +146,7 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
 			ID     int    `graphql:"id"`
-		} `graphql:"createCredential(credential_type: $credential_type, account: $account, realm: $realm, credential: $credential, comment: $comment, metadata: $metadata)"`
+		} `graphql:"createCredential(credential_type: $credential_type, account: $account, realm: $realm, credential: $credential, comment: $comment)"`
 	}
 
 	variables := map[string]interface{}{
@@ -155,7 +155,6 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 		"realm":           req.Realm,
 		"credential":      req.Credential,
 		"comment":         req.Comment,
-		"metadata":        req.Metadata,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
