@@ -234,26 +234,56 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 		return nil, WrapError("UpdateCredential", ErrInvalidInput, "no fields to update")
 	}
 
-	// Use a simplified mutation that only sets the comment field as a workaround
-	// Note: Full multi-field updates may require a different approach
+	// Build the _set object dynamically based on which fields are provided
+	setFields := make(map[string]interface{})
+
+	if req.Comment != nil {
+		setFields["comment"] = *req.Comment
+	}
+	if req.Deleted != nil {
+		setFields["deleted"] = *req.Deleted
+	}
+
+	// For now, only support updating comment and deleted fields
+	if req.Type != nil || req.Account != nil || req.Realm != nil || req.Credential != nil || req.Metadata != nil {
+		return nil, WrapError("UpdateCredential", ErrInvalidInput, "currently only comment and deleted field updates are supported")
+	}
+
+	// If only deleted is being set, use simplified mutation
+	if req.Deleted != nil && req.Comment == nil {
+		var mutation struct {
+			UpdateCredential struct {
+				Affected int `graphql:"affected_rows"`
+			} `graphql:"update_credential(where: {id: {_eq: $id}}, _set: {deleted: $deleted})"`
+		}
+
+		variables := map[string]interface{}{
+			"id":      req.ID,
+			"deleted": *req.Deleted,
+		}
+
+		err := c.executeMutation(ctx, &mutation, variables)
+		if err != nil {
+			return nil, WrapError("UpdateCredential", err, "failed to update credential")
+		}
+
+		if mutation.UpdateCredential.Affected == 0 {
+			return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
+		}
+
+		return &types.Credential{ID: req.ID}, nil
+	}
+
+	// Otherwise update comment
 	var mutation struct {
 		UpdateCredential struct {
 			Affected int `graphql:"affected_rows"`
 		} `graphql:"update_credential(where: {id: {_eq: $id}}, _set: {comment: $comment})"`
 	}
 
-	// For now, only support updating comment field
-	comment := ""
-	if req.Comment != nil {
-		comment = *req.Comment
-	} else if req.Type != nil || req.Account != nil || req.Realm != nil || req.Credential != nil || req.Metadata != nil {
-		// If trying to update other fields, return error for now
-		return nil, WrapError("UpdateCredential", ErrInvalidInput, "currently only comment field updates are supported")
-	}
-
 	variables := map[string]interface{}{
 		"id":      req.ID,
-		"comment": comment,
+		"comment": *req.Comment,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
