@@ -23,10 +23,8 @@ jobs:
         include:
           - test-group: "Phase 1+2: Core APIs"
             test-pattern: "TestE2E_Auth|TestE2E_Operations|TestE2E_File|TestE2E_Credential|TestE2E_Artifact|TestE2E_Tag|TestE2E_Operator|TestE2E_C2Profile|TestE2E_MITREAttack|TestE2E_Payload"
-            skip-agent: "true"
           - test-group: "Phase 3: Agent Tests"
             test-pattern: "TestE2E_Callback"
-            skip-agent: "false"
 
     steps:
       - name: Checkout SDK
@@ -78,6 +76,56 @@ jobs:
           sudo ./mythic-cli start
           echo "::endgroup::"
 
+      - name: Install HTTP C2 Profile
+        run: |
+          echo "::group::Installing HTTP C2 Profile"
+          cd /tmp/mythic
+          sudo ./mythic-cli install github https://github.com/MythicC2Profiles/http
+          echo "✅ HTTP C2 Profile installed"
+          echo "::endgroup::"
+
+      - name: Install Poseidon Agent
+        run: |
+          echo "::group::Installing Poseidon Agent"
+          cd /tmp/mythic
+          sudo ./mythic-cli install github https://github.com/MythicAgents/Poseidon
+          echo "✅ Poseidon Agent installed"
+          echo "::endgroup::"
+
+      - name: Wait for Agent and C2 Containers
+        run: |
+          echo "::group::Waiting for agent and C2 containers to start"
+          cd /tmp/mythic
+          timeout=120
+          attempt=0
+
+          while [ $attempt -lt $timeout ]; do
+            # Check if http container is running
+            http_running=$(sudo docker ps --filter "name=mythic_http" --format "{{.Status}}" | grep -c "Up" || echo "0")
+
+            # Check if poseidon container is running
+            poseidon_running=$(sudo docker ps --filter "name=mythic_poseidon" --format "{{.Status}}" | grep -c "Up" || echo "0")
+
+            if [ "$http_running" -eq "1" ] && [ "$poseidon_running" -eq "1" ]; then
+              echo "✅ All containers ready after $attempt seconds"
+              echo "HTTP C2 Profile: Running"
+              echo "Poseidon Agent: Running"
+              sudo docker ps --filter "name=mythic_"
+              break
+            fi
+
+            echo "Waiting for containers... (HTTP: $http_running, Poseidon: $poseidon_running)"
+            sleep 5
+            attempt=$((attempt + 5))
+          done
+
+          if [ $attempt -ge $timeout ]; then
+            echo "::warning::Containers did not fully start within timeout, continuing anyway"
+            sudo docker ps -a
+            sudo ./mythic-cli status
+          fi
+          echo "::endgroup::"
+
       - name: Wait for Mythic Ready
         run: |
           echo "::group::Waiting for Mythic to be ready"
@@ -113,11 +161,12 @@ jobs:
           MYTHIC_USERNAME: "mythic_admin"
           MYTHIC_PASSWORD: ${{ steps.mythic-creds.outputs.password }}
           MYTHIC_SKIP_TLS_VERIFY: "true"
-          SKIP_AGENT_TESTS: ${{ matrix.skip-agent }}
+          # Agent tests enabled now that Poseidon and HTTP are installed
+          SKIP_AGENT_TESTS: "false"
         run: |
           echo "::group::Running ${{ matrix.test-group }}"
           echo "Test Pattern: ${{ matrix.test-pattern }}"
-          echo "Skip Agent Tests: ${{ matrix.skip-agent }}"
+          echo "Agent Tests: Enabled (Poseidon + HTTP installed)"
 
           # Run tests and capture exit code
           set +e
