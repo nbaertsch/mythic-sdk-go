@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
