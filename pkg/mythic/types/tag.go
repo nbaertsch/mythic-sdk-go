@@ -31,17 +31,16 @@ func (t *TagType) IsDeleted() bool {
 }
 
 // Tag represents a tag instance applied to an object.
+// Note: The tag table in Mythic's database doesn't have operator_id or timestamp fields.
+// Tags are associated with objects (task, callback, file, etc.) via their respective ID fields.
 type Tag struct {
 	ID          int        `json:"id"`
 	TagTypeID   int        `json:"tagtype_id"`
 	TagType     *TagType   `json:"tagtype,omitempty"`
-	SourceType  string     `json:"source"`
-	SourceID    int        `json:"source_id"`
-	OperatorID  int        `json:"operator_id"`
-	OperationID int        `json:"operation_id"`
-	Timestamp   time.Time  `json:"timestamp"`
+	SourceType  string     `json:"source"`      // e.g., "task", "callback", "filemeta"
+	SourceID    int        `json:"source_id"`   // ID of the tagged object
+	OperationID int        `json:"operation_id"` // Operation this tag belongs to
 	Operation   *Operation `json:"operation,omitempty"`
-	Operator    *Operator  `json:"operator,omitempty"`
 }
 
 // String returns a string representation of a Tag.

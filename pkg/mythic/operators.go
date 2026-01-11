@@ -259,8 +259,11 @@ func (c *Client) UpdateOperatorPreferences(ctx context.Context, req *types.Updat
 	}
 
 	// Build REST API request using Mythic's webhook format
+	// Note: Mythic webhook expects parameters wrapped in "Input" object
 	requestData := map[string]interface{}{
-		"preferences": req.Preferences,
+		"Input": map[string]interface{}{
+			"preferences": req.Preferences,
+		},
 	}
 
 	var response struct {

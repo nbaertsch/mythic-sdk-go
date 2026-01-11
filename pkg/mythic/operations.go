@@ -167,16 +167,21 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 	}
 
 	// Build REST API request using Mythic's webhook format
-	requestData := map[string]interface{}{
+	// Note: Mythic webhook expects parameters wrapped in "Input" object
+	inputData := map[string]interface{}{
 		"operation_id": req.OperationID,
 	}
 
 	// Add fields that are being updated
 	if req.Complete != nil {
-		requestData["complete"] = *req.Complete
+		inputData["complete"] = *req.Complete
 	}
 	if req.Webhook != nil {
-		requestData["webhook"] = *req.Webhook
+		inputData["webhook"] = *req.Webhook
+	}
+
+	requestData := map[string]interface{}{
+		"Input": inputData,
 	}
 
 	var response struct {

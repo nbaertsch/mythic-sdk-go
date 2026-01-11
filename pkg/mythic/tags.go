@@ -287,21 +287,19 @@ func (c *Client) GetTagByID(ctx context.Context, tagID int) (*types.Tag, error) 
 
 	var query struct {
 		Tag []struct {
-			ID              int       `graphql:"id"`
-			TagTypeID       int       `graphql:"tagtype_id"`
-			SourceType      string    `graphql:"source"`
-			OperatorID      int       `graphql:"operator_id"`
-			OperationID     int       `graphql:"operation_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			TaskArtifactID  *int      `graphql:"taskartifact_id"`
-			TaskID          *int      `graphql:"task_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			FilemetaID      *int      `graphql:"filemeta_id"`
-			PayloadID       *int      `graphql:"payload_id"`
-			MythictreeID    *int      `graphql:"mythictree_id"`
-			KeylogID        *int      `graphql:"keylog_id"`
-			CredentialID    *int      `graphql:"credential_id"`
-			ResponseID      *int      `graphql:"response_id"`
+			ID             int    `graphql:"id"`
+			TagTypeID      int    `graphql:"tagtype_id"`
+			SourceType     string `graphql:"source"`
+			OperationID    int    `graphql:"operation_id"`
+			TaskArtifactID *int   `graphql:"taskartifact_id"`
+			TaskID         *int   `graphql:"task_id"`
+			CallbackID     *int   `graphql:"callback_id"`
+			FilemetaID     *int   `graphql:"filemeta_id"`
+			PayloadID      *int   `graphql:"payload_id"`
+			MythictreeID   *int   `graphql:"mythictree_id"`
+			KeylogID       *int   `graphql:"keylog_id"`
+			CredentialID   *int   `graphql:"credential_id"`
+			ResponseID     *int   `graphql:"response_id"`
 		} `graphql:"tag(where: {id: {_eq: $tag_id}})"`
 	}
 
@@ -347,9 +345,7 @@ func (c *Client) GetTagByID(ctx context.Context, tagID int) (*types.Tag, error) 
 		TagTypeID:   t.TagTypeID,
 		SourceType:  t.SourceType,
 		SourceID:    sourceID,
-		OperatorID:  t.OperatorID,
 		OperationID: t.OperationID,
-		Timestamp:   t.Timestamp,
 	}, nil
 }
 
@@ -391,22 +387,20 @@ func (c *Client) GetTags(ctx context.Context, sourceType string, sourceID int) (
 	// Query all tags with this source type and then filter by ID in code
 	var query struct {
 		Tag []struct {
-			ID              int       `graphql:"id"`
-			TagTypeID       int       `graphql:"tagtype_id"`
-			SourceType      string    `graphql:"source"`
-			OperatorID      int       `graphql:"operator_id"`
-			OperationID     int       `graphql:"operation_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			TaskArtifactID  *int      `graphql:"taskartifact_id"`
-			TaskID          *int      `graphql:"task_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			FilemetaID      *int      `graphql:"filemeta_id"`
-			PayloadID       *int      `graphql:"payload_id"`
-			MythictreeID    *int      `graphql:"mythictree_id"`
-			KeylogID        *int      `graphql:"keylog_id"`
-			CredentialID    *int      `graphql:"credential_id"`
-			ResponseID      *int      `graphql:"response_id"`
-		} `graphql:"tag(where: {source: {_eq: $source}}, order_by: {timestamp: desc})"`
+			ID             int    `graphql:"id"`
+			TagTypeID      int    `graphql:"tagtype_id"`
+			SourceType     string `graphql:"source"`
+			OperationID    int    `graphql:"operation_id"`
+			TaskArtifactID *int   `graphql:"taskartifact_id"`
+			TaskID         *int   `graphql:"task_id"`
+			CallbackID     *int   `graphql:"callback_id"`
+			FilemetaID     *int   `graphql:"filemeta_id"`
+			PayloadID      *int   `graphql:"payload_id"`
+			MythictreeID   *int   `graphql:"mythictree_id"`
+			KeylogID       *int   `graphql:"keylog_id"`
+			CredentialID   *int   `graphql:"credential_id"`
+			ResponseID     *int   `graphql:"response_id"`
+		} `graphql:"tag(where: {source: {_eq: $source}}, order_by: {id: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -468,9 +462,7 @@ func (c *Client) GetTags(ctx context.Context, sourceType string, sourceID int) (
 				TagTypeID:   t.TagTypeID,
 				SourceType:  t.SourceType,
 				SourceID:    tagSourceID,
-				OperatorID:  t.OperatorID,
 				OperationID: t.OperationID,
-				Timestamp:   t.Timestamp,
 			})
 		}
 	}
@@ -490,22 +482,20 @@ func (c *Client) GetTagsByOperation(ctx context.Context, operationID int) ([]*ty
 
 	var query struct {
 		Tag []struct {
-			ID              int       `graphql:"id"`
-			TagTypeID       int       `graphql:"tagtype_id"`
-			SourceType      string    `graphql:"source"`
-			OperatorID      int       `graphql:"operator_id"`
-			OperationID     int       `graphql:"operation_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			TaskArtifactID  *int      `graphql:"taskartifact_id"`
-			TaskID          *int      `graphql:"task_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			FilemetaID      *int      `graphql:"filemeta_id"`
-			PayloadID       *int      `graphql:"payload_id"`
-			MythictreeID    *int      `graphql:"mythictree_id"`
-			KeylogID        *int      `graphql:"keylog_id"`
-			CredentialID    *int      `graphql:"credential_id"`
-			ResponseID      *int      `graphql:"response_id"`
-		} `graphql:"tag(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
+			ID             int    `graphql:"id"`
+			TagTypeID      int    `graphql:"tagtype_id"`
+			SourceType     string `graphql:"source"`
+			OperationID    int    `graphql:"operation_id"`
+			TaskArtifactID *int   `graphql:"taskartifact_id"`
+			TaskID         *int   `graphql:"task_id"`
+			CallbackID     *int   `graphql:"callback_id"`
+			FilemetaID     *int   `graphql:"filemeta_id"`
+			PayloadID      *int   `graphql:"payload_id"`
+			MythictreeID   *int   `graphql:"mythictree_id"`
+			KeylogID       *int   `graphql:"keylog_id"`
+			CredentialID   *int   `graphql:"credential_id"`
+			ResponseID     *int   `graphql:"response_id"`
+		} `graphql:"tag(where: {operation_id: {_eq: $operation_id}}, order_by: {id: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -546,9 +536,7 @@ func (c *Client) GetTagsByOperation(ctx context.Context, operationID int) ([]*ty
 			TagTypeID:   t.TagTypeID,
 			SourceType:  t.SourceType,
 			SourceID:    sourceID,
-			OperatorID:  t.OperatorID,
 			OperationID: t.OperationID,
-			Timestamp:   t.Timestamp,
 		}
 	}
 
