@@ -17,17 +17,17 @@ func TestTagTypeString(t *testing.T) {
 		{
 			name: "with color",
 			tagType: types.TagType{
-				ID:        1,
-				Name:      "Critical",
-				Color:     "#FF0000",
+				ID:    1,
+				Name:  "Critical",
+				Color: "#FF0000",
 			},
 			contains: []string{"Critical", "#FF0000"},
 		},
 		{
 			name: "without color",
 			tagType: types.TagType{
-				ID:        2,
-				Name:      "Low Priority",
+				ID:   2,
+				Name: "Low Priority",
 			},
 			contains: []string{"Low Priority"},
 		},
@@ -264,8 +264,8 @@ func TestTagSourceConstants(t *testing.T) {
 // TestTagTypeWithoutOptionalFields tests TagType without optional fields
 func TestTagTypeWithoutOptionalFields(t *testing.T) {
 	tagType := types.TagType{
-		ID:        1,
-		Name:      "minimal",
+		ID:   1,
+		Name: "minimal",
 	}
 
 	if tagType.Description != "" {
@@ -325,9 +325,9 @@ func TestTagTypeColors(t *testing.T) {
 
 	for _, color := range colors {
 		tagType := types.TagType{
-			ID:        1,
-			Name:      "Test",
-			Color:     color,
+			ID:    1,
+			Name:  "Test",
+			Color: color,
 		}
 
 		if tagType.Color != color {

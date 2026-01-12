@@ -37,8 +37,8 @@ type Tag struct {
 	ID          int        `json:"id"`
 	TagTypeID   int        `json:"tagtype_id"`
 	TagType     *TagType   `json:"tagtype,omitempty"`
-	SourceType  string     `json:"source"`      // e.g., "task", "callback", "filemeta"
-	SourceID    int        `json:"source_id"`   // ID of the tagged object
+	SourceType  string     `json:"source"`       // e.g., "task", "callback", "filemeta"
+	SourceID    int        `json:"source_id"`    // ID of the tagged object
 	OperationID int        `json:"operation_id"` // Operation this tag belongs to
 	Operation   *Operation `json:"operation,omitempty"`
 }
