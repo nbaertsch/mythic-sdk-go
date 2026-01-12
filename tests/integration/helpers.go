@@ -53,7 +53,7 @@ func GetTestConfig(t *testing.T) *TestConfig {
 		Username:       username,
 		Password:       password,
 		SkipTLSVerify:  skipTLS,
-		DefaultTimeout: 30 * time.Second,
+		DefaultTimeout: 180 * time.Second, // Increased for slow webhooks in CI environments
 	}
 }
 
