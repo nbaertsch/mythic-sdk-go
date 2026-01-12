@@ -439,14 +439,14 @@ func (c *Client) CreateOperationEventLog(ctx context.Context, req *types.CreateO
 	// Fetch the created log entry
 	var query struct {
 		OperationEventLog []struct {
-			ID          int       `graphql:"id"`
-			OperatorID  int       `graphql:"operator_id"`
-			OperationID int       `graphql:"operation_id"`
-			Message     string    `graphql:"message"`
-			Timestamp   time.Time `graphql:"timestamp"`
-			Level       string    `graphql:"level"`
-			Source      string    `graphql:"source"`
-			Deleted     bool      `graphql:"deleted"`
+			ID          int    `graphql:"id"`
+			OperatorID  int    `graphql:"operator_id"`
+			OperationID int    `graphql:"operation_id"`
+			Message     string `graphql:"message"`
+			Timestamp   string `graphql:"timestamp"`
+			Level       string `graphql:"level"`
+			Source      string `graphql:"source"`
+			Deleted     bool   `graphql:"deleted"`
 		} `graphql:"operationeventlog(where: {id: {_eq: $id}})"`
 	}
 
@@ -464,12 +464,14 @@ func (c *Client) CreateOperationEventLog(ctx context.Context, req *types.CreateO
 	}
 
 	log := query.OperationEventLog[0]
+	timestamp, _ := parseTime(log.Timestamp) //nolint:errcheck // Timestamp parse errors not critical
+
 	return &types.OperationEventLog{
 		ID:          log.ID,
 		OperatorID:  log.OperatorID,
 		OperationID: log.OperationID,
 		Message:     log.Message,
-		Timestamp:   log.Timestamp,
+		Timestamp:   timestamp,
 		Level:       log.Level,
 		Source:      log.Source,
 		Deleted:     log.Deleted,
