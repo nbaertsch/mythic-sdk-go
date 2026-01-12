@@ -416,14 +416,13 @@ func (c *Client) CreateOperationEventLog(ctx context.Context, req *types.CreateO
 			Returning []struct {
 				ID int `graphql:"id"`
 			} `graphql:"returning"`
-		} `graphql:"insert_operationeventlog(objects: [{operation_id: $operation_id, message: $message, level: $level, source: $source}])"`
+		} `graphql:"insert_operationeventlog(objects: [{message: $message, level: $level, source: $source}])"`
 	}
 
 	variables := map[string]interface{}{
-		"operation_id": req.OperationID,
-		"message":      req.Message,
-		"level":        level,
-		"source":       source,
+		"message": req.Message,
+		"level":   level,
+		"source":  source,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
