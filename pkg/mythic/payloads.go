@@ -562,7 +562,15 @@ func (c *Client) WaitForPayloadComplete(ctx context.Context, uuid string, timeou
 		}
 
 		if payload.IsFailed() {
-			return WrapError("WaitForPayloadComplete", ErrTaskFailed, fmt.Sprintf("payload build failed: %s", payload.BuildMessage))
+			// Collect all available error details
+			errDetails := payload.BuildMessage
+			if payload.BuildStderr != "" {
+				errDetails += "\nStderr: " + payload.BuildStderr
+			}
+			if payload.BuildStdout != "" {
+				errDetails += "\nStdout: " + payload.BuildStdout
+			}
+			return WrapError("WaitForPayloadComplete", ErrTaskFailed, fmt.Sprintf("payload build failed: %s", errDetails))
 		}
 
 		// Wait before polling again
