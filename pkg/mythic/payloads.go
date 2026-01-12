@@ -155,6 +155,22 @@ func (c *Client) GetPayloadByUUID(ctx context.Context, uuid string) (*types.Payl
 	}, nil
 }
 
+// normalizeOS converts OS names to Mythic's expected format (capitalized).
+// Mythic uses: "Linux", "macOS", "Windows"
+func normalizeOS(os string) string {
+	switch os {
+	case "linux", "Linux", "LINUX":
+		return "Linux"
+	case "macos", "macOS", "MacOS", "MACOS", "darwin", "Darwin":
+		return "macOS"
+	case "windows", "Windows", "WINDOWS", "win":
+		return "Windows"
+	default:
+		// If already properly formatted or unknown, return as-is
+		return os
+	}
+}
+
 // CreatePayload builds a new payload.
 func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequest) (*types.Payload, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
@@ -165,17 +181,23 @@ func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequ
 		return nil, WrapError("CreatePayload", ErrInvalidInput, "payload type is required")
 	}
 
+	// Determine selected_os with proper normalization
+	selectedOS := req.SelectedOS
+	if selectedOS == "" && req.OS != "" {
+		selectedOS = req.OS
+	}
+	if selectedOS == "" {
+		selectedOS = "Linux" // Default to Linux
+	}
+	// Normalize to Mythic's expected format
+	selectedOS = normalizeOS(selectedOS)
+
 	// Build payload configuration matching Mythic's PayloadConfiguration struct
 	payloadConfig := map[string]interface{}{
 		"payload_type": req.PayloadType,
 		"description":  req.Description,
 		"filename":     req.Filename,
-		"selected_os":  req.SelectedOS,
-	}
-
-	// Use OS field if SelectedOS not provided
-	if payloadConfig["selected_os"] == "" && req.OS != "" {
-		payloadConfig["selected_os"] = req.OS
+		"selected_os":  selectedOS,
 	}
 
 	// Set default values if not provided
@@ -184,9 +206,6 @@ func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequ
 	}
 	if payloadConfig["filename"] == "" {
 		payloadConfig["filename"] = req.PayloadType
-	}
-	if payloadConfig["selected_os"] == "" {
-		payloadConfig["selected_os"] = "linux" // Default to linux
 	}
 
 	// Add commands if provided
