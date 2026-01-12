@@ -139,8 +139,8 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 			{
 				Name: c2Profile.Name,
 				Parameters: map[string]interface{}{
-					"callback_host":     "127.0.0.1",
-					"callback_port":     "7443",
+					"callback_host":     "http://127.0.0.1",
+					"callback_port":     80,
 					"callback_interval": "10",
 				},
 			},
@@ -337,8 +337,8 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 			{
 				Name: c2Profile.Name,
 				Parameters: map[string]interface{}{
-					"callback_host": "127.0.0.1",
-					"callback_port": "7443",
+					"callback_host": "http://127.0.0.1",
+					"callback_port": 80,
 				},
 			},
 		},
