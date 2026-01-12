@@ -16,11 +16,11 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 
 	var query struct {
 		Callback []struct {
-			ID              int       `graphql:"id"`
-			DisplayID       int       `graphql:"display_id"`
-			AgentCallbackID string    `graphql:"agent_callback_id"`
-			InitCallback    time.Time `graphql:"init_callback"`
-			LastCheckin     time.Time `graphql:"last_checkin"`
+			ID              int    `graphql:"id"`
+			DisplayID       int    `graphql:"display_id"`
+			AgentCallbackID string `graphql:"agent_callback_id"`
+			InitCallback    string `graphql:"init_callback"`
+			LastCheckin     string `graphql:"last_checkin"`
 			User            string    `graphql:"user"`
 			Host            string    `graphql:"host"`
 			PID             int       `graphql:"pid"`
@@ -62,12 +62,15 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 
 	callbacks := make([]*types.Callback, len(query.Callback))
 	for i, cb := range query.Callback {
+		initCallback, _ := parseTime(cb.InitCallback)
+		lastCheckin, _ := parseTime(cb.LastCheckin)
+
 		callbacks[i] = &types.Callback{
 			ID:              cb.ID,
 			DisplayID:       cb.DisplayID,
 			AgentCallbackID: cb.AgentCallbackID,
-			InitCallback:    cb.InitCallback,
-			LastCheckin:     cb.LastCheckin,
+			InitCallback:    initCallback,
+			LastCheckin:     lastCheckin,
 			User:            cb.User,
 			Host:            cb.Host,
 			PID:             cb.PID,
@@ -114,28 +117,28 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 
 	var query struct {
 		Callback []struct {
-			ID              int       `graphql:"id"`
-			DisplayID       int       `graphql:"display_id"`
-			AgentCallbackID string    `graphql:"agent_callback_id"`
-			InitCallback    time.Time `graphql:"init_callback"`
-			LastCheckin     time.Time `graphql:"last_checkin"`
-			User            string    `graphql:"user"`
-			Host            string    `graphql:"host"`
-			PID             int       `graphql:"pid"`
-			IP              string    `graphql:"ip"`
-			ExternalIP      string    `graphql:"external_ip"`
-			ProcessName     string    `graphql:"process_name"`
-			Description     string    `graphql:"description"`
-			Active          bool      `graphql:"active"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			Locked          bool      `graphql:"locked"`
-			OS              string    `graphql:"os"`
-			Architecture    string    `graphql:"architecture"`
-			Domain          string    `graphql:"domain"`
-			ExtraInfo       string    `graphql:"extra_info"`
-			SleepInfo       string    `graphql:"sleep_info"`
-			OperationID     int       `graphql:"operation_id"`
-			OperatorID      int       `graphql:"operator_id"`
+			ID              int    `graphql:"id"`
+			DisplayID       int    `graphql:"display_id"`
+			AgentCallbackID string `graphql:"agent_callback_id"`
+			InitCallback    string `graphql:"init_callback"`
+			LastCheckin     string `graphql:"last_checkin"`
+			User            string `graphql:"user"`
+			Host            string `graphql:"host"`
+			PID             int    `graphql:"pid"`
+			IP              string `graphql:"ip"`
+			ExternalIP      string `graphql:"external_ip"`
+			ProcessName     string `graphql:"process_name"`
+			Description     string `graphql:"description"`
+			Active          bool   `graphql:"active"`
+			IntegrityLevel  int    `graphql:"integrity_level"`
+			Locked          bool   `graphql:"locked"`
+			OS              string `graphql:"os"`
+			Architecture    string `graphql:"architecture"`
+			Domain          string `graphql:"domain"`
+			ExtraInfo       string `graphql:"extra_info"`
+			SleepInfo       string `graphql:"sleep_info"`
+			OperationID     int    `graphql:"operation_id"`
+			OperatorID      int    `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
@@ -160,12 +163,15 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 
 	callbacks := make([]*types.Callback, len(query.Callback))
 	for i, cb := range query.Callback {
+		initCallback, _ := parseTime(cb.InitCallback)
+		lastCheckin, _ := parseTime(cb.LastCheckin)
+
 		callbacks[i] = &types.Callback{
 			ID:              cb.ID,
 			DisplayID:       cb.DisplayID,
 			AgentCallbackID: cb.AgentCallbackID,
-			InitCallback:    cb.InitCallback,
-			LastCheckin:     cb.LastCheckin,
+			InitCallback:    initCallback,
+			LastCheckin:     lastCheckin,
 			User:            cb.User,
 			Host:            cb.Host,
 			PID:             cb.PID,
@@ -212,28 +218,28 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 
 	var query struct {
 		Callback []struct {
-			ID              int       `graphql:"id"`
-			DisplayID       int       `graphql:"display_id"`
-			AgentCallbackID string    `graphql:"agent_callback_id"`
-			InitCallback    time.Time `graphql:"init_callback"`
-			LastCheckin     time.Time `graphql:"last_checkin"`
-			User            string    `graphql:"user"`
-			Host            string    `graphql:"host"`
-			PID             int       `graphql:"pid"`
-			IP              string    `graphql:"ip"`
-			ExternalIP      string    `graphql:"external_ip"`
-			ProcessName     string    `graphql:"process_name"`
-			Description     string    `graphql:"description"`
-			Active          bool      `graphql:"active"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			Locked          bool      `graphql:"locked"`
-			OS              string    `graphql:"os"`
-			Architecture    string    `graphql:"architecture"`
-			Domain          string    `graphql:"domain"`
-			ExtraInfo       string    `graphql:"extra_info"`
-			SleepInfo       string    `graphql:"sleep_info"`
-			OperationID     int       `graphql:"operation_id"`
-			OperatorID      int       `graphql:"operator_id"`
+			ID              int    `graphql:"id"`
+			DisplayID       int    `graphql:"display_id"`
+			AgentCallbackID string `graphql:"agent_callback_id"`
+			InitCallback    string `graphql:"init_callback"`
+			LastCheckin     string `graphql:"last_checkin"`
+			User            string `graphql:"user"`
+			Host            string `graphql:"host"`
+			PID             int    `graphql:"pid"`
+			IP              string `graphql:"ip"`
+			ExternalIP      string `graphql:"external_ip"`
+			ProcessName     string `graphql:"process_name"`
+			Description     string `graphql:"description"`
+			Active          bool   `graphql:"active"`
+			IntegrityLevel  int    `graphql:"integrity_level"`
+			Locked          bool   `graphql:"locked"`
+			OS              string `graphql:"os"`
+			Architecture    string `graphql:"architecture"`
+			Domain          string `graphql:"domain"`
+			ExtraInfo       string `graphql:"extra_info"`
+			SleepInfo       string `graphql:"sleep_info"`
+			OperationID     int    `graphql:"operation_id"`
+			OperatorID      int    `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
@@ -265,12 +271,15 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 	}
 
 	cb := query.Callback[0]
+	initCallback, _ := parseTime(cb.InitCallback)
+	lastCheckin, _ := parseTime(cb.LastCheckin)
+
 	callback := &types.Callback{
 		ID:              cb.ID,
 		DisplayID:       cb.DisplayID,
 		AgentCallbackID: cb.AgentCallbackID,
-		InitCallback:    cb.InitCallback,
-		LastCheckin:     cb.LastCheckin,
+		InitCallback:    initCallback,
+		LastCheckin:     lastCheckin,
 		User:            cb.User,
 		Host:            cb.Host,
 		PID:             cb.PID,
