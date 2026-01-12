@@ -93,6 +93,9 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 		Commands: []string{
 			"shell", "ps", "whoami",
 		},
+		BuildParameters: map[string]interface{}{
+			"mode": "default",
+		},
 		C2Profiles: []types.C2ProfileConfig{
 			{
 				Name: c2Profile.Name,

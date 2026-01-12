@@ -145,7 +145,9 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 				},
 			},
 		},
-		BuildParameters: map[string]interface{}{},
+		BuildParameters: map[string]interface{}{
+			"mode": "default",
+		},
 	}
 
 	newPayload, err := client.CreatePayload(ctx5, payloadReq)
@@ -333,6 +335,9 @@ func TestE2E_PayloadLifecycle(t *testing.T) {
 		Description: "E2E Test Payload - For Rebuild Testing",
 		Filename:    "e2e_test_rebuild",
 		Commands:    []string{"shell", "ps"},
+		BuildParameters: map[string]interface{}{
+			"mode": "default",
+		},
 		C2Profiles: []types.C2ProfileConfig{
 			{
 				Name: c2Profile.Name,
