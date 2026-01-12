@@ -595,7 +595,7 @@ func (c *Client) DownloadPayload(ctx context.Context, uuid string) ([]byte, erro
 	if !c.config.SSL {
 		scheme = "http"
 	}
-	downloadURL := fmt.Sprintf("%s://%s/api/v1.4/payloads/download/%s", scheme, stripScheme(c.config.ServerURL), uuid)
+	downloadURL := fmt.Sprintf("%s://%s/direct/download/%s", scheme, stripScheme(c.config.ServerURL), uuid)
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
