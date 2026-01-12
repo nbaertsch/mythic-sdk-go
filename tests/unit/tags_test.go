@@ -2,14 +2,12 @@ package unit
 
 import (
 	"testing"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // TestTagTypeString tests the TagType.String() method
 func TestTagTypeString(t *testing.T) {
-	now := time.Now()
 
 	tests := []struct {
 		name     string
@@ -22,7 +20,6 @@ func TestTagTypeString(t *testing.T) {
 				ID:        1,
 				Name:      "Critical",
 				Color:     "#FF0000",
-				Timestamp: now,
 			},
 			contains: []string{"Critical", "#FF0000"},
 		},
@@ -31,7 +28,6 @@ func TestTagTypeString(t *testing.T) {
 			tagType: types.TagType{
 				ID:        2,
 				Name:      "Low Priority",
-				Timestamp: now,
 			},
 			contains: []string{"Low Priority"},
 		},
@@ -76,7 +72,6 @@ func TestTagTypeIsDeleted(t *testing.T) {
 
 // TestTagString tests the Tag.String() method
 func TestTagString(t *testing.T) {
-	now := time.Now()
 
 	tests := []struct {
 		name     string
@@ -90,7 +85,6 @@ func TestTagString(t *testing.T) {
 				TagTypeID:  5,
 				SourceType: types.TagSourceTask,
 				SourceID:   42,
-				Timestamp:  now,
 				TagType: &types.TagType{
 					Name: "Important",
 				},
@@ -104,7 +98,6 @@ func TestTagString(t *testing.T) {
 				TagTypeID:  10,
 				SourceType: types.TagSourceCallback,
 				SourceID:   100,
-				Timestamp:  now,
 			},
 			contains: []string{"10", "callback", "100"},
 		},
@@ -127,7 +120,6 @@ func TestTagString(t *testing.T) {
 
 // TestTagTypeTypes tests the TagType type structure
 func TestTagTypeTypes(t *testing.T) {
-	now := time.Now()
 
 	tagType := types.TagType{
 		ID:          1,
@@ -136,7 +128,6 @@ func TestTagTypeTypes(t *testing.T) {
 		Color:       "#FF5500",
 		OperationID: 5,
 		Deleted:     false,
-		Timestamp:   now,
 	}
 
 	if tagType.ID != 1 {
@@ -155,16 +146,13 @@ func TestTagTypeTypes(t *testing.T) {
 
 // TestTagTypes tests the Tag type structure
 func TestTagTypes(t *testing.T) {
-	now := time.Now()
 
 	tag := types.Tag{
 		ID:          1,
 		TagTypeID:   5,
 		SourceType:  types.TagSourceTask,
 		SourceID:    42,
-		OperatorID:  10,
 		OperationID: 3,
-		Timestamp:   now,
 	}
 
 	if tag.ID != 1 {
@@ -278,7 +266,6 @@ func TestTagTypeWithoutOptionalFields(t *testing.T) {
 	tagType := types.TagType{
 		ID:        1,
 		Name:      "minimal",
-		Timestamp: time.Now(),
 	}
 
 	if tagType.Description != "" {
@@ -307,7 +294,6 @@ func TestTagWithoutOptionalFields(t *testing.T) {
 		TagTypeID:  5,
 		SourceType: types.TagSourceCallback,
 		SourceID:   10,
-		Timestamp:  time.Now(),
 	}
 
 	if tag.TagType != nil {
@@ -315,9 +301,6 @@ func TestTagWithoutOptionalFields(t *testing.T) {
 	}
 	if tag.Operation != nil {
 		t.Error("Operation should be nil")
-	}
-	if tag.Operator != nil {
-		t.Error("Operator should be nil")
 	}
 
 	str := tag.String()
@@ -345,7 +328,6 @@ func TestTagTypeColors(t *testing.T) {
 			ID:        1,
 			Name:      "Test",
 			Color:     color,
-			Timestamp: time.Now(),
 		}
 
 		if tagType.Color != color {
@@ -380,7 +362,6 @@ func TestTagAllSources(t *testing.T) {
 			TagTypeID:  10,
 			SourceType: src.sourceType,
 			SourceID:   src.sourceID,
-			Timestamp:  time.Now(),
 		}
 
 		if tag.SourceType != src.sourceType {
@@ -397,34 +378,4 @@ func TestTagAllSources(t *testing.T) {
 	}
 }
 
-// TestTagTypeTimestamp tests timestamp handling
-func TestTagTypeTimestamp(t *testing.T) {
-	specificTime := time.Date(2024, 1, 15, 14, 30, 0, 0, time.UTC)
-
-	tagType := types.TagType{
-		ID:        1,
-		Name:      "Test",
-		Timestamp: specificTime,
-	}
-
-	if !tagType.Timestamp.Equal(specificTime) {
-		t.Errorf("Expected timestamp %v, got %v", specificTime, tagType.Timestamp)
-	}
-}
-
-// TestTagTimestamp tests tag timestamp handling
-func TestTagTimestamp(t *testing.T) {
-	specificTime := time.Date(2024, 1, 15, 14, 30, 0, 0, time.UTC)
-
-	tag := types.Tag{
-		ID:         1,
-		TagTypeID:  5,
-		SourceType: types.TagSourceTask,
-		SourceID:   10,
-		Timestamp:  specificTime,
-	}
-
-	if !tag.Timestamp.Equal(specificTime) {
-		t.Errorf("Expected timestamp %v, got %v", specificTime, tag.Timestamp)
-	}
-}
+// Note: Tag and TagType timestamp tests removed as these fields don't exist in Mythic's database schema
