@@ -2,6 +2,7 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -164,9 +165,91 @@ func (c *Client) CreatePayload(ctx context.Context, req *types.CreatePayloadRequ
 		return nil, WrapError("CreatePayload", ErrInvalidInput, "payload type is required")
 	}
 
-	// Mythic's createPayload mutation is complex and requires specific C2 profile configurations
-	// Payload creation is better handled through the REST API
-	return nil, WrapError("CreatePayload", ErrOperationFailed, "payload creation via GraphQL not fully supported - use REST API")
+	// Build payload configuration matching Mythic's PayloadConfiguration struct
+	payloadConfig := map[string]interface{}{
+		"payload_type": req.PayloadType,
+		"description":  req.Description,
+		"filename":     req.Filename,
+		"selected_os":  req.SelectedOS,
+	}
+
+	// Use OS field if SelectedOS not provided
+	if payloadConfig["selected_os"] == "" && req.OS != "" {
+		payloadConfig["selected_os"] = req.OS
+	}
+
+	// Set default values if not provided
+	if payloadConfig["description"] == "" {
+		payloadConfig["description"] = fmt.Sprintf("Payload created via SDK: %s", req.PayloadType)
+	}
+	if payloadConfig["filename"] == "" {
+		payloadConfig["filename"] = req.PayloadType
+	}
+	if payloadConfig["selected_os"] == "" {
+		payloadConfig["selected_os"] = "linux" // Default to linux
+	}
+
+	// Add commands if provided
+	if len(req.Commands) > 0 {
+		payloadConfig["commands"] = req.Commands
+	}
+
+	// Add C2 profiles if provided
+	if len(req.C2Profiles) > 0 {
+		c2Profiles := make([]map[string]interface{}, len(req.C2Profiles))
+		for i, c2 := range req.C2Profiles {
+			c2Profiles[i] = map[string]interface{}{
+				"c2_profile":            c2.Name,
+				"c2_profile_is_p2p":     false, // Assume not P2P by default
+				"c2_profile_parameters": c2.Parameters,
+			}
+		}
+		payloadConfig["c2_profiles"] = c2Profiles
+	}
+
+	// Add build parameters if provided
+	if len(req.BuildParameters) > 0 {
+		buildParams := make([]map[string]interface{}, 0, len(req.BuildParameters))
+		for name, value := range req.BuildParameters {
+			buildParams = append(buildParams, map[string]interface{}{
+				"name":  name,
+				"value": value,
+			})
+		}
+		payloadConfig["build_parameters"] = buildParams
+	}
+
+	// Marshal payload configuration to JSON string
+	payloadDefBytes, err := json.Marshal(payloadConfig)
+	if err != nil {
+		return nil, WrapError("CreatePayload", err, "failed to marshal payload configuration")
+	}
+	payloadDefStr := string(payloadDefBytes)
+
+	// Create payload using GraphQL mutation
+	var mutation struct {
+		CreatePayload struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			UUID   string `graphql:"uuid"`
+		} `graphql:"createPayload(payloadDefinition: $payload_definition)"`
+	}
+
+	variables := map[string]interface{}{
+		"payload_definition": payloadDefStr,
+	}
+
+	err = c.executeMutation(ctx, &mutation, variables)
+	if err != nil {
+		return nil, WrapError("CreatePayload", err, "failed to create payload")
+	}
+
+	if mutation.CreatePayload.Status != "success" {
+		return nil, WrapError("CreatePayload", ErrOperationFailed, mutation.CreatePayload.Error)
+	}
+
+	// Fetch the created payload by UUID
+	return c.GetPayloadByUUID(ctx, mutation.CreatePayload.UUID)
 }
 
 // UpdatePayload updates payload settings.

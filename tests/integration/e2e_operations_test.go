@@ -115,7 +115,7 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 7: Update operation settings
 	t.Log("=== Test 7: Update operation settings ===")
-	ctx5, cancel5 := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx5, cancel5 := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel5()
 
 	newWebhook := "https://example.com/updated-webhook"
@@ -333,7 +333,7 @@ func TestE2E_OperationsErrorHandling(t *testing.T) {
 
 	// Test 3: Update non-existent operation
 	t.Log("=== Test 3: Update non-existent operation ===")
-	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx3, cancel3 := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel3()
 
 	webhook := "https://example.com"

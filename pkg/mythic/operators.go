@@ -2,6 +2,7 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -209,7 +210,9 @@ func (c *Client) UpdatePasswordAndEmail(ctx context.Context, req *types.UpdatePa
 	return nil
 }
 
-// GetOperatorPreferences retrieves UI preferences for an operator.
+// GetOperatorPreferences retrieves UI preferences for the currently authenticated operator.
+// Note: This function returns preferences for the current operator, regardless of the operatorID parameter.
+// This is a Mythic API limitation - preferences are retrieved based on the JWT token.
 func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*types.OperatorPreferences, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -219,28 +222,34 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 		return nil, WrapError("GetOperatorPreferences", ErrInvalidInput, "operator ID is required")
 	}
 
-	var query struct {
-		Preferences struct {
-			Status      string `graphql:"status"`
-			Error       string `graphql:"error"`
-			Preferences string `graphql:"preferences"`
-		} `graphql:"getOperatorPreferences"`
+	// Use REST webhook (GraphQL getOperatorPreferences has issues with jsonb decoding)
+	var response struct {
+		Status      string                 `json:"status"`
+		Error       string                 `json:"error"`
+		Preferences map[string]interface{} `json:"preferences"`
 	}
 
-	variables := map[string]interface{}{}
+	// Empty request body - operator is determined from JWT
+	requestData := map[string]interface{}{}
 
-	err := c.executeQuery(ctx, &query, variables)
+	err := c.executeRESTWebhook(ctx, "api/v1.4/operator_get_preferences_webhook", requestData, &response)
 	if err != nil {
-		return nil, WrapError("GetOperatorPreferences", err, "failed to query operator preferences")
+		return nil, WrapError("GetOperatorPreferences", err, "failed to execute webhook")
 	}
 
-	if query.Preferences.Status != "success" {
-		return nil, WrapError("GetOperatorPreferences", ErrOperationFailed, query.Preferences.Error)
+	if response.Status != "success" {
+		return nil, WrapError("GetOperatorPreferences", ErrOperationFailed, response.Error)
+	}
+
+	// Marshal preferences map to JSON string for storage
+	prefsJSON, err := json.Marshal(response.Preferences)
+	if err != nil {
+		return nil, WrapError("GetOperatorPreferences", err, "failed to marshal preferences")
 	}
 
 	return &types.OperatorPreferences{
 		OperatorID:      operatorID,
-		PreferencesJSON: query.Preferences.Preferences,
+		PreferencesJSON: string(prefsJSON),
 	}, nil
 }
 

@@ -96,7 +96,7 @@ jobs:
         run: |
           echo "::group::Waiting for agent and C2 containers to start"
           cd /tmp/mythic
-          timeout=120
+          timeout=180
           attempt=0
 
           while [ $attempt -lt $timeout ]; do

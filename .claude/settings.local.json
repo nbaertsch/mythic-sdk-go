@@ -39,7 +39,8 @@
       "Bash(golangci-lint run:*)",
       "Bash(git rm:*)",
       "Bash(chmod:*)",
-      "Bash(sudo ./mythic-cli start:*)"
+      "Bash(sudo ./mythic-cli start:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

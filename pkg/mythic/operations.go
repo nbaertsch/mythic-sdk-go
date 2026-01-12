@@ -235,6 +235,12 @@ func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) (
 		return nil, err
 	}
 
+	// Verify operation exists
+	_, err := c.GetOperationByID(ctx, operationID)
+	if err != nil {
+		return nil, WrapError("GetOperatorsByOperation", err, "operation not found")
+	}
+
 	var query struct {
 		OperatorOperation []struct {
 			ID          int `graphql:"id"`
@@ -252,7 +258,7 @@ func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) (
 		"operation_id": operationID,
 	}
 
-	err := c.executeQuery(ctx, &query, variables)
+	err = c.executeQuery(ctx, &query, variables)
 	if err != nil {
 		return nil, WrapError("GetOperatorsByOperation", err, "failed to query operators")
 	}
