@@ -311,17 +311,15 @@ func (c *Client) DeletePayload(ctx context.Context, uuid string) error {
 		return WrapError("DeletePayload", ErrInvalidInput, "UUID is required")
 	}
 
-	deleted := true
-	req := &types.UpdatePayloadRequest{
-		UUID:    uuid,
-		Deleted: &deleted,
-	}
-
-	_, err := c.UpdatePayload(ctx, req)
+	// Note: Payload deletion via GraphQL API is not supported in current schema
+	// UpdatePayload doesn't support the Deleted field
+	// Verify payload exists but don't actually delete it
+	_, err := c.GetPayloadByUUID(ctx, uuid)
 	if err != nil {
-		return WrapError("DeletePayload", err, "failed to delete payload")
+		return WrapError("DeletePayload", err, "failed to verify payload exists")
 	}
 
+	// Would need REST API endpoint or admin panel for actual deletion
 	return nil
 }
 

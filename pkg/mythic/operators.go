@@ -432,11 +432,9 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 
 	var mutation struct {
 		CreateInviteLink struct {
-			Status  string `graphql:"status"`
-			Error   string `graphql:"error"`
-			ID      int    `graphql:"id"`
-			Code    string `graphql:"code"`
-			MaxUses int    `graphql:"max_uses"`
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			Code   string `graphql:"code"`
 		} `graphql:"createInviteLink"`
 	}
 
@@ -451,12 +449,12 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, WrapError("CreateInviteLink", ErrOperationFailed, mutation.CreateInviteLink.Error)
 	}
 
-	// Use server-provided defaults for MaxUses and ExpiresAt
+	// Server doesn't return ID or MaxUses in response - use defaults
 	return &types.InviteLink{
-		ID:          mutation.CreateInviteLink.ID,
+		ID:          0,          // Not returned by createInviteLink mutation
 		Code:        mutation.CreateInviteLink.Code,
 		ExpiresAt:   time.Time{}, // Server default, not exposed in response
-		MaxUses:     mutation.CreateInviteLink.MaxUses,
+		MaxUses:     0,          // Server default, not exposed in response
 		CurrentUses: 0,
 		Active:      true,
 	}, nil
