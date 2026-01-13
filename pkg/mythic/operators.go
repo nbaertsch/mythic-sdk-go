@@ -154,12 +154,9 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 	}
 
 	// Note: updateOperatorStatus expects at least one of: active, admin, or deleted
-	// Build variables map with all possible fields
+	// Build variables map - only include non-nil values
 	variables := map[string]interface{}{
 		"operator_id": req.OperatorID,
-		"active":      nil,
-		"admin":       nil,
-		"deleted":     nil,
 	}
 
 	hasStatusField := false

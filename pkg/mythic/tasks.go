@@ -96,20 +96,11 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
-	// Build variables - initialize all to handle GraphQL library requirements
+	// Build variables - only include non-nil/non-empty values
 	variables := map[string]interface{}{
-		"command":               req.Command,
-		"params":                req.Params,
-		"is_interactive_task":   req.IsInteractiveTask,
-		"callback_id":           nil,
-		"callback_ids":          nil,
-		"files":                 nil,
-		"interactive_task_type": nil,
-		"parent_task_id":        nil,
-		"tasking_location":      nil,
-		"parameter_group_name":  nil,
-		"original_params":       nil,
-		"token_id":              nil,
+		"command":             req.Command,
+		"params":              req.Params,
+		"is_interactive_task": req.IsInteractiveTask,
 	}
 
 	// Set callback_id or callback_ids (mutually exclusive)
@@ -119,7 +110,7 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		variables["callback_ids"] = req.CallbackIDs
 	}
 
-	// Set optional fields if provided
+	// Set optional fields only if provided
 	if req.InteractiveTaskType != nil {
 		variables["interactive_task_type"] = *req.InteractiveTaskType
 	}
