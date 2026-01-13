@@ -400,16 +400,17 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 	// Since we can't reliably get links via GraphQL due to JSONB scalar issues,
 	// query the database table directly via GraphQL table query
 	var linksQuery struct {
-		OperatorInviteLinks []struct {
-			ID         int       `graphql:"id"`
-			Code       string    `graphql:"code"`
-			ExpiresAt  time.Time `graphql:"expires_at"`
-			CreatedBy  int       `graphql:"created_by"`
-			CreatedAt  time.Time `graphql:"created_at"`
-			MaxUses    int       `graphql:"max_uses"`
-			CurrentUses int      `graphql:"current_uses"`
-			Active     bool      `graphql:"active"`
-		} `graphql:"operatorinvitelink(order_by: {created_at: desc})"`
+		InviteLinks []struct {
+			ID            int       `graphql:"id"`
+			ShortCode     string    `graphql:"short_code"`
+			CreatedAt     time.Time `graphql:"created_at"`
+			OperatorID    int       `graphql:"operator_id"`
+			OperationID   int       `graphql:"operation_id"`
+			Name          string    `graphql:"name"`
+			TotalUses     int       `graphql:"total_uses"`
+			TotalUsed     int       `graphql:"total_used"`
+			OperationRole string    `graphql:"operation_role"`
+		} `graphql:"invite_link(order_by: {created_at: desc})"`
 	}
 
 	err = c.executeQuery(ctx, &linksQuery, nil)
@@ -418,17 +419,20 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 	}
 
 	// Convert to types.InviteLink
-	links := make([]*types.InviteLink, len(linksQuery.OperatorInviteLinks))
-	for i, link := range linksQuery.OperatorInviteLinks {
+	links := make([]*types.InviteLink, len(linksQuery.InviteLinks))
+	for i, link := range linksQuery.InviteLinks {
+		// Calculate if link is still active (used < max)
+		active := link.TotalUsed < link.TotalUses
+
 		links[i] = &types.InviteLink{
 			ID:          link.ID,
-			Code:        link.Code,
-			ExpiresAt:   link.ExpiresAt,
-			CreatedBy:   link.CreatedBy,
+			Code:        link.ShortCode,
+			ExpiresAt:   time.Time{}, // Not tracked in database
+			CreatedBy:   link.OperatorID,
 			CreatedAt:   link.CreatedAt,
-			MaxUses:     link.MaxUses,
-			CurrentUses: link.CurrentUses,
-			Active:      link.Active,
+			MaxUses:     link.TotalUses,
+			CurrentUses: link.TotalUsed,
+			Active:      active,
 		}
 	}
 
