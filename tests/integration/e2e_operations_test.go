@@ -127,8 +127,8 @@ func TestE2E_OperationsManagement(t *testing.T) {
 	// Test 7: Update operation settings
 	// Note: UpdateOperation webhook can be slow in CI environments (30+ seconds)
 	t.Log("=== Test 7: Update operation settings ===")
-	ctx5, cancel5 := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel5()
+	ctx6, cancel6 := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel6()
 
 	newWebhook := "https://example.com/updated-webhook"
 	complete := false
@@ -138,7 +138,7 @@ func TestE2E_OperationsManagement(t *testing.T) {
 		Complete:    &complete,
 	}
 
-	updatedOp, err := client.UpdateOperation(ctx5, updateReq)
+	updatedOp, err := client.UpdateOperation(ctx6, updateReq)
 	if err != nil {
 		t.Fatalf("UpdateOperation failed: %v", err)
 	}
@@ -149,10 +149,10 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 8: Verify update persisted
 	t.Log("=== Test 8: Verify update persisted ===")
-	ctx6, cancel6 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel6()
+	ctx7, cancel7 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel7()
 
-	updatedOp, err = client.GetOperationByID(ctx6, testOperationID)
+	updatedOp, err = client.GetOperationByID(ctx7, testOperationID)
 	if err != nil {
 		t.Fatalf("Failed to get updated operation: %v", err)
 	}
@@ -163,10 +163,10 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 9: Get operators in operation
 	t.Log("=== Test 9: Get operators in operation ===")
-	ctx7, cancel7 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel7()
+	ctx8, cancel8 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel8()
 
-	operators, err := client.GetOperatorsByOperation(ctx7, testOperationID)
+	operators, err := client.GetOperatorsByOperation(ctx8, testOperationID)
 	if err != nil {
 		t.Fatalf("GetOperatorsByOperation failed: %v", err)
 	}
@@ -179,8 +179,8 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 10: Create event log entry
 	t.Log("=== Test 10: Create event log entry ===")
-	ctx8, cancel8 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel8()
+	ctx9, cancel9 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel9()
 
 	logMessage := "E2E test event log entry"
 	logReq := &types.CreateOperationEventLogRequest{
@@ -189,7 +189,7 @@ func TestE2E_OperationsManagement(t *testing.T) {
 		Level:       "info",
 	}
 
-	logEntry, err := client.CreateOperationEventLog(ctx8, logReq)
+	logEntry, err := client.CreateOperationEventLog(ctx9, logReq)
 	if err != nil {
 		t.Fatalf("CreateOperationEventLog failed: %v", err)
 	}
@@ -200,10 +200,10 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 11: Get event log
 	t.Log("=== Test 11: Get event log ===")
-	ctx9, cancel9 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel9()
+	ctx10, cancel10 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel10()
 
-	logs, err := client.GetOperationEventLog(ctx9, testOperationID, 100)
+	logs, err := client.GetOperationEventLog(ctx10, testOperationID, 100)
 	if err != nil {
 		t.Fatalf("GetOperationEventLog failed: %v", err)
 	}
@@ -228,10 +228,10 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 12: Get global settings
 	t.Log("=== Test 12: Get global settings ===")
-	ctx10, cancel10 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel10()
+	ctx11, cancel11 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel11()
 
-	settings, err := client.GetGlobalSettings(ctx10)
+	settings, err := client.GetGlobalSettings(ctx11)
 	if err != nil {
 		t.Fatalf("GetGlobalSettings failed: %v", err)
 	}
@@ -242,8 +242,8 @@ func TestE2E_OperationsManagement(t *testing.T) {
 
 	// Test 13: Update global settings
 	t.Log("=== Test 13: Update global settings ===")
-	ctx11, cancel11 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel11()
+	ctx12, cancel12 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel12()
 
 	// Save original value if present
 	var originalAllowedIP interface{}
@@ -256,7 +256,7 @@ func TestE2E_OperationsManagement(t *testing.T) {
 		"allowed_ip_blocks": "0.0.0.0/0",
 	}
 
-	err = client.UpdateGlobalSettings(ctx11, updateSettingsReq)
+	err = client.UpdateGlobalSettings(ctx12, updateSettingsReq)
 	if err != nil {
 		// UpdateGlobalSettings not supported in GraphQL API
 		t.Logf("⚠ UpdateGlobalSettings not supported (expected): %v", err)
