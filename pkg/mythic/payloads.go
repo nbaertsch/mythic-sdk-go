@@ -281,29 +281,39 @@ func (c *Client) UpdatePayload(ctx context.Context, req *types.UpdatePayloadRequ
 		return nil, WrapError("UpdatePayload", ErrInvalidInput, "UUID is required")
 	}
 
-	// Simplified: only support updating description for now
-	// Note: Full multi-field updates require a different GraphQL approach
-	if req.Description == nil {
-		return nil, WrapError("UpdatePayload", ErrInvalidInput, "currently only description field updates are supported")
+	// First, get the payload to find its internal ID
+	payload, err := c.GetPayloadByUUID(ctx, req.UUID)
+	if err != nil {
+		return nil, WrapError("UpdatePayload", err, "failed to get payload")
+	}
+
+	// Build set clause
+	setClause := make(map[string]interface{})
+	if req.Description != nil {
+		setClause["description"] = *req.Description
+	}
+
+	if len(setClause) == 0 {
+		return nil, WrapError("UpdatePayload", ErrInvalidInput, "no fields to update")
 	}
 
 	var mutation struct {
-		UpdatePayload struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_payload(where: {uuid: {_eq: $uuid}}, _set: {description: $description})"`
+		UpdatePayloadByPk struct {
+			ID int `graphql:"id"`
+		} `graphql:"update_payload_by_pk(pk_columns: {id: $id}, _set: $set)"`
 	}
 
 	variables := map[string]interface{}{
-		"uuid":        req.UUID,
-		"description": *req.Description,
+		"id":  payload.ID,
+		"set": setClause,
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	err = c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return nil, WrapError("UpdatePayload", err, "failed to update payload")
 	}
 
-	if mutation.UpdatePayload.Affected == 0 {
+	if mutation.UpdatePayloadByPk.ID == 0 {
 		return nil, WrapError("UpdatePayload", ErrNotFound, fmt.Sprintf("payload %s not found", req.UUID))
 	}
 
