@@ -96,6 +96,52 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
+	// Build variables - initialize all to handle GraphQL library requirements
+	variables := map[string]interface{}{
+		"command":               req.Command,
+		"params":                req.Params,
+		"is_interactive_task":   req.IsInteractiveTask,
+		"callback_id":           nil,
+		"callback_ids":          nil,
+		"files":                 nil,
+		"interactive_task_type": nil,
+		"parent_task_id":        nil,
+		"tasking_location":      nil,
+		"parameter_group_name":  nil,
+		"original_params":       nil,
+		"token_id":              nil,
+	}
+
+	// Set callback_id or callback_ids (mutually exclusive)
+	if req.CallbackID != nil {
+		variables["callback_id"] = *req.CallbackID
+	} else if len(req.CallbackIDs) > 0 {
+		variables["callback_ids"] = req.CallbackIDs
+	}
+
+	// Set optional fields if provided
+	if req.InteractiveTaskType != nil {
+		variables["interactive_task_type"] = *req.InteractiveTaskType
+	}
+	if req.ParentTaskID != nil {
+		variables["parent_task_id"] = *req.ParentTaskID
+	}
+	if req.TokenID != nil {
+		variables["token_id"] = *req.TokenID
+	}
+	if req.TaskingLocation != "" {
+		variables["tasking_location"] = req.TaskingLocation
+	}
+	if req.ParameterGroupName != "" {
+		variables["parameter_group_name"] = req.ParameterGroupName
+	}
+	if req.OriginalParams != "" {
+		variables["original_params"] = req.OriginalParams
+	}
+	if len(req.Files) > 0 {
+		variables["files"] = req.Files
+	}
+
 	var mutation struct {
 		CreateTask struct {
 			ID        int    `graphql:"id"`
@@ -103,32 +149,6 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 			Status    string `graphql:"status"`
 			Error     string `graphql:"error"`
 		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
-	}
-
-	variables := map[string]interface{}{
-		"callback_id":           req.CallbackID,
-		"command":               req.Command,
-		"params":                req.Params,
-		"is_interactive_task":   req.IsInteractiveTask,
-		"interactive_task_type": req.InteractiveTaskType,
-		"parent_task_id":        req.ParentTaskID,
-		"tasking_location":      req.TaskingLocation,
-		"parameter_group_name":  req.ParameterGroupName,
-		"original_params":       req.OriginalParams,
-		"token_id":              req.TokenID,
-	}
-
-	// Handle array fields - avoid null for non-nullable array types
-	if len(req.CallbackIDs) > 0 {
-		variables["callback_ids"] = req.CallbackIDs
-	} else {
-		variables["callback_ids"] = []int{}
-	}
-
-	if len(req.Files) > 0 {
-		variables["files"] = req.Files
-	} else {
-		variables["files"] = []string{}
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
