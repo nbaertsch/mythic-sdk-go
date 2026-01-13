@@ -434,7 +434,6 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		CreateInviteLink struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-			Code   string `graphql:"code"`
 		} `graphql:"createInviteLink"`
 	}
 
@@ -449,12 +448,13 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, WrapError("CreateInviteLink", ErrOperationFailed, mutation.CreateInviteLink.Error)
 	}
 
-	// Server doesn't return ID or MaxUses in response - use defaults
+	// createInviteLinkOutput only returns status and error
+	// All other fields (ID, Code, MaxUses, ExpiresAt) must be retrieved separately
 	return &types.InviteLink{
 		ID:          0,          // Not returned by createInviteLink mutation
-		Code:        mutation.CreateInviteLink.Code,
-		ExpiresAt:   time.Time{}, // Server default, not exposed in response
-		MaxUses:     0,          // Server default, not exposed in response
+		Code:        "",         // Not returned by createInviteLink mutation
+		ExpiresAt:   time.Time{}, // Not returned by createInviteLink mutation
+		MaxUses:     0,          // Not returned by createInviteLink mutation
 		CurrentUses: 0,
 		Active:      true,
 	}, nil
