@@ -491,6 +491,8 @@ func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{},
 }
 
 // UpdateGlobalSettings updates Mythic global settings.
+// Note: This feature is not available in the current Mythic GraphQL schema.
+// The mutation does not exist or requires admin-level access not exposed via GraphQL.
 func (c *Client) UpdateGlobalSettings(ctx context.Context, settings map[string]interface{}) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -500,20 +502,7 @@ func (c *Client) UpdateGlobalSettings(ctx context.Context, settings map[string]i
 		return WrapError("UpdateGlobalSettings", ErrInvalidInput, "settings cannot be empty")
 	}
 
-	var mutation struct {
-		UpdateGlobalSettings struct {
-			Status string `graphql:"status"`
-		} `graphql:"updateGlobalSettings(settings: $settings)"`
-	}
-
-	variables := map[string]interface{}{
-		"settings": settings,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return WrapError("UpdateGlobalSettings", err, "failed to update global settings")
-	}
-
-	return nil
+	// UpdateGlobalSettings mutation not available in GraphQL schema
+	// Would need REST API endpoint or admin panel access
+	return WrapError("UpdateGlobalSettings", ErrOperationFailed, "global settings updates not supported via GraphQL API")
 }

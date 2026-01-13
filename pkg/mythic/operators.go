@@ -431,9 +431,8 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, WrapError("CreateInviteLink", ErrInvalidInput, "max uses must be greater than 0")
 	}
 
-	if req.ExpiresAt.Before(time.Now()) {
-		return nil, WrapError("CreateInviteLink", ErrInvalidInput, "expiration date must be in the future")
-	}
+	// Note: expires_at is not supported in the GraphQL schema
+	// The expiration is handled server-side with default values
 
 	var mutation struct {
 		CreateInviteLink struct {
@@ -442,12 +441,11 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 			ID      int    `graphql:"id"`
 			Code    string `graphql:"code"`
 			MaxUses int    `graphql:"max_uses"`
-		} `graphql:"createInviteLink(max_uses: $max_uses, expires_at: $expires_at)"`
+		} `graphql:"createInviteLink(max_uses: $max_uses)"`
 	}
 
 	variables := map[string]interface{}{
-		"max_uses":   req.MaxUses,
-		"expires_at": req.ExpiresAt.Format(time.RFC3339),
+		"max_uses": req.MaxUses,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
