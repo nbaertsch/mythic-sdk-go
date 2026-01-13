@@ -378,12 +378,13 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 
 	// Use the getInviteLinks query action (returns jsonb)
 	// Since jsonb is a scalar type, we need to use a custom type that can handle raw JSON
+	// Using a pointer to handle null values from the GraphQL API
 	type JSONScalar string
 	var query struct {
 		GetInviteLinks struct {
-			Status string     `graphql:"status"`
-			Error  string     `graphql:"error"`
-			Links  JSONScalar `graphql:"links"`
+			Status string      `graphql:"status"`
+			Error  string      `graphql:"error"`
+			Links  *JSONScalar `graphql:"links"`
 		} `graphql:"getInviteLinks"`
 	}
 
@@ -396,8 +397,12 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
 	}
 
-	// Handle empty or null links field
-	linksJSON := string(query.GetInviteLinks.Links)
+	// Handle null or empty links field
+	if query.GetInviteLinks.Links == nil {
+		return []*types.InviteLink{}, nil
+	}
+
+	linksJSON := string(*query.GetInviteLinks.Links)
 	if linksJSON == "" || linksJSON == "null" {
 		return []*types.InviteLink{}, nil
 	}
