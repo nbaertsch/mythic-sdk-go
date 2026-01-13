@@ -3,8 +3,6 @@ package mythic
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -156,62 +154,51 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 	}
 
 	// Note: updateOperatorStatus expects at least one of: active, admin, or deleted
-	// Build variables map with only provided fields
+	// Build variables map with all possible fields
 	variables := map[string]interface{}{
 		"operator_id": req.OperatorID,
+		"active":      nil,
+		"admin":       nil,
+		"deleted":     nil,
 	}
 
-	// Build parameter list dynamically based on provided fields
-	params := []string{"operator_id: $operator_id"}
+	hasStatusField := false
 
 	if req.Active != nil {
 		variables["active"] = *req.Active
-		params = append(params, "active: $active")
+		hasStatusField = true
 	}
 	if req.Admin != nil {
 		variables["admin"] = *req.Admin
-		params = append(params, "admin: $admin")
+		hasStatusField = true
 	}
 	if req.Deleted != nil {
 		variables["deleted"] = *req.Deleted
-		params = append(params, "deleted: $deleted")
+		hasStatusField = true
 	}
 
 	// If no status fields provided, return error
-	if len(params) == 1 { // Only operator_id
+	if !hasStatusField {
 		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "at least one status field (active, admin, deleted) must be provided")
 	}
 
-	// Execute mutation using REST webhook approach since we need dynamic parameters
-	// Note: Mythic's updateOperatorStatus action is available via GraphQL
-	type UpdateStatusResponse struct {
-		Status string `json:"status"`
-		Error  string `json:"error"`
-		ID     int    `json:"id"`
-		Active *bool  `json:"active"`
-		Admin  *bool  `json:"admin"`
+	var mutation struct {
+		UpdateOperatorStatus struct {
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			ID     int    `graphql:"id"`
+			Active *bool  `graphql:"active"`
+			Admin  *bool  `graphql:"admin"`
+		} `graphql:"updateOperatorStatus(operator_id: $operator_id, active: $active, admin: $admin, deleted: $deleted)"`
 	}
 
-	var response UpdateStatusResponse
-	err := c.executeRESTWebhook(ctx, "graphql", map[string]interface{}{
-		"query": fmt.Sprintf(`mutation($operator_id: Int!, $active: Boolean, $admin: Boolean, $deleted: Boolean) {
-			updateOperatorStatus(%s) {
-				status
-				error
-				id
-				active
-				admin
-			}
-		}`, strings.Join(params, ", ")),
-		"variables": variables,
-	}, &response)
-
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("UpdateOperatorStatus", err, "failed to update operator status")
 	}
 
-	if response.Status != "success" {
-		return WrapError("UpdateOperatorStatus", ErrOperationFailed, response.Error)
+	if mutation.UpdateOperatorStatus.Status != "success" {
+		return WrapError("UpdateOperatorStatus", ErrOperationFailed, mutation.UpdateOperatorStatus.Error)
 	}
 
 	return nil
