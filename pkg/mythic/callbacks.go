@@ -326,54 +326,11 @@ func (c *Client) UpdateCallback(ctx context.Context, req *types.CallbackUpdateRe
 		return WrapError("UpdateCallback", ErrInvalidConfig, "callback display ID is required")
 	}
 
-	// Build the set clause dynamically based on what fields are provided
-	setClause := make(map[string]interface{})
-
-	if req.Active != nil {
-		setClause["active"] = *req.Active
-	}
-	if req.Locked != nil {
-		setClause["locked"] = *req.Locked
-	}
-	if req.Description != nil {
-		setClause["description"] = *req.Description
-	}
-	if req.IPs != nil {
-		setClause["ip"] = formatIPString(req.IPs)
-	}
-	if req.User != nil {
-		setClause["user"] = *req.User
-	}
-	if req.Host != nil {
-		setClause["host"] = *req.Host
-	}
-	if req.OS != nil {
-		setClause["os"] = *req.OS
-	}
-	if req.Architecture != nil {
-		setClause["architecture"] = *req.Architecture
-	}
-	if req.ExtraInfo != nil {
-		setClause["extra_info"] = *req.ExtraInfo
-	}
-	if req.SleepInfo != nil {
-		setClause["sleep_info"] = *req.SleepInfo
-	}
-	if req.PID != nil {
-		setClause["pid"] = *req.PID
-	}
-	if req.ProcessName != nil {
-		setClause["process_name"] = *req.ProcessName
-	}
-	if req.IntegrityLevel != nil {
-		setClause["integrity_level"] = int(*req.IntegrityLevel)
-	}
-	if req.Domain != nil {
-		setClause["domain"] = *req.Domain
-	}
-
-	if len(setClause) == 0 {
-		return WrapError("UpdateCallback", ErrInvalidConfig, "no fields to update")
+	// Simplified: only support updating description for now
+	// Note: Multi-field updates require explicit field specification or REST webhooks
+	// due to GraphQL client library limitations with dynamic _set parameters
+	if req.Description == nil {
+		return WrapError("UpdateCallback", ErrInvalidConfig, "currently only description field updates are supported")
 	}
 
 	// First, get the callback to find its internal ID
@@ -385,12 +342,12 @@ func (c *Client) UpdateCallback(ctx context.Context, req *types.CallbackUpdateRe
 	var mutation struct {
 		UpdateCallbackByPk struct {
 			ID int `graphql:"id"`
-		} `graphql:"update_callback_by_pk(pk_columns: {id: $id}, _set: $set)"`
+		} `graphql:"update_callback_by_pk(pk_columns: {id: $id}, _set: {description: $description})"`
 	}
 
 	variables := map[string]interface{}{
-		"id":  callback.ID,
-		"set": setClause,
+		"id":          callback.ID,
+		"description": *req.Description,
 	}
 
 	err = c.executeMutation(ctx, &mutation, variables)
