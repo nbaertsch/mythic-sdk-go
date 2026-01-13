@@ -377,12 +377,14 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 	}
 
 	// Use the getInviteLinks query action (returns jsonb)
-	// Since jsonb is a scalar type, we need to use interface{} to handle raw JSON or null
+	// Since jsonb is a scalar type causing GraphQL client issues, query without links field
+	// and use a separate REST/GraphQL call or handle via alternate method
 	var query struct {
 		GetInviteLinks struct {
-			Status string      `graphql:"status"`
-			Error  string      `graphql:"error"`
-			Links  interface{} `graphql:"links"`
+			Status string `graphql:"status"`
+			Error  string `graphql:"error"`
+			// Note: Omitting Links field due to GraphQL client JSONB scalar handling issues
+			// Links field causes reflection panics in shurcooL/graphql library
 		} `graphql:"getInviteLinks"`
 	}
 
@@ -395,72 +397,39 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
 	}
 
-	// Handle null or empty links field
-	if query.GetInviteLinks.Links == nil {
-		return []*types.InviteLink{}, nil
+	// Since we can't reliably get links via GraphQL due to JSONB scalar issues,
+	// query the database table directly via GraphQL table query
+	var linksQuery struct {
+		OperatorInviteLinks []struct {
+			ID         int       `graphql:"id"`
+			Code       string    `graphql:"code"`
+			ExpiresAt  time.Time `graphql:"expires_at"`
+			CreatedBy  int       `graphql:"created_by"`
+			CreatedAt  time.Time `graphql:"created_at"`
+			MaxUses    int       `graphql:"max_uses"`
+			CurrentUses int      `graphql:"current_uses"`
+			Active     bool      `graphql:"active"`
+		} `graphql:"operatorinvitelink(order_by: {created_at: desc})"`
 	}
 
-	// The links field can be a string (jsonb scalar) or already unmarshaled data
-	// Try to get it as a string first
-	var linksJSON string
-	switch v := query.GetInviteLinks.Links.(type) {
-	case string:
-		linksJSON = v
-	case []byte:
-		linksJSON = string(v)
-	default:
-		// If it's already unmarshaled as a map or slice, marshal it back to JSON
-		linksBytes, err := json.Marshal(v)
-		if err != nil {
-			return nil, WrapError("GetInviteLinks", err, "failed to marshal links data")
-		}
-		linksJSON = string(linksBytes)
+	err = c.executeQuery(ctx, &linksQuery, nil)
+	if err != nil {
+		return nil, WrapError("GetInviteLinks", err, "failed to query invite links table")
 	}
 
-	if linksJSON == "" || linksJSON == "null" {
-		return []*types.InviteLink{}, nil
-	}
-
-	// Parse the jsonb string into a slice of maps
-	var linksData []map[string]interface{}
-	if err := json.Unmarshal([]byte(linksJSON), &linksData); err != nil {
-		return nil, WrapError("GetInviteLinks", err, "failed to parse links JSON")
-	}
-
-	// Parse the links from the jsonb response
-	links := make([]*types.InviteLink, 0, len(linksData))
-	for _, linkData := range linksData {
-
-		link := &types.InviteLink{}
-
-		if id, ok := linkData["id"].(float64); ok {
-			link.ID = int(id)
+	// Convert to types.InviteLink
+	links := make([]*types.InviteLink, len(linksQuery.OperatorInviteLinks))
+	for i, link := range linksQuery.OperatorInviteLinks {
+		links[i] = &types.InviteLink{
+			ID:          link.ID,
+			Code:        link.Code,
+			ExpiresAt:   link.ExpiresAt,
+			CreatedBy:   link.CreatedBy,
+			CreatedAt:   link.CreatedAt,
+			MaxUses:     link.MaxUses,
+			CurrentUses: link.CurrentUses,
+			Active:      link.Active,
 		}
-		if code, ok := linkData["code"].(string); ok {
-			link.Code = code
-		}
-		if expiresAtStr, ok := linkData["expires_at"].(string); ok {
-			expiresAt, _ := parseTime(expiresAtStr) //nolint:errcheck
-			link.ExpiresAt = expiresAt
-		}
-		if createdBy, ok := linkData["created_by"].(float64); ok {
-			link.CreatedBy = int(createdBy)
-		}
-		if createdAtStr, ok := linkData["created_at"].(string); ok {
-			createdAt, _ := parseTime(createdAtStr) //nolint:errcheck
-			link.CreatedAt = createdAt
-		}
-		if maxUses, ok := linkData["max_uses"].(float64); ok {
-			link.MaxUses = int(maxUses)
-		}
-		if currentUses, ok := linkData["current_uses"].(float64); ok {
-			link.CurrentUses = int(currentUses)
-		}
-		if active, ok := linkData["active"].(bool); ok {
-			link.Active = active
-		}
-
-		links = append(links, link)
 	}
 
 	return links, nil
