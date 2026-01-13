@@ -112,7 +112,6 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		"callback_id":           req.CallbackID,
 		"command":               req.Command,
 		"params":                req.Params,
-		"files":                 req.Files,
 		"is_interactive_task":   req.IsInteractiveTask,
 		"interactive_task_type": req.InteractiveTaskType,
 		"parent_task_id":        req.ParentTaskID,
@@ -122,12 +121,17 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		"token_id":              req.TokenID,
 	}
 
-	// Only include callback_ids if provided (avoid null for non-nullable array type)
+	// Handle array fields - avoid null for non-nullable array types
 	if len(req.CallbackIDs) > 0 {
 		variables["callback_ids"] = req.CallbackIDs
 	} else {
-		// Provide empty array if not specified
 		variables["callback_ids"] = []int{}
+	}
+
+	if len(req.Files) > 0 {
+		variables["files"] = req.Files
+	} else {
+		variables["files"] = []string{}
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

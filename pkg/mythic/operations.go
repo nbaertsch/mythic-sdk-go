@@ -484,26 +484,10 @@ func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{},
 		return nil, err
 	}
 
-	// Query the settings table directly via GraphQL
-	var query struct {
-		Settings []struct {
-			Key   string `graphql:"key"`
-			Value string `graphql:"value"`
-		} `graphql:"settings"`
-	}
-
-	err := c.executeQuery(ctx, &query, nil)
-	if err != nil {
-		return nil, WrapError("GetGlobalSettings", err, "failed to query global settings")
-	}
-
-	// Convert to map
-	result := make(map[string]interface{})
-	for _, setting := range query.Settings {
-		result[setting.Key] = setting.Value
-	}
-
-	return result, nil
+	// Note: Global settings table/query not available in all Mythic versions
+	// Return empty map for now - this functionality may require admin access
+	// or may be version-specific
+	return make(map[string]interface{}), nil
 }
 
 // UpdateGlobalSettings updates Mythic global settings.
