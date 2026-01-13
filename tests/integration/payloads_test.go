@@ -599,7 +599,7 @@ func TestPayloads_DownloadToFile(t *testing.T) {
 
 	// Test writing to a temporary file
 	tmpfile := "/tmp/test-payload-" + time.Now().Format("20060102-150405")
-	defer os.Remove(tmpfile)
+	defer func() { _ = os.Remove(tmpfile) }()
 
 	err = os.WriteFile(tmpfile, data, 0644)
 	if err != nil {

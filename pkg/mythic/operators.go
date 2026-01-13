@@ -444,10 +444,10 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 	// createInviteLinkOutput only returns status and error
 	// All other fields (ID, Code, MaxUses, ExpiresAt) must be retrieved separately
 	return &types.InviteLink{
-		ID:          0,          // Not returned by createInviteLink mutation
-		Code:        "",         // Not returned by createInviteLink mutation
+		ID:          0,           // Not returned by createInviteLink mutation
+		Code:        "",          // Not returned by createInviteLink mutation
 		ExpiresAt:   time.Time{}, // Not returned by createInviteLink mutation
-		MaxUses:     0,          // Not returned by createInviteLink mutation
+		MaxUses:     0,           // Not returned by createInviteLink mutation
 		CurrentUses: 0,
 		Active:      true,
 	}, nil

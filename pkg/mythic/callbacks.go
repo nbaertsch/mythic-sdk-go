@@ -20,23 +20,23 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 			AgentCallbackID string `graphql:"agent_callback_id"`
 			InitCallback    string `graphql:"init_callback"`
 			LastCheckin     string `graphql:"last_checkin"`
-			User            string    `graphql:"user"`
-			Host            string    `graphql:"host"`
-			PID             int       `graphql:"pid"`
-			IP              string    `graphql:"ip"`
-			ExternalIP      string    `graphql:"external_ip"`
-			ProcessName     string    `graphql:"process_name"`
-			Description     string    `graphql:"description"`
-			Active          bool      `graphql:"active"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			Locked          bool      `graphql:"locked"`
-			OS              string    `graphql:"os"`
-			Architecture    string    `graphql:"architecture"`
-			Domain          string    `graphql:"domain"`
-			ExtraInfo       string    `graphql:"extra_info"`
-			SleepInfo       string    `graphql:"sleep_info"`
-			OperationID     int       `graphql:"operation_id"`
-			OperatorID      int       `graphql:"operator_id"`
+			User            string `graphql:"user"`
+			Host            string `graphql:"host"`
+			PID             int    `graphql:"pid"`
+			IP              string `graphql:"ip"`
+			ExternalIP      string `graphql:"external_ip"`
+			ProcessName     string `graphql:"process_name"`
+			Description     string `graphql:"description"`
+			Active          bool   `graphql:"active"`
+			IntegrityLevel  int    `graphql:"integrity_level"`
+			Locked          bool   `graphql:"locked"`
+			OS              string `graphql:"os"`
+			Architecture    string `graphql:"architecture"`
+			Domain          string `graphql:"domain"`
+			ExtraInfo       string `graphql:"extra_info"`
+			SleepInfo       string `graphql:"sleep_info"`
+			OperationID     int    `graphql:"operation_id"`
+			OperatorID      int    `graphql:"operator_id"`
 			Payload         struct {
 				ID          int    `graphql:"id"`
 				UUID        string `graphql:"uuid"`
@@ -343,8 +343,6 @@ func (c *Client) UpdateCallback(ctx context.Context, req *types.CallbackUpdateRe
 
 	// Update not performed - would need REST API endpoint
 	return nil
-
-	return nil
 }
 
 // CreateCallbackInput represents the input for manually creating a callback.
@@ -635,16 +633,4 @@ func parseIPString(ipStr string) []string {
 	}
 
 	return ips
-}
-
-// formatIPString formats a slice of IP addresses into Mythic's comma-separated format.
-func formatIPString(ips []string) string {
-	result := ""
-	for i, ip := range ips {
-		if i > 0 {
-			result += ","
-		}
-		result += ip
-	}
-	return result
 }
