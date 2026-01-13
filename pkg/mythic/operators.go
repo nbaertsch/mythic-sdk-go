@@ -119,12 +119,17 @@ func (c *Client) CreateOperator(ctx context.Context, req *types.CreateOperatorRe
 			Error    string `graphql:"error"`
 			ID       int    `graphql:"id"`
 			Username string `graphql:"username"`
-		} `graphql:"createOperator(username: $username, password: $password)"`
+		} `graphql:"createOperator(input: $input)"`
+	}
+
+	// Build the OperatorInput object
+	operatorInput := map[string]interface{}{
+		"username": req.Username,
+		"password": req.Password,
 	}
 
 	variables := map[string]interface{}{
-		"username": req.Username,
-		"password": req.Password,
+		"input": operatorInput,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
