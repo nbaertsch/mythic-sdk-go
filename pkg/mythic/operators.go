@@ -375,21 +375,18 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, err
 	}
 
+	// Query the invitelink table directly (Hasura pattern)
 	var query struct {
-		InviteLinks struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-			Links  []struct {
-				ID          int    `graphql:"id"`
-				Code        string `graphql:"code"`
-				ExpiresAt   string `graphql:"expires_at"`
-				CreatedBy   int    `graphql:"created_by"`
-				CreatedAt   string `graphql:"created_at"`
-				MaxUses     int    `graphql:"max_uses"`
-				CurrentUses int    `graphql:"current_uses"`
-				Active      bool   `graphql:"active"`
-			} `graphql:"links"`
-		} `graphql:"getInviteLinks"`
+		InviteLink []struct {
+			ID          int    `graphql:"id"`
+			Code        string `graphql:"code"`
+			ExpiresAt   string `graphql:"expires_at"`
+			CreatedBy   int    `graphql:"created_by"`
+			CreatedAt   string `graphql:"created_at"`
+			MaxUses     int    `graphql:"max_uses"`
+			CurrentUses int    `graphql:"current_uses"`
+			Active      bool   `graphql:"active"`
+		} `graphql:"invitelink(order_by: {created_at: desc})"`
 	}
 
 	err := c.executeQuery(ctx, &query, nil)
@@ -397,12 +394,8 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", err, "failed to query invite links")
 	}
 
-	if query.InviteLinks.Status != "success" {
-		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.InviteLinks.Error)
-	}
-
-	links := make([]*types.InviteLink, len(query.InviteLinks.Links))
-	for i, link := range query.InviteLinks.Links {
+	links := make([]*types.InviteLink, len(query.InviteLink))
+	for i, link := range query.InviteLink {
 		expiresAt, _ := parseTime(link.ExpiresAt) //nolint:errcheck // Timestamp parse errors not critical
 		createdAt, _ := parseTime(link.CreatedAt) //nolint:errcheck // Timestamp parse errors not critical
 
