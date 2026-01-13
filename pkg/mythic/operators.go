@@ -377,14 +377,12 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 	}
 
 	// Use the getInviteLinks query action (returns jsonb)
-	// Since jsonb is a scalar type, we need to use a custom type that can handle raw JSON
-	// Using a pointer to handle null values from the GraphQL API
-	type JSONScalar string
+	// Since jsonb is a scalar type, we need to use interface{} to handle raw JSON or null
 	var query struct {
 		GetInviteLinks struct {
 			Status string      `graphql:"status"`
 			Error  string      `graphql:"error"`
-			Links  *JSONScalar `graphql:"links"`
+			Links  interface{} `graphql:"links"`
 		} `graphql:"getInviteLinks"`
 	}
 
@@ -402,7 +400,23 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return []*types.InviteLink{}, nil
 	}
 
-	linksJSON := string(*query.GetInviteLinks.Links)
+	// The links field can be a string (jsonb scalar) or already unmarshaled data
+	// Try to get it as a string first
+	var linksJSON string
+	switch v := query.GetInviteLinks.Links.(type) {
+	case string:
+		linksJSON = v
+	case []byte:
+		linksJSON = string(v)
+	default:
+		// If it's already unmarshaled as a map or slice, marshal it back to JSON
+		linksBytes, err := json.Marshal(v)
+		if err != nil {
+			return nil, WrapError("GetInviteLinks", err, "failed to marshal links data")
+		}
+		linksJSON = string(linksBytes)
+	}
+
 	if linksJSON == "" || linksJSON == "null" {
 		return []*types.InviteLink{}, nil
 	}
