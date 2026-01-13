@@ -102,8 +102,6 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 			DisplayID int    `graphql:"display_id"`
 			Status    string `graphql:"status"`
 			Error     string `graphql:"error"`
-			Stdout    string `graphql:"stdout"`
-			Stderr    string `graphql:"stderr"`
 		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
 	}
 

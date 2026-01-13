@@ -208,17 +208,24 @@ func (c *Client) UpdateCurrentOperationForUser(ctx context.Context, operationID 
 		return err
 	}
 
+	// Get current user ID
+	me, err := c.GetMe(ctx)
+	if err != nil {
+		return WrapError("UpdateCurrentOperationForUser", err, "failed to get current user")
+	}
+
 	var mutation struct {
 		UpdateCurrentOperation struct {
 			Status string `graphql:"status"`
-		} `graphql:"updateCurrentOperation(operation_id: $operation_id)"`
+		} `graphql:"updateCurrentOperation(user_id: $user_id, operation_id: $operation_id)"`
 	}
 
 	variables := map[string]interface{}{
+		"user_id":      me.ID,
 		"operation_id": operationID,
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	err = c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("UpdateCurrentOperationForUser", err, "failed to update current operation")
 	}

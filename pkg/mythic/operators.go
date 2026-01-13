@@ -427,12 +427,8 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, err
 	}
 
-	if req == nil || req.MaxUses <= 0 {
-		return nil, WrapError("CreateInviteLink", ErrInvalidInput, "max uses must be greater than 0")
-	}
-
-	// Note: expires_at is not supported in the GraphQL schema
-	// The expiration is handled server-side with default values
+	// Note: expires_at and max_uses are not supported in the GraphQL schema
+	// The expiration and max uses are handled server-side with default values
 
 	var mutation struct {
 		CreateInviteLink struct {
@@ -441,12 +437,10 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 			ID      int    `graphql:"id"`
 			Code    string `graphql:"code"`
 			MaxUses int    `graphql:"max_uses"`
-		} `graphql:"createInviteLink(max_uses: $max_uses)"`
+		} `graphql:"createInviteLink"`
 	}
 
-	variables := map[string]interface{}{
-		"max_uses": req.MaxUses,
-	}
+	variables := map[string]interface{}{}
 
 	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
@@ -457,10 +451,11 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, WrapError("CreateInviteLink", ErrOperationFailed, mutation.CreateInviteLink.Error)
 	}
 
+	// Use server-provided defaults for MaxUses and ExpiresAt
 	return &types.InviteLink{
 		ID:          mutation.CreateInviteLink.ID,
 		Code:        mutation.CreateInviteLink.Code,
-		ExpiresAt:   req.ExpiresAt,
+		ExpiresAt:   time.Time{}, // Server default, not exposed in response
 		MaxUses:     mutation.CreateInviteLink.MaxUses,
 		CurrentUses: 0,
 		Active:      true,
