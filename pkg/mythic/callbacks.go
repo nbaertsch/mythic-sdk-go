@@ -61,8 +61,8 @@ func (c *Client) GetAllCallbacks(ctx context.Context) ([]*types.Callback, error)
 
 	callbacks := make([]*types.Callback, len(query.Callback))
 	for i, cb := range query.Callback {
-		initCallback, _ := parseTime(cb.InitCallback)
-		lastCheckin, _ := parseTime(cb.LastCheckin)
+		initCallback, _ := parseTime(cb.InitCallback) //nolint:errcheck // Timestamp parse errors not critical
+		lastCheckin, _ := parseTime(cb.LastCheckin)   //nolint:errcheck // Timestamp parse errors not critical
 
 		callbacks[i] = &types.Callback{
 			ID:              cb.ID,
@@ -162,8 +162,8 @@ func (c *Client) GetAllActiveCallbacks(ctx context.Context) ([]*types.Callback, 
 
 	callbacks := make([]*types.Callback, len(query.Callback))
 	for i, cb := range query.Callback {
-		initCallback, _ := parseTime(cb.InitCallback)
-		lastCheckin, _ := parseTime(cb.LastCheckin)
+		initCallback, _ := parseTime(cb.InitCallback) //nolint:errcheck // Timestamp parse errors not critical
+		lastCheckin, _ := parseTime(cb.LastCheckin)   //nolint:errcheck // Timestamp parse errors not critical
 
 		callbacks[i] = &types.Callback{
 			ID:              cb.ID,
