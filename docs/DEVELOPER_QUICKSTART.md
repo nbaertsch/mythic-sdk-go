@@ -595,3 +595,476 @@ gh run watch <run-id>
 # Check test failures
 gh run view <run-id> --log | grep "FAIL"
 ```
+
+## Generic Task Creation Architecture
+
+### Overview
+
+Mythic's command system is **dynamic and extensible**. Each payload type (agent) registers its own commands with parameter definitions. The SDK must **query these definitions** at runtime and adapt parameter formatting accordingly.
+
+**DO NOT hardcode command-specific logic.** Always query command definitions from Mythic.
+
+### Command Registration Flow
+
+```
+┌────────────────┐
+│ Payload Type   │ (e.g., Poseidon)
+│ Container      │
+└────────┬───────┘
+         │ 1. Container starts
+         │ 2. Registers commands with Mythic
+         ▼
+┌────────────────────┐
+│ Mythic Server      │
+│                    │
+│ ┌────────────────┐ │
+│ │  command       │ │ (cmd, description, author, etc.)
+│ └────────┬───────┘ │
+│          │         │
+│ ┌────────▼────────┐│
+│ │commandparameters││ (name, type, required, default, etc.)
+│ └─────────────────┘│
+└────────────────────┘
+         ▲
+         │ 3. SDK queries command definitions
+         │ 4. SDK builds params dynamically
+┌────────┴────────┐
+│ SDK Client      │
+└─────────────────┘
+```
+
+### Two Types of Commands
+
+#### Type 1: Parameterized Commands (JSON-based)
+
+**Characteristics:**
+- Has `CommandParameters` defined
+- Expects params as **JSON object**
+- Parameters have names, types, defaults, validation
+
+**Example: `curl` command**
+
+```go
+// Poseidon registration (agentfunctions/curl.go)
+Command Parameters: [
+    {Name: "url", Type: "String", Required: true},
+    {Name: "method", Type: "ChooseOne", Choices: ["GET", "POST", ...], Default: "GET"},
+    {Name: "headers", Type: "Array"},
+    {Name: "body", Type: "String"},
+]
+
+// SDK params format:
+Params: `{"url": "https://example.com", "method": "POST", "body": "data"}`
+```
+
+#### Type 2: Raw String Commands
+
+**Characteristics:**
+- NO `CommandParameters` defined
+- Expects params as **plain text string**
+- No parameter validation or structure
+
+**Example: `shell` command**
+
+```go
+// Poseidon registration (agentfunctions/shell.go)
+var shell = agentstructs.Command{
+    Name: "shell",
+    // NO CommandParameters!
+    TaskFunctionCreateTasking: shellCreateTasking,
+}
+
+// SDK params format:
+Params: "whoami"  // Plain string, NOT {"command": "whoami"}
+```
+
+### Proper Task Creation Workflow
+
+#### Step 1: Query Available Commands
+
+```go
+// For a specific callback (recommended - shows only loaded commands)
+commands, err := client.GetLoadedCommandsForCallback(ctx, callbackID)
+
+// Or query by payload type
+type CommandsQuery struct {
+    Command []struct {
+        ID          int       `graphql:"id"`
+        Cmd         string    `graphql:"cmd"`
+        Description string    `graphql:"description"`
+        Version     int       `graphql:"version"`
+        Author      string    `graphql:"author"`
+        HelpCmd     string    `graphql:"help_cmd"`
+        CommandParameters []struct {
+            ID           int         `graphql:"id"`
+            Name         string      `graphql:"name"`
+            DisplayName  string      `graphql:"display_name"`
+            Type         string      `graphql:"type"`
+            Required     bool        `graphql:"required"`
+            DefaultValue interface{} `graphql:"default_value"`
+            Choices      interface{} `graphql:"choices"`
+            Description  string      `graphql:"description"`
+        } `graphql:"commandparameters"`
+    } `graphql:"command(where: {payload_type_id: {_eq: $payload_type_id}, deleted: {_eq: false}})"`
+}
+```
+
+#### Step 2: Determine Command Type
+
+```go
+func IsRawStringCommand(command *types.LoadedCommand) bool {
+    return len(command.Parameters) == 0
+}
+
+func GetParametersHelp(command *types.LoadedCommand) string {
+    if IsRawStringCommand(command) {
+        return fmt.Sprintf("%s: Plain text command (no structured parameters)", command.CommandName)
+    }
+
+    help := fmt.Sprintf("%s parameters:\n", command.CommandName)
+    for _, param := range command.Parameters {
+        required := ""
+        if param.Required {
+            required = " (REQUIRED)"
+        }
+        help += fmt.Sprintf("  - %s (%s)%s: %s\n", 
+            param.Name, param.Type, required, param.Description)
+    }
+    return help
+}
+```
+
+#### Step 3: Build Params Dynamically
+
+```go
+func BuildTaskParams(command *types.LoadedCommand, inputs map[string]interface{}) (string, error) {
+    if IsRawStringCommand(command) {
+        // Raw string command - params should be plain text
+        if rawValue, ok := inputs["raw"]; ok {
+            return fmt.Sprintf("%v", rawValue), nil
+        }
+        return "", fmt.Errorf("raw string command requires 'raw' input")
+    }
+
+    // Parameterized command - build JSON object
+    paramsMap := make(map[string]interface{})
+
+    for _, param := range command.Parameters {
+        value, provided := inputs[param.Name]
+
+        // Check required parameters
+        if param.Required && !provided {
+            return "", fmt.Errorf("required parameter missing: %s", param.Name)
+        }
+
+        // Use provided value or default
+        if provided {
+            paramsMap[param.Name] = value
+        } else if param.DefaultValue != nil {
+            paramsMap[param.Name] = param.DefaultValue
+        }
+    }
+
+    // Marshal to JSON string
+    paramsJSON, err := json.Marshal(paramsMap)
+    if err != nil {
+        return "", fmt.Errorf("failed to marshal params: %w", err)
+    }
+
+    return string(paramsJSON), nil
+}
+```
+
+#### Step 4: Issue Task
+
+```go
+func IssueTaskDynamic(ctx context.Context, client *mythic.Client, 
+                       callbackID int, commandName string, 
+                       inputs map[string]interface{}) (*mythic.Task, error) {
+    
+    // 1. Get command definition
+    commands, err := client.GetLoadedCommandsForCallback(ctx, callbackID)
+    if err != nil {
+        return nil, err
+    }
+
+    var targetCommand *types.LoadedCommand
+    for _, cmd := range commands {
+        if cmd.CommandName == commandName {
+            targetCommand = cmd
+            break
+        }
+    }
+
+    if targetCommand == nil {
+        return nil, fmt.Errorf("command %s not loaded for callback", commandName)
+    }
+
+    // 2. Build params based on command type
+    params, err := BuildTaskParams(targetCommand, inputs)
+    if err != nil {
+        return nil, fmt.Errorf("invalid parameters: %w", err)
+    }
+
+    // 3. Issue task
+    return client.IssueTask(ctx, &mythic.TaskRequest{
+        CallbackID: &callbackID,
+        Command:    commandName,
+        Params:     params,
+    })
+}
+
+// Usage examples:
+// Raw string command:
+task, err := IssueTaskDynamic(ctx, client, callbackID, "shell", map[string]interface{}{
+    "raw": "whoami",
+})
+
+// Parameterized command:
+task, err := IssueTaskDynamic(ctx, client, callbackID, "curl", map[string]interface{}{
+    "url":    "https://example.com",
+    "method": "POST",
+    "body":   "test data",
+})
+```
+
+### Parameter Types
+
+Mythic supports these parameter types (from MythicContainer agent_structs):
+
+```go
+const (
+    COMMAND_PARAMETER_TYPE_STRING           = "String"
+    COMMAND_PARAMETER_TYPE_BOOLEAN          = "Boolean"
+    COMMAND_PARAMETER_TYPE_NUMBER           = "Number"
+    COMMAND_PARAMETER_TYPE_ARRAY            = "Array"
+    COMMAND_PARAMETER_TYPE_CHOOSE_ONE       = "ChooseOne"
+    COMMAND_PARAMETER_TYPE_CHOOSE_MULTIPLE  = "ChooseMultiple"
+    COMMAND_PARAMETER_TYPE_FILE             = "File"
+    COMMAND_PARAMETER_TYPE_CREDENTIAL_JSON  = "CredentialJson"
+    COMMAND_PARAMETER_TYPE_LINKINFO         = "LinkInfo"
+    COMMAND_PARAMETER_TYPE_PAYLOAD_LIST     = "PayloadList"
+    COMMAND_PARAMETER_TYPE_AGGREGATE_DATA   = "AggregateBrowserScriptData"
+    COMMAND_PARAMETER_TYPE_DATE             = "Date"
+)
+```
+
+**Validation by Type:**
+
+```go
+func ValidateParameterValue(param *types.CommandParameter, value interface{}) error {
+    switch param.Type {
+    case "String":
+        if _, ok := value.(string); !ok {
+            return fmt.Errorf("%s must be a string", param.Name)
+        }
+
+    case "Boolean":
+        if _, ok := value.(bool); !ok {
+            return fmt.Errorf("%s must be a boolean", param.Name)
+        }
+
+    case "Number":
+        switch value.(type) {
+        case int, int64, float64:
+            // Valid
+        default:
+            return fmt.Errorf("%s must be a number", param.Name)
+        }
+
+    case "Array":
+        if _, ok := value.([]interface{}); !ok {
+            return fmt.Errorf("%s must be an array", param.Name)
+        }
+
+    case "ChooseOne":
+        strVal, ok := value.(string)
+        if !ok {
+            return fmt.Errorf("%s must be a string", param.Name)
+        }
+        // Validate against choices
+        for _, choice := range param.Choices {
+            if choice == strVal {
+                return nil
+            }
+        }
+        return fmt.Errorf("%s must be one of: %v", param.Name, param.Choices)
+
+    case "ChooseMultiple":
+        arr, ok := value.([]interface{})
+        if !ok {
+            return fmt.Errorf("%s must be an array", param.Name)
+        }
+        // Validate each choice
+        for _, item := range arr {
+            strItem, ok := item.(string)
+            if !ok {
+                return fmt.Errorf("%s items must be strings", param.Name)
+            }
+            found := false
+            for _, choice := range param.Choices {
+                if choice == strItem {
+                    found = true
+                    break
+                }
+            }
+            if !found {
+                return fmt.Errorf("%s: invalid choice '%s'", param.Name, strItem)
+            }
+        }
+    }
+
+    return nil
+}
+```
+
+### Interactive CLI Example
+
+```go
+func InteractiveCLI(ctx context.Context, client *mythic.Client, callbackID int) error {
+    // 1. List commands
+    commands, err := client.GetLoadedCommandsForCallback(ctx, callbackID)
+    if err != nil {
+        return err
+    }
+
+    fmt.Println("\nAvailable commands:")
+    for i, cmd := range commands {
+        fmt.Printf("%2d. %-15s - %s\n", i+1, cmd.CommandName, cmd.Description)
+    }
+
+    // 2. Select command
+    fmt.Print("\nSelect command (number): ")
+    var cmdIndex int
+    fmt.Scanf("%d", &cmdIndex)
+    if cmdIndex < 1 || cmdIndex > len(commands) {
+        return fmt.Errorf("invalid selection")
+    }
+
+    selectedCmd := commands[cmdIndex-1]
+    fmt.Printf("\nSelected: %s\n%s\n", selectedCmd.CommandName, selectedCmd.Description)
+
+    // 3. Build parameters
+    inputs := make(map[string]interface{})
+
+    if IsRawStringCommand(selectedCmd) {
+        // Raw string command
+        fmt.Print("\nEnter command: ")
+        reader := bufio.NewReader(os.Stdin)
+        line, _ := reader.ReadString('\n')
+        inputs["raw"] = strings.TrimSpace(line)
+    } else {
+        // Parameterized command
+        fmt.Println("\nEnter parameters (leave blank for default):")
+
+        for _, param := range selectedCmd.Parameters {
+            required := ""
+            if param.Required {
+                required = " [REQUIRED]"
+            }
+
+            fmt.Printf("\n%s (%s)%s:\n", param.Name, param.Type, required)
+            fmt.Printf("  %s\n", param.Description)
+
+            if param.DefaultValue != nil {
+                fmt.Printf("  Default: %v\n", param.DefaultValue)
+            }
+
+            if len(param.Choices) > 0 {
+                fmt.Printf("  Choices: %v\n", param.Choices)
+            }
+
+            fmt.Print("  Value: ")
+            reader := bufio.NewReader(os.Stdin)
+            line, _ := reader.ReadString('\n')
+            line = strings.TrimSpace(line)
+
+            if line == "" && !param.Required {
+                continue
+            }
+
+            // Parse value based on type
+            value, err := parseParameterValue(param.Type, line)
+            if err != nil {
+                fmt.Printf("  Error: %v\n", err)
+                return err
+            }
+
+            // Validate
+            if err := ValidateParameterValue(param, value); err != nil {
+                fmt.Printf("  Error: %v\n", err)
+                return err
+            }
+
+            inputs[param.Name] = value
+        }
+    }
+
+    // 4. Build and preview params
+    params, err := BuildTaskParams(selectedCmd, inputs)
+    if err != nil {
+        return fmt.Errorf("failed to build params: %w", err)
+    }
+
+    fmt.Printf("\n┌─ Task Preview ──────────────────┐\n")
+    fmt.Printf("│ Command: %s\n", selectedCmd.CommandName)
+    fmt.Printf("│ Params:  %s\n", params)
+    fmt.Printf("└────────────────────────────────┘\n")
+
+    // 5. Confirm
+    fmt.Print("\nIssue task? (y/n): ")
+    var confirm string
+    fmt.Scanf("%s", &confirm)
+
+    if strings.ToLower(confirm) != "y" {
+        fmt.Println("Cancelled.")
+        return nil
+    }
+
+    // 6. Issue task
+    task, err := client.IssueTask(ctx, &mythic.TaskRequest{
+        CallbackID: &callbackID,
+        Command:    selectedCmd.CommandName,
+        Params:     params,
+    })
+
+    if err != nil {
+        return fmt.Errorf("task failed: %w", err)
+    }
+
+    fmt.Printf("\n✓ Task created successfully\n")
+    fmt.Printf("  Display ID: %d\n", task.DisplayID)
+    fmt.Printf("  Status: %s\n", task.Status)
+
+    return nil
+}
+```
+
+### SDK Implementation Checklist
+
+- [ ] Add `GetCommandsForPayloadType(ctx, payloadTypeID)` method
+- [ ] Add `Command` type with `Parameters []*CommandParameter`
+- [ ] Add `CommandParameter` type with all fields from schema
+- [ ] Add `IsRawStringCommand(command)` helper
+- [ ] Add `BuildTaskParams(command, inputs)` helper
+- [ ] Add `ValidateParameterValue(param, value)` helper
+- [ ] Update `IssueTask()` documentation with param format requirements
+- [ ] Add examples for both command types to README
+- [ ] Add integration test for parameterized command (e.g., `curl`)
+- [ ] Add integration test for raw string command (e.g., `shell`)
+
+### Key Takeaways
+
+1. **NEVER hardcode command logic** - always query command definitions
+2. **Check parameter count** to determine if command is raw string or parameterized
+3. **The `commandparameters` table is the source of truth** for all parameter metadata
+4. **Use `GetLoadedCommandsForCallback()`** to see what's actually available
+5. **Build params dynamically** based on command type and parameter definitions
+6. **This approach works with ANY payload type** - not just Poseidon!
+
+### References
+
+- Mythic command registration: `/root/Mythic/InstalledServices/poseidon/poseidon/agentfunctions/`
+- Mythic agent structs: `github.com/MythicMeta/MythicContainer/agent_structs`
+- Hasura schema: `/root/Mythic/hasura-docker/metadata/databases/default/tables/`
+- GraphQL introspection: `scripts/utils/introspect_schema.py --type command`

@@ -396,9 +396,15 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
 	}
 
+	// Handle empty or null links field
+	linksJSON := string(query.GetInviteLinks.Links)
+	if linksJSON == "" || linksJSON == "null" {
+		return []*types.InviteLink{}, nil
+	}
+
 	// Parse the jsonb string into a slice of maps
 	var linksData []map[string]interface{}
-	if err := json.Unmarshal([]byte(query.GetInviteLinks.Links), &linksData); err != nil {
+	if err := json.Unmarshal([]byte(linksJSON), &linksData); err != nil {
 		return nil, WrapError("GetInviteLinks", err, "failed to parse links JSON")
 	}
 
