@@ -110,7 +110,6 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 
 	variables := map[string]interface{}{
 		"callback_id":           req.CallbackID,
-		"callback_ids":          req.CallbackIDs,
 		"command":               req.Command,
 		"params":                req.Params,
 		"files":                 req.Files,
@@ -121,6 +120,14 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		"parameter_group_name":  req.ParameterGroupName,
 		"original_params":       req.OriginalParams,
 		"token_id":              req.TokenID,
+	}
+
+	// Only include callback_ids if provided (avoid null for non-nullable array type)
+	if len(req.CallbackIDs) > 0 {
+		variables["callback_ids"] = req.CallbackIDs
+	} else {
+		// Provide empty array if not specified
+		variables["callback_ids"] = []int{}
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

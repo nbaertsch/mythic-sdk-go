@@ -333,29 +333,23 @@ func (c *Client) UpdateCallback(ctx context.Context, req *types.CallbackUpdateRe
 		return WrapError("UpdateCallback", ErrInvalidConfig, "currently only description field updates are supported")
 	}
 
-	// First, get the callback to find its internal ID
-	callback, err := c.GetCallbackByID(ctx, req.CallbackDisplayID)
-	if err != nil {
-		return WrapError("UpdateCallback", err, "failed to get callback")
-	}
-
 	var mutation struct {
-		UpdateCallbackByPk struct {
-			ID int `graphql:"id"`
-		} `graphql:"update_callback_by_pk(pk_columns: {id: $id}, _set: {description: $description})"`
+		UpdateCallback struct {
+			Affected int `graphql:"affected_rows"`
+		} `graphql:"update_callback(where: {display_id: {_eq: $displayID}}, _set: {description: $description})"`
 	}
 
 	variables := map[string]interface{}{
-		"id":          callback.ID,
+		"displayID":   req.CallbackDisplayID,
 		"description": *req.Description,
 	}
 
-	err = c.executeMutation(ctx, &mutation, variables)
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("UpdateCallback", err, "failed to update callback")
 	}
 
-	if mutation.UpdateCallbackByPk.ID == 0 {
+	if mutation.UpdateCallback.Affected == 0 {
 		return WrapError("UpdateCallback", ErrNotFound, fmt.Sprintf("callback with display_id %d not found", req.CallbackDisplayID))
 	}
 

@@ -484,27 +484,26 @@ func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{},
 		return nil, err
 	}
 
-	// Use REST webhook endpoint
-	requestData := map[string]interface{}{
-		"Input": map[string]interface{}{},
+	// Query the settings table directly via GraphQL
+	var query struct {
+		Settings []struct {
+			Key   string `graphql:"key"`
+			Value string `graphql:"value"`
+		} `graphql:"settings"`
 	}
 
-	var response struct {
-		Status         string                 `json:"status"`
-		Error          string                 `json:"error"`
-		GlobalSettings map[string]interface{} `json:"global_settings"`
-	}
-
-	err := c.executeRESTWebhook(ctx, "api/v1.4/settings_get_webhook", requestData, &response)
+	err := c.executeQuery(ctx, &query, nil)
 	if err != nil {
 		return nil, WrapError("GetGlobalSettings", err, "failed to query global settings")
 	}
 
-	if response.Status != "success" {
-		return nil, WrapError("GetGlobalSettings", ErrOperationFailed, response.Error)
+	// Convert to map
+	result := make(map[string]interface{})
+	for _, setting := range query.Settings {
+		result[setting.Key] = setting.Value
 	}
 
-	return response.GlobalSettings, nil
+	return result, nil
 }
 
 // UpdateGlobalSettings updates Mythic global settings.

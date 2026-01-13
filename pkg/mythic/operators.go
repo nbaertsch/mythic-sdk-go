@@ -310,9 +310,9 @@ func (c *Client) GetOperatorSecrets(ctx context.Context, operatorID int) (*types
 	}
 
 	var response struct {
-		Status  string `json:"status"`
-		Error   string `json:"error"`
-		Secrets string `json:"secrets"`
+		Status  string                 `json:"status"`
+		Error   string                 `json:"error"`
+		Secrets map[string]interface{} `json:"secrets"`
 	}
 
 	err := c.executeRESTWebhook(ctx, "api/v1.4/operator_get_secrets_webhook", requestData, &response)
@@ -325,8 +325,8 @@ func (c *Client) GetOperatorSecrets(ctx context.Context, operatorID int) (*types
 	}
 
 	return &types.OperatorSecrets{
-		OperatorID:  operatorID,
-		SecretsJSON: response.Secrets,
+		OperatorID: operatorID,
+		Secrets:    response.Secrets,
 	}, nil
 }
 
