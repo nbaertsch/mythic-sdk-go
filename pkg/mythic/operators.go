@@ -370,23 +370,19 @@ func (c *Client) UpdateOperatorSecrets(ctx context.Context, req *types.UpdateOpe
 }
 
 // GetInviteLinks retrieves all invitation links for new operators.
+// Note: This uses the getInviteLinks query action which returns links as jsonb.
 func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
-	// Query the invitelink table directly (Hasura pattern)
+	// Use the getInviteLinks query action (returns jsonb)
 	var query struct {
-		InviteLink []struct {
-			ID          int    `graphql:"id"`
-			Code        string `graphql:"code"`
-			ExpiresAt   string `graphql:"expires_at"`
-			CreatedBy   int    `graphql:"created_by"`
-			CreatedAt   string `graphql:"created_at"`
-			MaxUses     int    `graphql:"max_uses"`
-			CurrentUses int    `graphql:"current_uses"`
-			Active      bool   `graphql:"active"`
-		} `graphql:"invitelink(order_by: {created_at: desc})"`
+		GetInviteLinks struct {
+			Status string                   `graphql:"status"`
+			Error  string                   `graphql:"error"`
+			Links  []map[string]interface{} `graphql:"links"`
+		} `graphql:"getInviteLinks"`
 	}
 
 	err := c.executeQuery(ctx, &query, nil)
@@ -394,21 +390,43 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", err, "failed to query invite links")
 	}
 
-	links := make([]*types.InviteLink, len(query.InviteLink))
-	for i, link := range query.InviteLink {
-		expiresAt, _ := parseTime(link.ExpiresAt) //nolint:errcheck // Timestamp parse errors not critical
-		createdAt, _ := parseTime(link.CreatedAt) //nolint:errcheck // Timestamp parse errors not critical
+	if query.GetInviteLinks.Status != "success" {
+		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
+	}
 
-		links[i] = &types.InviteLink{
-			ID:          link.ID,
-			Code:        link.Code,
-			ExpiresAt:   expiresAt,
-			CreatedBy:   link.CreatedBy,
-			CreatedAt:   createdAt,
-			MaxUses:     link.MaxUses,
-			CurrentUses: link.CurrentUses,
-			Active:      link.Active,
+	// Parse the links from the jsonb response
+	links := make([]*types.InviteLink, 0, len(query.GetInviteLinks.Links))
+	for _, linkData := range query.GetInviteLinks.Links {
+		link := &types.InviteLink{}
+
+		if id, ok := linkData["id"].(float64); ok {
+			link.ID = int(id)
 		}
+		if code, ok := linkData["code"].(string); ok {
+			link.Code = code
+		}
+		if expiresAtStr, ok := linkData["expires_at"].(string); ok {
+			expiresAt, _ := parseTime(expiresAtStr) //nolint:errcheck
+			link.ExpiresAt = expiresAt
+		}
+		if createdBy, ok := linkData["created_by"].(float64); ok {
+			link.CreatedBy = int(createdBy)
+		}
+		if createdAtStr, ok := linkData["created_at"].(string); ok {
+			createdAt, _ := parseTime(createdAtStr) //nolint:errcheck
+			link.CreatedAt = createdAt
+		}
+		if maxUses, ok := linkData["max_uses"].(float64); ok {
+			link.MaxUses = int(maxUses)
+		}
+		if currentUses, ok := linkData["current_uses"].(float64); ok {
+			link.CurrentUses = int(currentUses)
+		}
+		if active, ok := linkData["active"].(bool); ok {
+			link.Active = active
+		}
+
+		links = append(links, link)
 	}
 
 	return links, nil
