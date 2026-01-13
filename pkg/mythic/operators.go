@@ -343,25 +343,26 @@ func (c *Client) UpdateOperatorSecrets(ctx context.Context, req *types.UpdateOpe
 		return WrapError("UpdateOperatorSecrets", ErrInvalidInput, "secrets must not be empty")
 	}
 
-	var mutation struct {
-		UpdateSecrets struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updateOperatorSecrets(operator_id: $operator_id, secrets: $secrets)"`
+	// Build REST API request using Mythic's webhook format
+	requestData := map[string]interface{}{
+		"Input": map[string]interface{}{
+			"operator_id": req.OperatorID,
+			"secrets":     req.Secrets,
+		},
 	}
 
-	variables := map[string]interface{}{
-		"operator_id": req.OperatorID,
-		"secrets":     req.Secrets,
+	var response struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	err := c.executeRESTWebhook(ctx, "api/v1.4/operator_update_secrets_webhook", requestData, &response)
 	if err != nil {
-		return WrapError("UpdateOperatorSecrets", err, "failed to update operator secrets")
+		return WrapError("UpdateOperatorSecrets", err, "failed to execute webhook")
 	}
 
-	if mutation.UpdateSecrets.Status != "success" {
-		return WrapError("UpdateOperatorSecrets", ErrOperationFailed, mutation.UpdateSecrets.Error)
+	if response.Status != "success" {
+		return WrapError("UpdateOperatorSecrets", ErrOperationFailed, response.Error)
 	}
 
 	return nil

@@ -486,7 +486,7 @@ func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{},
 
 	var query struct {
 		Settings struct {
-			GlobalSettings map[string]interface{} `graphql:"global_settings"`
+			GlobalSettings [][2]interface{} `graphql:"global_settings"`
 		} `graphql:"getGlobalSettings"`
 	}
 
@@ -495,7 +495,17 @@ func (c *Client) GetGlobalSettings(ctx context.Context) (map[string]interface{},
 		return nil, WrapError("GetGlobalSettings", err, "failed to query global settings")
 	}
 
-	return query.Settings.GlobalSettings, nil
+	// Convert [][2]interface{} to map[string]interface{}
+	result := make(map[string]interface{})
+	for _, pair := range query.Settings.GlobalSettings {
+		if len(pair) == 2 {
+			if key, ok := pair[0].(string); ok {
+				result[key] = pair[1]
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // UpdateGlobalSettings updates Mythic global settings.
