@@ -377,12 +377,13 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 	}
 
 	// Use the getInviteLinks query action (returns jsonb)
-	// GraphQL library doesn't support []map[string]interface{}, so use interface{} and unmarshal manually
+	// Since jsonb is a scalar type, we need to use a custom type that can handle raw JSON
+	type JSONScalar string
 	var query struct {
 		GetInviteLinks struct {
-			Status string      `graphql:"status"`
-			Error  string      `graphql:"error"`
-			Links  interface{} `graphql:"links"`
+			Status string     `graphql:"status"`
+			Error  string     `graphql:"error"`
+			Links  JSONScalar `graphql:"links"`
 		} `graphql:"getInviteLinks"`
 	}
 
@@ -395,19 +396,15 @@ func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error
 		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
 	}
 
-	// Convert interface{} to []map[string]interface{}
-	linksData, ok := query.GetInviteLinks.Links.([]interface{})
-	if !ok {
-		return nil, WrapError("GetInviteLinks", ErrInvalidInput, "unexpected links format")
+	// Parse the jsonb string into a slice of maps
+	var linksData []map[string]interface{}
+	if err := json.Unmarshal([]byte(query.GetInviteLinks.Links), &linksData); err != nil {
+		return nil, WrapError("GetInviteLinks", err, "failed to parse links JSON")
 	}
 
 	// Parse the links from the jsonb response
 	links := make([]*types.InviteLink, 0, len(linksData))
-	for _, linkItem := range linksData {
-		linkData, ok := linkItem.(map[string]interface{})
-		if !ok {
-			continue
-		}
+	for _, linkData := range linksData {
 
 		link := &types.InviteLink{}
 

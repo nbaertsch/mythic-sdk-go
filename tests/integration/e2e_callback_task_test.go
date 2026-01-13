@@ -227,8 +227,8 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 
 	// Test 12: Issue shell task (whoami)
 	t.Log("=== Test 12: Issue shell task (whoami) ===")
-	// Note: Mythic commands expect params to be JSON string
-	taskDisplayID, err := setup.ExecuteCommand("shell", `{"command": "whoami"}`)
+	// Note: shell command expects params as plain command string, not JSON
+	taskDisplayID, err := setup.ExecuteCommand("shell", "whoami")
 	if err != nil {
 		t.Fatalf("Failed to issue shell task: %v", err)
 	}
@@ -502,7 +502,7 @@ func TestE2E_CallbackTaskErrorHandling(t *testing.T) {
 	taskReq := &mythic.TaskRequest{
 		CallbackID: &nonExistentCallbackID,
 		Command:    "shell",
-		Params:     `{"command": "whoami"}`,
+		Params:     "whoami",
 	}
 
 	_, err = client.IssueTask(ctx3, taskReq)
