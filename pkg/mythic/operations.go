@@ -350,14 +350,14 @@ func (c *Client) GetOperationEventLog(ctx context.Context, operationID int, limi
 
 	var query struct {
 		OperationEventLog []struct {
-			ID          int       `graphql:"id"`
-			OperatorID  int       `graphql:"operator_id"`
-			OperationID int       `graphql:"operation_id"`
-			Message     string    `graphql:"message"`
-			Timestamp   time.Time `graphql:"timestamp"`
-			Level       string    `graphql:"level"`
-			Source      string    `graphql:"source"`
-			Deleted     bool      `graphql:"deleted"`
+			ID          int    `graphql:"id"`
+			OperatorID  int    `graphql:"operator_id"`
+			OperationID int    `graphql:"operation_id"`
+			Message     string `graphql:"message"`
+			Timestamp   string `graphql:"timestamp"`
+			Level       string `graphql:"level"`
+			Source      string `graphql:"source"`
+			Deleted     bool   `graphql:"deleted"`
 			Operator    struct {
 				ID       int    `graphql:"id"`
 				Username string `graphql:"username"`
@@ -377,12 +377,13 @@ func (c *Client) GetOperationEventLog(ctx context.Context, operationID int, limi
 
 	logs := make([]*types.OperationEventLog, len(query.OperationEventLog))
 	for i, log := range query.OperationEventLog {
+		timestamp, _ := parseTime(log.Timestamp) //nolint:errcheck // Timestamp parse errors not critical
 		logs[i] = &types.OperationEventLog{
 			ID:          log.ID,
 			OperatorID:  log.OperatorID,
 			OperationID: log.OperationID,
 			Message:     log.Message,
-			Timestamp:   log.Timestamp,
+			Timestamp:   timestamp,
 			Level:       log.Level,
 			Source:      log.Source,
 			Deleted:     log.Deleted,
