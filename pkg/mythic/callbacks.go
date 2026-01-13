@@ -270,8 +270,8 @@ func (c *Client) GetCallbackByID(ctx context.Context, displayID int) (*types.Cal
 	}
 
 	cb := query.Callback[0]
-	initCallback, _ := parseTime(cb.InitCallback)
-	lastCheckin, _ := parseTime(cb.LastCheckin)
+	initCallback, _ := parseTime(cb.InitCallback) //nolint:errcheck // Timestamp parse errors not critical
+	lastCheckin, _ := parseTime(cb.LastCheckin)   //nolint:errcheck // Timestamp parse errors not critical
 
 	callback := &types.Callback{
 		ID:              cb.ID,
