@@ -3,7 +3,6 @@ package mythic
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
