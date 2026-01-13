@@ -3,6 +3,8 @@ package mythic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -153,9 +155,66 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "operator ID is required")
 	}
 
-	// Mythic does not provide a direct GraphQL mutation for updating operator status
-	// Operator status updates require using the REST API or admin interface
-	return WrapError("UpdateOperatorStatus", ErrOperationFailed, "operator status updates not supported via GraphQL API")
+	// Note: updateOperatorStatus expects at least one of: active, admin, or deleted
+	// Build variables map with only provided fields
+	variables := map[string]interface{}{
+		"operator_id": req.OperatorID,
+	}
+
+	// Build parameter list dynamically based on provided fields
+	params := []string{"operator_id: $operator_id"}
+
+	if req.Active != nil {
+		variables["active"] = *req.Active
+		params = append(params, "active: $active")
+	}
+	if req.Admin != nil {
+		variables["admin"] = *req.Admin
+		params = append(params, "admin: $admin")
+	}
+	if req.Deleted != nil {
+		variables["deleted"] = *req.Deleted
+		params = append(params, "deleted: $deleted")
+	}
+
+	// If no status fields provided, return error
+	if len(params) == 1 { // Only operator_id
+		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "at least one status field (active, admin, deleted) must be provided")
+	}
+
+	// Execute mutation using REST webhook approach since we need dynamic parameters
+	// Note: Mythic's updateOperatorStatus action is available via GraphQL
+	type UpdateStatusResponse struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
+		ID     int    `json:"id"`
+		Active *bool  `json:"active"`
+		Admin  *bool  `json:"admin"`
+	}
+
+	var response UpdateStatusResponse
+	err := c.executeRESTWebhook(ctx, "graphql", map[string]interface{}{
+		"query": fmt.Sprintf(`mutation($operator_id: Int!, $active: Boolean, $admin: Boolean, $deleted: Boolean) {
+			updateOperatorStatus(%s) {
+				status
+				error
+				id
+				active
+				admin
+			}
+		}`, strings.Join(params, ", ")),
+		"variables": variables,
+	}, &response)
+
+	if err != nil {
+		return WrapError("UpdateOperatorStatus", err, "failed to update operator status")
+	}
+
+	if response.Status != "success" {
+		return WrapError("UpdateOperatorStatus", ErrOperationFailed, response.Error)
+	}
+
+	return nil
 }
 
 // UpdatePasswordAndEmail updates an operator's password and/or email.
