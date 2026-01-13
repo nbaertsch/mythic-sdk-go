@@ -180,17 +180,17 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 
 	var query struct {
 		Command []struct {
-			ID             int    `graphql:"id"`
-			Cmd            string `graphql:"cmd"`
-			PayloadTypeID  int    `graphql:"payloadtype_id"`
-			Description    string `graphql:"description"`
-			Help           string `graphql:"help_cmd"`
-			Version        int    `graphql:"version"`
-			Supported      bool   `graphql:"supported_ui_features"`
-			Author         string `graphql:"author"`
-			Attributes     string `graphql:"attributes"`
-			ScriptOnly     bool   `graphql:"script_only"`
-			AttackMappings string `graphql:"attack"`
+			ID                int    `graphql:"id"`
+			Cmd               string `graphql:"cmd"`
+			PayloadTypeID     int    `graphql:"payloadtype_id"`
+			Description       string `graphql:"description"`
+			Help              string `graphql:"help_cmd"`
+			Version           int    `graphql:"version"`
+			Supported         bool   `graphql:"supported_ui_features"`
+			Author            string `graphql:"author"`
+			Attributes        string `graphql:"attributes"`
+			ScriptOnly        bool   `graphql:"script_only"`
+			AttackMappings    string `graphql:"attack"`
 			CommandParameters []struct {
 				ID                          int    `graphql:"id"`
 				CommandID                   int    `graphql:"command_id"`
@@ -211,8 +211,8 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 	}
 
 	variables := map[string]interface{}{
-		"cmd":             commandName,
-		"payloadtype_id":  payloadTypeID,
+		"cmd":            commandName,
+		"payloadtype_id": payloadTypeID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)
