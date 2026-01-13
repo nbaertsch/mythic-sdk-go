@@ -113,23 +113,21 @@ func (c *Client) CreateOperator(ctx context.Context, req *types.CreateOperatorRe
 		return nil, WrapError("CreateOperator", ErrInvalidInput, "password must be at least 12 characters long")
 	}
 
+	// Note: createOperator in Mythic expects: createOperator(input: OperatorInput!)
+	// where OperatorInput is { username: String!, password: String, email: String, bot: Boolean }
+	// The GraphQL client library requires us to pass the nested object fields directly
 	var mutation struct {
 		CreateOperator struct {
 			Status   string `graphql:"status"`
 			Error    string `graphql:"error"`
 			ID       int    `graphql:"id"`
 			Username string `graphql:"username"`
-		} `graphql:"createOperator(input: $input)"`
-	}
-
-	// Build the OperatorInput object
-	operatorInput := map[string]interface{}{
-		"username": req.Username,
-		"password": req.Password,
+		} `graphql:"createOperator(input: {username: $username, password: $password})"`
 	}
 
 	variables := map[string]interface{}{
-		"input": operatorInput,
+		"username": req.Username,
+		"password": req.Password,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
