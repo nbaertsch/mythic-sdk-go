@@ -302,30 +302,31 @@ func (c *Client) GetOperatorSecrets(ctx context.Context, operatorID int) (*types
 		return nil, WrapError("GetOperatorSecrets", ErrInvalidInput, "operator ID is required")
 	}
 
-	var query struct {
-		Secrets struct {
-			Status  string `graphql:"status"`
-			Error   string `graphql:"error"`
-			Secrets string `graphql:"secrets"`
-		} `graphql:"getOperatorSecrets(operator_id: $operator_id)"`
+	// Use REST webhook endpoint
+	requestData := map[string]interface{}{
+		"Input": map[string]interface{}{
+			"operator_id": operatorID,
+		},
 	}
 
-	variables := map[string]interface{}{
-		"operator_id": operatorID,
+	var response struct {
+		Status  string `json:"status"`
+		Error   string `json:"error"`
+		Secrets string `json:"secrets"`
 	}
 
-	err := c.executeQuery(ctx, &query, variables)
+	err := c.executeRESTWebhook(ctx, "api/v1.4/operator_get_secrets_webhook", requestData, &response)
 	if err != nil {
 		return nil, WrapError("GetOperatorSecrets", err, "failed to query operator secrets")
 	}
 
-	if query.Secrets.Status != "success" {
-		return nil, WrapError("GetOperatorSecrets", ErrOperationFailed, query.Secrets.Error)
+	if response.Status != "success" {
+		return nil, WrapError("GetOperatorSecrets", ErrOperationFailed, response.Error)
 	}
 
 	return &types.OperatorSecrets{
 		OperatorID:  operatorID,
-		SecretsJSON: query.Secrets.Secrets,
+		SecretsJSON: response.Secrets,
 	}, nil
 }
 
