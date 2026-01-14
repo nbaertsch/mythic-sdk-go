@@ -180,37 +180,37 @@ func (c *Client) GetTask(ctx context.Context, displayID int) (*Task, error) {
 
 	var query struct {
 		Task []struct {
-			ID                        int       `graphql:"id"`
-			DisplayID                 int       `graphql:"display_id"`
-			AgentTaskID               string    `graphql:"agent_task_id"`
-			CommandName               string    `graphql:"command_name"`
-			Params                    string    `graphql:"params"`
-			DisplayParams             string    `graphql:"display_params"`
-			OriginalParams            string    `graphql:"original_params"`
-			Status                    string    `graphql:"status"`
-			Completed                 bool      `graphql:"completed"`
-			Comment                   string    `graphql:"comment"`
-			Timestamp                 time.Time `graphql:"timestamp"`
-			CallbackID                int       `graphql:"callback_id"`
-			OperatorID                int       `graphql:"operator_id"`
-			OperationID               int       `graphql:"operation_id"`
-			ParentTaskID              *int      `graphql:"parent_task_id"`
-			ResponseCount             int       `graphql:"response_count"`
-			IsInteractiveTask         bool      `graphql:"is_interactive_task"`
-			InteractiveTaskType       *int      `graphql:"interactive_task_type"`
-			TaskingLocation           string    `graphql:"tasking_location"`
-			ParameterGroupName        string    `graphql:"parameter_group_name"`
-			Stdout                    string    `graphql:"stdout"`
-			Stderr                    string    `graphql:"stderr"`
-			CompletedCallbackFunction string    `graphql:"completed_callback_function"`
-			SubtaskCallbackFunction   string    `graphql:"subtask_callback_function"`
-			GroupCallbackFunction     string    `graphql:"group_callback_function"`
-			OpsecPreBlocked           *bool     `graphql:"opsec_pre_blocked"`
-			OpsecPreBypassed          bool      `graphql:"opsec_pre_bypassed"`
-			OpsecPreMessage           string    `graphql:"opsec_pre_message"`
-			OpsecPostBlocked          *bool     `graphql:"opsec_post_blocked"`
-			OpsecPostBypassed         bool      `graphql:"opsec_post_bypassed"`
-			OpsecPostMessage          string    `graphql:"opsec_post_message"`
+			ID                        int    `graphql:"id"`
+			DisplayID                 int    `graphql:"display_id"`
+			AgentTaskID               string `graphql:"agent_task_id"`
+			CommandName               string `graphql:"command_name"`
+			Params                    string `graphql:"params"`
+			DisplayParams             string `graphql:"display_params"`
+			OriginalParams            string `graphql:"original_params"`
+			Status                    string `graphql:"status"`
+			Completed                 bool   `graphql:"completed"`
+			Comment                   string `graphql:"comment"`
+			Timestamp                 string `graphql:"timestamp"` // Use string to handle Mythic's timestamp format
+			CallbackID                int    `graphql:"callback_id"`
+			OperatorID                int    `graphql:"operator_id"`
+			OperationID               int    `graphql:"operation_id"`
+			ParentTaskID              *int   `graphql:"parent_task_id"`
+			ResponseCount             int    `graphql:"response_count"`
+			IsInteractiveTask         bool   `graphql:"is_interactive_task"`
+			InteractiveTaskType       *int   `graphql:"interactive_task_type"`
+			TaskingLocation           string `graphql:"tasking_location"`
+			ParameterGroupName        string `graphql:"parameter_group_name"`
+			Stdout                    string `graphql:"stdout"`
+			Stderr                    string `graphql:"stderr"`
+			CompletedCallbackFunction string `graphql:"completed_callback_function"`
+			SubtaskCallbackFunction   string `graphql:"subtask_callback_function"`
+			GroupCallbackFunction     string `graphql:"group_callback_function"`
+			OpsecPreBlocked           *bool  `graphql:"opsec_pre_blocked"`
+			OpsecPreBypassed          bool   `graphql:"opsec_pre_bypassed"`
+			OpsecPreMessage           string `graphql:"opsec_pre_message"`
+			OpsecPostBlocked          *bool  `graphql:"opsec_post_blocked"`
+			OpsecPostBypassed         bool   `graphql:"opsec_post_bypassed"`
+			OpsecPostMessage          string `graphql:"opsec_post_message"`
 		} `graphql:"task(where: {display_id: {_eq: $display_id}}, limit: 1)"`
 	}
 
@@ -228,6 +228,14 @@ func (c *Client) GetTask(ctx context.Context, displayID int) (*Task, error) {
 	}
 
 	t := query.Task[0]
+
+	// Parse timestamp string (Mythic returns timestamps without timezone)
+	timestamp, err := parseTimestamp(t.Timestamp)
+	if err != nil {
+		// If parsing fails, use zero time but don't fail the entire request
+		timestamp = time.Time{}
+	}
+
 	return &Task{
 		ID:                        t.ID,
 		DisplayID:                 t.DisplayID,
@@ -239,7 +247,7 @@ func (c *Client) GetTask(ctx context.Context, displayID int) (*Task, error) {
 		Status:                    t.Status,
 		Completed:                 t.Completed,
 		Comment:                   t.Comment,
-		Timestamp:                 t.Timestamp,
+		Timestamp:                 timestamp,
 		CallbackID:                t.CallbackID,
 		OperatorID:                t.OperatorID,
 		OperationID:               t.OperationID,
