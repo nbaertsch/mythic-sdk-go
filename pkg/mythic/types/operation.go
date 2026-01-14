@@ -120,8 +120,10 @@ func (e *OperationEventLog) String() string {
 
 // CreateOperatorRequest represents a request to create a new operator.
 type CreateOperatorRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username"`        // Required: operator username
+	Password string `json:"password"`        // Required: operator password (min 12 chars)
+	Email    string `json:"email,omitempty"` // Optional: operator email address
+	Bot      bool   `json:"bot,omitempty"`   // Optional: if true, creates a bot account
 }
 
 // UpdateOperatorStatusRequest represents a request to update operator status.

@@ -117,18 +117,23 @@ func (c *Client) CreateOperator(ctx context.Context, req *types.CreateOperatorRe
 	// Note: createOperator in Mythic expects: createOperator(input: OperatorInput!)
 	// where OperatorInput is { username: String!, password: String, email: String, bot: Boolean }
 	// The GraphQL client library requires us to pass the nested object fields directly
+
+	// Always include all fields in the mutation (GraphQL requires all referenced variables)
+	// Optional fields will be passed as empty string/false when not provided
+	variables := map[string]interface{}{
+		"username": req.Username,
+		"password": req.Password,
+		"email":    req.Email, // Empty string if not provided
+		"bot":      req.Bot,   // False if not provided
+	}
+
 	var mutation struct {
 		CreateOperator struct {
 			Status   string `graphql:"status"`
 			Error    string `graphql:"error"`
 			ID       int    `graphql:"id"`
 			Username string `graphql:"username"`
-		} `graphql:"createOperator(input: {username: $username, password: $password})"`
-	}
-
-	variables := map[string]interface{}{
-		"username": req.Username,
-		"password": req.Password,
+		} `graphql:"createOperator(input: {username: $username, password: $password, email: $email, bot: $bot})"`
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
