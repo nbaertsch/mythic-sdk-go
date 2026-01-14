@@ -96,41 +96,20 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
-	// Build variables - only include non-nil/non-empty values
+	// Build variables - must include all variables referenced in query
 	variables := map[string]interface{}{
-		"command":             req.Command,
-		"params":              req.Params,
-		"is_interactive_task": req.IsInteractiveTask,
-	}
-
-	// Set callback_id or callback_ids (mutually exclusive)
-	if req.CallbackID != nil {
-		variables["callback_id"] = *req.CallbackID
-	} else if len(req.CallbackIDs) > 0 {
-		variables["callback_ids"] = req.CallbackIDs
-	}
-
-	// Set optional fields only if provided
-	if req.InteractiveTaskType != nil {
-		variables["interactive_task_type"] = *req.InteractiveTaskType
-	}
-	if req.ParentTaskID != nil {
-		variables["parent_task_id"] = *req.ParentTaskID
-	}
-	if req.TokenID != nil {
-		variables["token_id"] = *req.TokenID
-	}
-	if req.TaskingLocation != "" {
-		variables["tasking_location"] = req.TaskingLocation
-	}
-	if req.ParameterGroupName != "" {
-		variables["parameter_group_name"] = req.ParameterGroupName
-	}
-	if req.OriginalParams != "" {
-		variables["original_params"] = req.OriginalParams
-	}
-	if len(req.Files) > 0 {
-		variables["files"] = req.Files
+		"command":               req.Command,
+		"params":                req.Params,
+		"is_interactive_task":   req.IsInteractiveTask,
+		"callback_id":           req.CallbackID,
+		"callback_ids":          req.CallbackIDs,
+		"files":                 req.Files,
+		"interactive_task_type": req.InteractiveTaskType,
+		"parent_task_id":        req.ParentTaskID,
+		"tasking_location":      req.TaskingLocation,
+		"parameter_group_name":  req.ParameterGroupName,
+		"original_params":       req.OriginalParams,
+		"token_id":              req.TokenID,
 	}
 
 	var mutation struct {

@@ -154,28 +154,16 @@ func (c *Client) UpdateOperatorStatus(ctx context.Context, req *types.UpdateOper
 	}
 
 	// Note: updateOperatorStatus expects at least one of: active, admin, or deleted
-	// Build variables map - only include non-nil values
+	// Build variables map - must include all variables referenced in query
 	variables := map[string]interface{}{
 		"operator_id": req.OperatorID,
+		"active":      req.Active,
+		"admin":       req.Admin,
+		"deleted":     req.Deleted,
 	}
 
-	hasStatusField := false
-
-	if req.Active != nil {
-		variables["active"] = *req.Active
-		hasStatusField = true
-	}
-	if req.Admin != nil {
-		variables["admin"] = *req.Admin
-		hasStatusField = true
-	}
-	if req.Deleted != nil {
-		variables["deleted"] = *req.Deleted
-		hasStatusField = true
-	}
-
-	// If no status fields provided, return error
-	if !hasStatusField {
+	// Verify at least one status field is provided
+	if req.Active == nil && req.Admin == nil && req.Deleted == nil {
 		return WrapError("UpdateOperatorStatus", ErrInvalidInput, "at least one status field (active, admin, deleted) must be provided")
 	}
 
