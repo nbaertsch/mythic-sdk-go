@@ -97,23 +97,14 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 	}
 
 	// Build variables - must include all variables referenced in query
-	// For non-nullable arrays (e.g., [Int!]!), use empty array instead of nil
-	callbackIDs := req.CallbackIDs
-	if callbackIDs == nil {
-		callbackIDs = []int{}
-	}
-	files := req.Files
-	if files == nil {
-		files = []string{}
-	}
-
+	// Pass pointer types directly so webhook receives proper nil vs non-nil distinction
 	variables := map[string]interface{}{
 		"command":               req.Command,
 		"params":                req.Params,
 		"is_interactive_task":   req.IsInteractiveTask,
 		"callback_id":           req.CallbackID,
-		"callback_ids":          callbackIDs,
-		"files":                 files,
+		"callback_ids":          req.CallbackIDs,   // Pass as-is (nil or []int)
+		"files":                 req.Files,          // Can be nil or []string
 		"interactive_task_type": req.InteractiveTaskType,
 		"parent_task_id":        req.ParentTaskID,
 		"tasking_location":      req.TaskingLocation,
