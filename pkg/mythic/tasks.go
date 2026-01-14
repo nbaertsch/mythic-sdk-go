@@ -83,6 +83,17 @@ const (
 
 // IssueTask creates a new task for a callback.
 // If CallbackIDs is provided, the task will be issued to multiple callbacks.
+//
+// Note: This function uses the Hasura webhook endpoint directly instead of the GraphQL
+// mutation. This is necessary because the GraphQL client library requires all variables
+// to be present in the variables map, and serializes nil values as "null" in JSON.
+// When Hasura receives explicit null values for optional array parameters, it validates
+// them and rejects with "null value found for non-nullable type" errors, even though
+// the GraphQL schema defines these as nullable ([Int] not [Int!]!).
+//
+// The webhook approach allows us to omit parameters entirely from the JSON request,
+// which is the correct way to indicate "not provided" vs explicitly passing null.
+// This is a documented, stable API endpoint that Hasura would call anyway.
 func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -96,61 +107,69 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
-	// Build variables map for GraphQL mutation
-	// CRITICAL: For optional array parameters, use nil when not set (not empty slices!)
-	// The GraphQL client serializes nil as null, which Hasura treats as "parameter not provided"
-	// Empty slices [] would be serialized as [], which could cause validation errors
+	// Build request payload - only include non-nil/non-empty values
+	// This allows the webhook to properly distinguish "not provided" from "empty"
+	payload := map[string]interface{}{
+		"input": map[string]interface{}{
+			"command":             req.Command,
+			"params":              req.Params,
+			"is_interactive_task": req.IsInteractiveTask,
+		},
+	}
 
-	var callbackIDs []int
+	input := payload["input"].(map[string]interface{})
+
+	// Only include callback_id OR callback_ids, not both
+	if req.CallbackID != nil {
+		input["callback_id"] = req.CallbackID
+	}
 	if len(req.CallbackIDs) > 0 {
-		callbackIDs = req.CallbackIDs
+		input["callback_ids"] = req.CallbackIDs
 	}
-	// Otherwise leave as nil
 
-	var files []string
+	// Only include optional fields if they're set
 	if len(req.Files) > 0 {
-		files = req.Files
+		input["files"] = req.Files
 	}
-	// Otherwise leave as nil
-
-	// All variables must be present in the map (GraphQL requires this),
-	// but optional parameters should be nil when not set
-	variables := map[string]interface{}{
-		"command":               req.Command,
-		"params":                req.Params,
-		"is_interactive_task":   req.IsInteractiveTask,
-		"callback_id":           req.CallbackID,          // *int (nil or value)
-		"callback_ids":          callbackIDs,             // nil or []int
-		"files":                 files,                   // nil or []string
-		"interactive_task_type": req.InteractiveTaskType, // *int (nil or value)
-		"parent_task_id":        req.ParentTaskID,        // *int (nil or value)
-		"tasking_location":      req.TaskingLocation,     // string (empty or value)
-		"parameter_group_name":  req.ParameterGroupName,  // string (empty or value)
-		"original_params":       req.OriginalParams,      // string (empty or value)
-		"token_id":              req.TokenID,             // *int (nil or value)
+	if req.InteractiveTaskType != nil {
+		input["interactive_task_type"] = req.InteractiveTaskType
 	}
-
-	var mutation struct {
-		CreateTask struct {
-			ID        int    `graphql:"id"`
-			DisplayID int    `graphql:"display_id"`
-			Status    string `graphql:"status"`
-			Error     string `graphql:"error"`
-		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
+	if req.ParentTaskID != nil {
+		input["parent_task_id"] = req.ParentTaskID
+	}
+	if req.TaskingLocation != "" {
+		input["tasking_location"] = req.TaskingLocation
+	}
+	if req.ParameterGroupName != "" {
+		input["parameter_group_name"] = req.ParameterGroupName
+	}
+	if req.OriginalParams != "" {
+		input["original_params"] = req.OriginalParams
+	}
+	if req.TokenID != nil {
+		input["token_id"] = req.TokenID
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	// Call the Hasura webhook endpoint
+	var response struct {
+		Status    string `json:"status"`
+		Error     string `json:"error"`
+		ID        int    `json:"id"`
+		DisplayID int    `json:"display_id"`
+	}
+
+	err := c.executeRESTWebhook(ctx, "api/v1.4/create_task_webhook", payload, &response)
 	if err != nil {
 		return nil, WrapError("IssueTask", err, "failed to create task")
 	}
 
 	// Check for error in response
-	if mutation.CreateTask.Error != "" {
-		return nil, WrapError("IssueTask", ErrInvalidResponse, fmt.Sprintf("task creation failed: %s", mutation.CreateTask.Error))
+	if response.Status != "success" {
+		return nil, WrapError("IssueTask", ErrOperationFailed, fmt.Sprintf("task creation failed: %s", response.Error))
 	}
 
 	// Get the full task details
-	return c.GetTask(ctx, mutation.CreateTask.DisplayID)
+	return c.GetTask(ctx, response.DisplayID)
 }
 
 // GetTask retrieves a task by its display ID.
