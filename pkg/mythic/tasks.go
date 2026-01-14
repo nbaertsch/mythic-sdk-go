@@ -96,44 +96,70 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
-	// Build variables - must include all variables referenced in query
-	// Pass pointer types directly so webhook receives proper nil vs non-nil distinction
-	variables := map[string]interface{}{
-		"command":               req.Command,
-		"params":                req.Params,
-		"is_interactive_task":   req.IsInteractiveTask,
-		"callback_id":           req.CallbackID,
-		"callback_ids":          req.CallbackIDs,   // Pass as-is (nil or []int)
-		"files":                 req.Files,          // Can be nil or []string
-		"interactive_task_type": req.InteractiveTaskType,
-		"parent_task_id":        req.ParentTaskID,
-		"tasking_location":      req.TaskingLocation,
-		"parameter_group_name":  req.ParameterGroupName,
-		"original_params":       req.OriginalParams,
-		"token_id":              req.TokenID,
+	// Use REST webhook endpoint for better control over JSON serialization
+	// Build the request payload - only include non-nil values
+	payload := map[string]interface{}{
+		"input": map[string]interface{}{
+			"command":             req.Command,
+			"params":              req.Params,
+			"is_interactive_task": req.IsInteractiveTask,
+		},
 	}
 
-	var mutation struct {
-		CreateTask struct {
-			ID        int    `graphql:"id"`
-			DisplayID int    `graphql:"display_id"`
-			Status    string `graphql:"status"`
-			Error     string `graphql:"error"`
-		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
+	input := payload["input"].(map[string]interface{})
+
+	// Only include callback_id OR callback_ids, not both
+	// This matches the webhook's logic for determining which callbacks to use
+	if req.CallbackID != nil {
+		input["callback_id"] = req.CallbackID
+	}
+	if len(req.CallbackIDs) > 0 {
+		input["callback_ids"] = req.CallbackIDs
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	// Only include optional fields if they're set
+	if len(req.Files) > 0 {
+		input["files"] = req.Files
+	}
+	if req.InteractiveTaskType != nil {
+		input["interactive_task_type"] = req.InteractiveTaskType
+	}
+	if req.ParentTaskID != nil {
+		input["parent_task_id"] = req.ParentTaskID
+	}
+	if req.TaskingLocation != "" {
+		input["tasking_location"] = req.TaskingLocation
+	}
+	if req.ParameterGroupName != "" {
+		input["parameter_group_name"] = req.ParameterGroupName
+	}
+	if req.OriginalParams != "" {
+		input["original_params"] = req.OriginalParams
+	}
+	if req.TokenID != nil {
+		input["token_id"] = req.TokenID
+	}
+
+	// Call the REST webhook endpoint
+	var response struct {
+		Status    string `json:"status"`
+		Error     string `json:"error"`
+		ID        int    `json:"id"`
+		DisplayID int    `json:"display_id"`
+	}
+
+	err := c.executeRESTRequest(ctx, "POST", "/api/v1.4/create_task_webhook", payload, &response)
 	if err != nil {
 		return nil, WrapError("IssueTask", err, "failed to create task")
 	}
 
 	// Check for error in response
-	if mutation.CreateTask.Error != "" {
-		return nil, WrapError("IssueTask", ErrInvalidResponse, fmt.Sprintf("task creation failed: %s", mutation.CreateTask.Error))
+	if response.Status != "success" {
+		return nil, WrapError("IssueTask", ErrOperationFailed, fmt.Sprintf("task creation failed: %s", response.Error))
 	}
 
 	// Get the full task details
-	return c.GetTask(ctx, mutation.CreateTask.DisplayID)
+	return c.GetTask(ctx, response.DisplayID)
 }
 
 // GetTask retrieves a task by its display ID.
