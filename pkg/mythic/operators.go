@@ -3,6 +3,7 @@ package mythic
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -479,17 +480,34 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, err
 	}
 
-	// Note: expires_at and max_uses are not supported in the GraphQL schema
-	// The expiration and max uses are handled server-side with default values
+	// Build variables map with all provided parameters
+	variables := map[string]interface{}{}
+
+	if req != nil {
+		if req.OperationID != nil {
+			variables["operation_id"] = *req.OperationID
+		}
+		if req.OperationRole != "" {
+			variables["operation_role"] = req.OperationRole
+		}
+		if req.MaxUses > 0 {
+			variables["total"] = req.MaxUses // GraphQL parameter is 'total', not 'max_uses'
+		}
+		if req.Name != "" {
+			variables["name"] = req.Name
+		}
+		if req.ShortCode != "" {
+			variables["short_code"] = req.ShortCode
+		}
+	}
 
 	var mutation struct {
 		CreateInviteLink struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"createInviteLink"`
+			Link   string `graphql:"link"` // The actual invite link URL
+		} `graphql:"createInviteLink(operation_id: $operation_id, operation_role: $operation_role, total: $total, name: $name, short_code: $short_code)"`
 	}
-
-	variables := map[string]interface{}{}
 
 	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
@@ -500,13 +518,24 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, WrapError("CreateInviteLink", ErrOperationFailed, mutation.CreateInviteLink.Error)
 	}
 
-	// createInviteLinkOutput only returns status and error
-	// All other fields (ID, Code, MaxUses, ExpiresAt) must be retrieved separately
+	// Parse the link URL to extract the short code
+	// Link format is typically: https://<server>/new/invite/<short_code>
+	link := mutation.CreateInviteLink.Link
+	shortCode := ""
+	if link != "" {
+		// Extract short code from URL
+		parts := strings.Split(link, "/")
+		if len(parts) > 0 {
+			shortCode = parts[len(parts)-1]
+		}
+	}
+
+	// Return the invite link with the short code
+	// Note: Other fields (ID, ExpiresAt, CreatedBy, etc.) are not returned by the mutation
+	// and would need to be retrieved via GetInviteLinks()
 	return &types.InviteLink{
-		ID:          0,           // Not returned by createInviteLink mutation
-		Code:        "",          // Not returned by createInviteLink mutation
-		ExpiresAt:   time.Time{}, // Not returned by createInviteLink mutation
-		MaxUses:     0,           // Not returned by createInviteLink mutation
+		Code:        shortCode,
+		MaxUses:     req.MaxUses,
 		CurrentUses: 0,
 		Active:      true,
 	}, nil

@@ -176,8 +176,11 @@ type InviteLink struct {
 
 // CreateInviteLinkRequest represents a request to create an invite link.
 type CreateInviteLinkRequest struct {
-	MaxUses   int       `json:"max_uses"`
-	ExpiresAt time.Time `json:"expires_at"`
+	OperationID   *int   `json:"operation_id,omitempty"`   // Operation to associate link with (optional)
+	OperationRole string `json:"operation_role,omitempty"` // Role for new users (operator, spectator, etc.)
+	MaxUses       int    `json:"max_uses,omitempty"`       // Maximum number of uses (maps to 'total' in GraphQL)
+	Name          string `json:"name,omitempty"`           // Human-readable name for the link
+	ShortCode     string `json:"short_code,omitempty"`     // Custom short code (optional)
 }
 
 // String returns a string representation of an Operator.
