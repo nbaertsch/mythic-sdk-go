@@ -117,7 +117,10 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		},
 	}
 
-	input := payload["input"].(map[string]interface{})
+	input, ok := payload["input"].(map[string]interface{})
+	if !ok {
+		return nil, WrapError("IssueTask", fmt.Errorf("unexpected payload structure"), "failed to construct request")
+	}
 
 	// Only include callback_id OR callback_ids, not both
 	if req.CallbackID != nil {
