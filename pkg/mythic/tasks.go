@@ -97,13 +97,23 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 	}
 
 	// Build variables - must include all variables referenced in query
+	// For non-nullable arrays (e.g., [Int!]!), use empty array instead of nil
+	callbackIDs := req.CallbackIDs
+	if callbackIDs == nil {
+		callbackIDs = []int{}
+	}
+	files := req.Files
+	if files == nil {
+		files = []string{}
+	}
+
 	variables := map[string]interface{}{
 		"command":               req.Command,
 		"params":                req.Params,
 		"is_interactive_task":   req.IsInteractiveTask,
 		"callback_id":           req.CallbackID,
-		"callback_ids":          req.CallbackIDs,
-		"files":                 req.Files,
+		"callback_ids":          callbackIDs,
+		"files":                 files,
 		"interactive_task_type": req.InteractiveTaskType,
 		"parent_task_id":        req.ParentTaskID,
 		"tasking_location":      req.TaskingLocation,

@@ -296,42 +296,37 @@ func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateO
 		return WrapError("UpdateOperatorOperation", ErrInvalidInput, "operator ID and operation ID are required")
 	}
 
-	if req.Remove {
-		// Remove operator from operation
-		var mutation struct {
-			DeleteOperatorOperation struct {
-				AffectedRows int `graphql:"affected_rows"`
-			} `graphql:"delete_operatoroperation(where: {operator_id: {_eq: $operator_id}, operation_id: {_eq: $operation_id}})"`
-		}
-
-		variables := map[string]interface{}{
-			"operator_id":  req.OperatorID,
-			"operation_id": req.OperationID,
-		}
-
-		err := c.executeMutation(ctx, &mutation, variables)
-		if err != nil {
-			return WrapError("UpdateOperatorOperation", err, "failed to remove operator from operation")
-		}
-
-		return nil
-	}
-
-	// Add or update operator in operation
+	// Note: updateOperatorOperation action signature:
+	// updateOperatorOperation(operation_id: Int!, add_users: [Int], remove_users: [Int],
+	//                         view_mode_operators: [Int], view_mode_spectators: [Int])
 	var mutation struct {
 		UpdateOperatorOperation struct {
 			Status string `graphql:"status"`
-		} `graphql:"updateOperatorOperation(operator_id: $operator_id, operation_id: $operation_id)"`
+			Error  string `graphql:"error"`
+		} `graphql:"updateOperatorOperation(operation_id: $operation_id, add_users: $add_users, remove_users: $remove_users)"`
 	}
 
 	variables := map[string]interface{}{
-		"operator_id":  req.OperatorID,
 		"operation_id": req.OperationID,
+		"add_users":    []int{},
+		"remove_users": []int{},
+	}
+
+	if req.Remove {
+		// Remove operator from operation
+		variables["remove_users"] = []int{req.OperatorID}
+	} else {
+		// Add operator to operation
+		variables["add_users"] = []int{req.OperatorID}
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return WrapError("UpdateOperatorOperation", err, "failed to update operator in operation")
+	}
+
+	if mutation.UpdateOperatorOperation.Status != "success" {
+		return WrapError("UpdateOperatorOperation", ErrOperationFailed, mutation.UpdateOperatorOperation.Error)
 	}
 
 	return nil
