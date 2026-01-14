@@ -77,11 +77,18 @@ type UpdateOperationRequest struct {
 	BannerColor *string `json:"banner_color,omitempty"`
 }
 
-// UpdateOperatorOperationRequest represents a request to update an operator's role in an operation.
+// UpdateOperatorOperationRequest represents a request to update operator(s) in an operation.
+// Supports adding/removing multiple operators and setting view-only permissions.
 type UpdateOperatorOperationRequest struct {
-	OperatorID  int  `json:"operator_id"`
-	OperationID int  `json:"operation_id"`
-	Remove      bool `json:"remove,omitempty"` // If true, remove operator from operation
+	OperationID        int   `json:"operation_id"`                   // Operation to modify (required)
+	AddUsers           []int `json:"add_users,omitempty"`            // Operator IDs to add with full access
+	RemoveUsers        []int `json:"remove_users,omitempty"`         // Operator IDs to remove from operation
+	ViewModeOperators  []int `json:"view_mode_operators,omitempty"`  // Operator IDs to set as view-only operators
+	ViewModeSpectators []int `json:"view_mode_spectators,omitempty"` // Operator IDs to set as view-only spectators
+
+	// Legacy fields for backwards compatibility - prefer using the array fields above
+	OperatorID int  `json:"operator_id,omitempty"` // Single operator ID (deprecated, use AddUsers/RemoveUsers)
+	Remove     bool `json:"remove,omitempty"`      // If true, remove operator (deprecated, use RemoveUsers)
 }
 
 // CreateOperationEventLogRequest represents a request to create an event log entry.

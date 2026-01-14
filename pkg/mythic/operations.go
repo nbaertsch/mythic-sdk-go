@@ -286,38 +286,63 @@ func (c *Client) GetOperatorsByOperation(ctx context.Context, operationID int) (
 	return operators, nil
 }
 
-// UpdateOperatorOperation adds/removes/updates an operator in an operation.
+// UpdateOperatorOperation adds/removes/updates operator(s) in an operation.
+// Supports bulk operations and view-only permissions.
 func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateOperatorOperationRequest) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
 	}
 
-	if req == nil || req.OperatorID == 0 || req.OperationID == 0 {
-		return WrapError("UpdateOperatorOperation", ErrInvalidInput, "operator ID and operation ID are required")
+	if req == nil || req.OperationID == 0 {
+		return WrapError("UpdateOperatorOperation", ErrInvalidInput, "operation ID is required")
 	}
 
-	// Note: updateOperatorOperation action signature:
-	// updateOperatorOperation(operation_id: Int!, add_users: [Int], remove_users: [Int],
-	//                         view_mode_operators: [Int], view_mode_spectators: [Int])
+	// Build variables map with all provided parameters
+	// GraphQL signature: updateOperatorOperation(operation_id: Int!, add_users: [Int],
+	//                    remove_users: [Int], view_mode_operators: [Int], view_mode_spectators: [Int])
+	variables := map[string]interface{}{
+		"operation_id": req.OperationID,
+	}
+
+	// Handle new array-based fields
+	addUsers := req.AddUsers
+	removeUsers := req.RemoveUsers
+
+	// Handle legacy single-operator fields for backwards compatibility
+	if req.OperatorID != 0 {
+		if req.Remove {
+			// Legacy: Remove single operator
+			if len(removeUsers) == 0 {
+				removeUsers = []int{req.OperatorID}
+			}
+		} else {
+			// Legacy: Add single operator
+			if len(addUsers) == 0 {
+				addUsers = []int{req.OperatorID}
+			}
+		}
+	}
+
+	// Only include non-empty arrays in variables
+	// Nil arrays are handled properly by the GraphQL client
+	if len(addUsers) > 0 {
+		variables["add_users"] = addUsers
+	}
+	if len(removeUsers) > 0 {
+		variables["remove_users"] = removeUsers
+	}
+	if len(req.ViewModeOperators) > 0 {
+		variables["view_mode_operators"] = req.ViewModeOperators
+	}
+	if len(req.ViewModeSpectators) > 0 {
+		variables["view_mode_spectators"] = req.ViewModeSpectators
+	}
+
 	var mutation struct {
 		UpdateOperatorOperation struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"updateOperatorOperation(operation_id: $operation_id, add_users: $add_users, remove_users: $remove_users)"`
-	}
-
-	variables := map[string]interface{}{
-		"operation_id": req.OperationID,
-		"add_users":    []int{},
-		"remove_users": []int{},
-	}
-
-	if req.Remove {
-		// Remove operator from operation
-		variables["remove_users"] = []int{req.OperatorID}
-	} else {
-		// Add operator to operation
-		variables["add_users"] = []int{req.OperatorID}
+		} `graphql:"updateOperatorOperation(operation_id: $operation_id, add_users: $add_users, remove_users: $remove_users, view_mode_operators: $view_mode_operators, view_mode_spectators: $view_mode_spectators)"`
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
