@@ -96,70 +96,61 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		return nil, WrapError("IssueTask", ErrInvalidInput, "command is required")
 	}
 
-	// Use REST webhook endpoint for better control over JSON serialization
-	// Build the request payload - only include non-nil values
-	payload := map[string]interface{}{
-		"input": map[string]interface{}{
-			"command":             req.Command,
-			"params":              req.Params,
-			"is_interactive_task": req.IsInteractiveTask,
-		},
-	}
+	// Build variables map for GraphQL mutation
+	// CRITICAL: For optional array parameters, use nil when not set (not empty slices!)
+	// The GraphQL client serializes nil as null, which Hasura treats as "parameter not provided"
+	// Empty slices [] would be serialized as [], which could cause validation errors
 
-	input := payload["input"].(map[string]interface{})
-
-	// Only include callback_id OR callback_ids, not both
-	// This matches the webhook's logic for determining which callbacks to use
-	if req.CallbackID != nil {
-		input["callback_id"] = req.CallbackID
-	}
+	var callbackIDs []int
 	if len(req.CallbackIDs) > 0 {
-		input["callback_ids"] = req.CallbackIDs
+		callbackIDs = req.CallbackIDs
 	}
+	// Otherwise leave as nil
 
-	// Only include optional fields if they're set
+	var files []string
 	if len(req.Files) > 0 {
-		input["files"] = req.Files
+		files = req.Files
 	}
-	if req.InteractiveTaskType != nil {
-		input["interactive_task_type"] = req.InteractiveTaskType
-	}
-	if req.ParentTaskID != nil {
-		input["parent_task_id"] = req.ParentTaskID
-	}
-	if req.TaskingLocation != "" {
-		input["tasking_location"] = req.TaskingLocation
-	}
-	if req.ParameterGroupName != "" {
-		input["parameter_group_name"] = req.ParameterGroupName
-	}
-	if req.OriginalParams != "" {
-		input["original_params"] = req.OriginalParams
-	}
-	if req.TokenID != nil {
-		input["token_id"] = req.TokenID
+	// Otherwise leave as nil
+
+	// All variables must be present in the map (GraphQL requires this),
+	// but optional parameters should be nil when not set
+	variables := map[string]interface{}{
+		"command":               req.Command,
+		"params":                req.Params,
+		"is_interactive_task":   req.IsInteractiveTask,
+		"callback_id":           req.CallbackID,          // *int (nil or value)
+		"callback_ids":          callbackIDs,             // nil or []int
+		"files":                 files,                   // nil or []string
+		"interactive_task_type": req.InteractiveTaskType, // *int (nil or value)
+		"parent_task_id":        req.ParentTaskID,        // *int (nil or value)
+		"tasking_location":      req.TaskingLocation,     // string (empty or value)
+		"parameter_group_name":  req.ParameterGroupName,  // string (empty or value)
+		"original_params":       req.OriginalParams,      // string (empty or value)
+		"token_id":              req.TokenID,             // *int (nil or value)
 	}
 
-	// Call the REST webhook endpoint
-	var response struct {
-		Status    string `json:"status"`
-		Error     string `json:"error"`
-		ID        int    `json:"id"`
-		DisplayID int    `json:"display_id"`
+	var mutation struct {
+		CreateTask struct {
+			ID        int    `graphql:"id"`
+			DisplayID int    `graphql:"display_id"`
+			Status    string `graphql:"status"`
+			Error     string `graphql:"error"`
+		} `graphql:"createTask(callback_id: $callback_id, callback_ids: $callback_ids, command: $command, params: $params, files: $files, is_interactive_task: $is_interactive_task, interactive_task_type: $interactive_task_type, parent_task_id: $parent_task_id, tasking_location: $tasking_location, parameter_group_name: $parameter_group_name, original_params: $original_params, token_id: $token_id)"`
 	}
 
-	err := c.executeRESTWebhook(ctx, "api/v1.4/create_task_webhook", payload, &response)
+	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
 		return nil, WrapError("IssueTask", err, "failed to create task")
 	}
 
 	// Check for error in response
-	if response.Status != "success" {
-		return nil, WrapError("IssueTask", ErrOperationFailed, fmt.Sprintf("task creation failed: %s", response.Error))
+	if mutation.CreateTask.Error != "" {
+		return nil, WrapError("IssueTask", ErrInvalidResponse, fmt.Sprintf("task creation failed: %s", mutation.CreateTask.Error))
 	}
 
 	// Get the full task details
-	return c.GetTask(ctx, response.DisplayID)
+	return c.GetTask(ctx, mutation.CreateTask.DisplayID)
 }
 
 // GetTask retrieves a task by its display ID.
