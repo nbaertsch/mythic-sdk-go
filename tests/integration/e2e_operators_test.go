@@ -196,10 +196,10 @@ func TestE2E_OperatorManagement(t *testing.T) {
 	ctx10, cancel10 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel10()
 
-	expiresAt := time.Now().Add(24 * time.Hour)
 	inviteReq := &types.CreateInviteLinkRequest{
-		MaxUses:   5,
-		ExpiresAt: expiresAt,
+		MaxUses:       5,
+		Name:          "E2E Test Invite",
+		OperationRole: "operator",
 	}
 
 	inviteLink, err := client.CreateInviteLink(ctx10, inviteReq)
@@ -207,8 +207,7 @@ func TestE2E_OperatorManagement(t *testing.T) {
 		// Invite links may be disabled on the server
 		t.Logf("⚠ CreateInviteLink not available (server may have invite links disabled): %v", err)
 	} else {
-		// Note: createInviteLinkOutput doesn't return code, id, or other fields
-		t.Logf("✓ Invite link operation completed (code and details not returned by API)")
+		t.Logf("✓ Invite link created with code: %s (maxUses: %d)", inviteLink.Code, inviteLink.MaxUses)
 	}
 
 	// Test 11: Get invite links
