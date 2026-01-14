@@ -148,7 +148,7 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 		DisplayID int    `json:"display_id"`
 	}
 
-	err := c.executeRESTRequest(ctx, "POST", "/api/v1.4/create_task_webhook", payload, &response)
+	err := c.executeRESTWebhook(ctx, "api/v1.4/create_task_webhook", payload, &response)
 	if err != nil {
 		return nil, WrapError("IssueTask", err, "failed to create task")
 	}
