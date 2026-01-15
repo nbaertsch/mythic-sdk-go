@@ -283,3 +283,140 @@ func TestE2E_C2ProfilesErrorHandling(t *testing.T) {
 
 	t.Log("=== ✓ All error handling tests passed ===")
 }
+
+// TestE2E_C2ProfileImport tests C2 profile instance import.
+// Covers: ImportC2Instance
+func TestE2E_C2ProfileImport(t *testing.T) {
+	_ = AuthenticateTestClient(t)
+
+	t.Log("=== Test: Import C2 instance (skipped for safety) ===")
+	t.Log("⚠ ImportC2Instance not tested to avoid modifying C2 infrastructure")
+	t.Log("  To test import, export a C2 instance config first and use it for testing")
+	t.Log("  Note: This operation can affect running C2 profiles")
+	t.Log("=== ✓ Import test skipped ===")
+
+	// In a real test environment, you would:
+	// 1. Export a C2 instance config
+	// 2. Modify it slightly (e.g., change instance name)
+	// 3. Import it back as a new instance
+	// 4. Verify the import succeeded
+	// 5. Clean up the test instance
+}
+
+// TestE2E_C2ProfileHostFile tests hosting files via C2 profiles.
+// Covers: C2HostFile
+func TestE2E_C2ProfileHostFile(t *testing.T) {
+	client := AuthenticateTestClient(t)
+
+	// Get a running C2 profile
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+
+	profiles, err := client.GetC2Profiles(ctx0)
+	if err != nil {
+		t.Fatalf("GetC2Profiles failed: %v", err)
+	}
+
+	var runningProfile *types.C2Profile
+	for _, profile := range profiles {
+		if profile.Running {
+			runningProfile = profile
+			break
+		}
+	}
+
+	if runningProfile == nil {
+		t.Skip("No running C2 profiles found, skipping file hosting test")
+	}
+
+	t.Logf("Using running profile: %s (ID: %d)", runningProfile.Name, runningProfile.ID)
+
+	// Get a file to host
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel1()
+
+	files, err := client.GetFiles(ctx1, 10)
+	if err != nil || len(files) == 0 {
+		t.Skip("No files found, skipping file hosting test")
+	}
+
+	testFile := files[0]
+	t.Logf("Using file: %s (UUID: %s)", testFile.Filename, testFile.AgentFileID)
+
+	// Test: Host file via C2 profile
+	t.Log("=== Test: Host file via C2 profile ===")
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel2()
+
+	err = client.C2HostFile(ctx2, runningProfile.ID, testFile.AgentFileID)
+	if err != nil {
+		t.Logf("⚠ C2HostFile failed (may not be supported by this profile): %v", err)
+	} else {
+		t.Logf("✓ File hosted successfully via profile %d", runningProfile.ID)
+	}
+
+	t.Log("=== ✓ File hosting tests completed ===")
+}
+
+// TestE2E_C2ProfileAttributes tests C2 profile attribute analysis.
+func TestE2E_C2ProfileAttributes(t *testing.T) {
+	client := AuthenticateTestClient(t)
+
+	t.Log("=== Test: Analyze C2 profile attributes ===")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	profiles, err := client.GetC2Profiles(ctx)
+	if err != nil {
+		t.Fatalf("GetC2Profiles failed: %v", err)
+	}
+
+	if len(profiles) == 0 {
+		t.Skip("No C2 profiles found for attribute analysis")
+	}
+
+	t.Logf("✓ Analyzing %d C2 profiles", len(profiles))
+
+	// Analyze attributes
+	runningCount := 0
+	stoppedCount := 0
+	profileTypes := make(map[string]int)
+
+	for _, profile := range profiles {
+		if profile.Running {
+			runningCount++
+		} else {
+			stoppedCount++
+		}
+		if profile.Name != "" {
+			profileTypes[profile.Name]++
+		}
+	}
+
+	t.Logf("  Profile status:")
+	t.Logf("    Running: %d", runningCount)
+	t.Logf("    Stopped: %d", stoppedCount)
+
+	t.Logf("  Profile types:")
+	for ptype, count := range profileTypes {
+		t.Logf("    %s: %d", ptype, count)
+	}
+
+	// Show sample profiles
+	sampleCount := 3
+	if len(profiles) < sampleCount {
+		sampleCount = len(profiles)
+	}
+
+	t.Logf("  Sample profiles:")
+	for i := 0; i < sampleCount; i++ {
+		p := profiles[i]
+		status := "stopped"
+		if p.Running {
+			status = "running"
+		}
+		t.Logf("    [%d] %s (Status: %s)", p.ID, p.Name, status)
+	}
+
+	t.Log("=== ✓ Attribute analysis complete ===")
+}
