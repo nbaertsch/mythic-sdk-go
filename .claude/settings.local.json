@@ -44,7 +44,8 @@
       "Bash(sudo ./mythic-cli stop:*)",
       "Bash(go install:*)",
       "Bash(wc:*)",
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "WebFetch(domain:docs.mythic-c2.net)"
     ]
   }
 }

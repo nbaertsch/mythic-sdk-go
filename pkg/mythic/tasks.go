@@ -390,6 +390,13 @@ func (c *Client) GetTaskOutput(ctx context.Context, taskDisplayID int) ([]*TaskR
 // WaitForTaskComplete polls a task until it completes or times out.
 // Returns an error if the task fails or times out.
 func (c *Client) WaitForTaskComplete(ctx context.Context, taskDisplayID int, timeoutSeconds int) error {
+	return c.WaitForTaskCompleteWithOptions(ctx, taskDisplayID, timeoutSeconds, false)
+}
+
+// WaitForTaskCompleteWithOptions polls a task until it completes or times out.
+// If autoBypassOpsec is true, automatically requests OPSEC bypass when tasks are blocked.
+// This is useful for automated testing environments where manual OPSEC approval is not available.
+func (c *Client) WaitForTaskCompleteWithOptions(ctx context.Context, taskDisplayID int, timeoutSeconds int, autoBypassOpsec bool) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
 	}
@@ -401,6 +408,8 @@ func (c *Client) WaitForTaskComplete(ctx context.Context, taskDisplayID int, tim
 	timeout := time.After(time.Duration(timeoutSeconds) * time.Second)
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+
+	opsecBypassAttempted := false // Track if we've already tried to bypass OPSEC
 
 	for {
 		select {
@@ -422,6 +431,24 @@ func (c *Client) WaitForTaskComplete(ctx context.Context, taskDisplayID int, tim
 			// Check if task errored
 			if task.Status == string(TaskStatusError) {
 				return WrapError("WaitForTaskComplete", ErrTaskFailed, fmt.Sprintf("task %d failed: %s", taskDisplayID, task.Stderr))
+			}
+
+			// Auto-bypass OPSEC if requested and task is blocked
+			if autoBypassOpsec && !opsecBypassAttempted {
+				// Check if task is blocked by OPSEC pre-check
+				isOpsecBlocked := (task.OpsecPreBlocked != nil && *task.OpsecPreBlocked) ||
+					(task.Status == "OPSEC Pre Check Running...")
+
+				if isOpsecBlocked && !task.OpsecPreBypassed {
+					// Request OPSEC bypass
+					bypassErr := c.RequestOpsecBypass(ctx, task.ID)
+					if bypassErr != nil {
+						// Log the error but continue polling - operator may need to approve
+						// Don't fail the entire wait operation
+						_ = bypassErr // Ignore error - may not have permission
+					}
+					opsecBypassAttempted = true // Only try once per wait cycle
+				}
 			}
 		}
 	}

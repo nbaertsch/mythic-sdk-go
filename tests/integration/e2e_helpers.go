@@ -174,17 +174,20 @@ func (s *E2ETestSetup) ExecuteCommand(cmd string, params string) (int, error) {
 	return task.DisplayID, nil
 }
 
-// WaitForTaskComplete polls for task completion and returns concatenated output
+// WaitForTaskComplete polls for task completion and returns concatenated output.
+// Automatically requests OPSEC bypass if task is blocked (for automated testing).
 func (s *E2ETestSetup) WaitForTaskComplete(taskDisplayID int, timeout time.Duration) (string, error) {
 	s.t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	s.t.Logf("Waiting for task %d to complete (timeout: %v)", taskDisplayID, timeout)
+	s.t.Logf("Waiting for task %d to complete (timeout: %v, auto-bypass OPSEC: enabled)", taskDisplayID, timeout)
 
 	timeoutSeconds := int(timeout.Seconds())
-	err := s.Client.WaitForTaskComplete(ctx, taskDisplayID, timeoutSeconds)
+	// Enable automatic OPSEC bypass for E2E tests
+	// This allows tests to run in automated environments without manual approval
+	err := s.Client.WaitForTaskCompleteWithOptions(ctx, taskDisplayID, timeoutSeconds, true)
 	if err != nil {
 		return "", fmt.Errorf("task did not complete: %w", err)
 	}
