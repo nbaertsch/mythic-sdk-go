@@ -20,11 +20,17 @@ jobs:
         test-group:
           - "Phase 1+2: Core APIs"
           - "Phase 3: Agent Tests"
+          - "Phase 4: Advanced APIs"
+          - "Phase 5: Edge Cases"
         include:
           - test-group: "Phase 1+2: Core APIs"
             test-pattern: "TestE2E_Auth|TestE2E_Operations|TestE2E_File|TestE2E_Credential|TestE2E_Artifact|TestE2E_Tag|TestE2E_Operator|TestE2E_C2Profile|TestE2E_MITREAttack|TestE2E_Payload"
           - test-group: "Phase 3: Agent Tests"
             test-pattern: "TestE2E_Callback"
+          - test-group: "Phase 4: Advanced APIs"
+            test-pattern: "TestE2E_Command|TestE2E_Task|TestE2E_Response|TestE2E_Process|TestE2E_Screenshot|TestE2E_Report|TestE2E_Redirect|TestE2E_Token"
+          - test-group: "Phase 5: Edge Cases"
+            test-pattern: "TestE2E_Context|TestE2E_Concurrent|TestE2E_Large|TestE2E_Rate|TestE2E_Invalid|TestE2E_Network|TestE2E_Memory|TestE2E_Query"
 
     steps:
       - name: Checkout SDK

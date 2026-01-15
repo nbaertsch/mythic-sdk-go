@@ -190,7 +190,7 @@ func (c *Client) GetCallbackTokens(ctx context.Context) ([]*types.CallbackToken,
 			CallbackID int       `graphql:"callback_id"`
 			TokenID    int       `graphql:"token_id"`
 			Timestamp  time.Time `graphql:"timestamp"`
-		} `graphql:"callbacktoken(where: {callback: {operation_id: {_eq: $operation_id}}}, order_by: {timestamp: desc})"`
+		} `graphql:"callbacktoken(where: {callback: {operation_id: {_eq: $operation_id}}}, order_by: {id: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -231,7 +231,7 @@ func (c *Client) GetCallbackTokensByCallback(ctx context.Context, callbackID int
 			CallbackID int       `graphql:"callback_id"`
 			TokenID    int       `graphql:"token_id"`
 			Timestamp  time.Time `graphql:"timestamp"`
-		} `graphql:"callbacktoken(where: {callback_id: {_eq: $callback_id}}, order_by: {timestamp: desc})"`
+		} `graphql:"callbacktoken(where: {callback_id: {_eq: $callback_id}}, order_by: {id: desc})"`
 	}
 
 	variables := map[string]interface{}{

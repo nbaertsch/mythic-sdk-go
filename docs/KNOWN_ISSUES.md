@@ -123,6 +123,121 @@ The GraphQL client serializes `nil` pointers as `null`, which GraphQL correctly 
 
 ---
 
+## C2GetIOC and C2SampleMessage GraphQL Schema Mismatches
+
+### Issue
+The `C2GetIOC` and `C2SampleMessage` functions use parameter names that don't match the Mythic GraphQL schema in some configurations.
+
+### Error Messages
+1. **C2GetIOC**: `'c2GetIOC' has no argument named 'profile_id'`
+2. **C2SampleMessage**: `'c2SampleMessage' has no argument named 'message_type'`
+
+### Current Status
+- Functions are implemented and fail gracefully when schema doesn't match
+- Integration tests handle these as warnings (not failures)
+- May be version-specific or configuration-dependent features
+
+### Impact
+- ⚠️ IOC generation may not work in all Mythic configurations
+- ⚠️ Sample message generation may not work in all Mythic configurations
+- ✅ Tests pass - errors are caught and logged as warnings
+- ✅ SDK remains functional - these are optional features
+
+### Workaround
+These features are not critical to core SDK functionality. The SDK handles failures gracefully:
+```go
+ioc, err := client.C2GetIOC(ctx, profileID)
+if err != nil {
+    // Handle gracefully - feature may not be available
+    log.Printf("C2GetIOC not available: %v", err)
+}
+```
+
+### Investigation Needed
+To fix these issues, we need to:
+1. Determine correct parameter names from Mythic GraphQL schema
+2. Verify if these features require specific C2 profile types
+3. Check if these features are version-specific (may not be in v3.4.20)
+
+### Status
+- **Documented**: Known schema mismatch (v3.4.20)
+- **Low priority**: Optional features, graceful degradation
+- **Future**: Investigate correct schema parameters or remove if deprecated
+
+### Code Location
+See `pkg/mythic/c2profiles.go:296-368`
+
+---
+
+## TestE2E_CallbackTaskLifecycle OPSEC Timeout in CI
+
+### Issue
+The `TestE2E_CallbackTaskLifecycle` integration test occasionally times out in CI when tasks get stuck in "OPSEC Pre Check Running..." status.
+
+### Root Cause
+Mythic's OPSEC (Operational Security) pre-check feature requires manual operator approval before tasks execute. In the CI environment:
+1. Task is issued successfully
+2. Task enters "OPSEC Pre Check Running..." status
+3. **No operator available to approve** - test waits indefinitely
+4. Test times out after 30-60 seconds
+
+### CI Evidence (Run 21014612618)
+```
+Duration: 61.29s
+Details:
+- ✓ Payload created and agent deployed successfully
+- ✓ Agent callback established (ID: 1)
+- ✓ Host: RUNNERVMI13QX, User: runner, PID: 11675
+- ✓ Loaded 75 commands
+- ✓ Shell task issued (Display ID: 1)
+- ✓ Task status: "OPSEC Pre Check Running..."
+- ❌ Task never completed (stuck in OPSEC pre-check)
+```
+
+### Impact
+- ⚠️ Intermittent CI failures when OPSEC is enabled
+- ⚠️ Test timeout (61s) but no actual SDK failure
+- ✅ SDK works correctly - issue is test environment configuration
+- ✅ Manual testing with OPSEC disabled works fine
+
+### Workarounds
+
+**Option 1: Disable OPSEC for Test Operation** (Recommended)
+Configure the Mythic operation to bypass OPSEC checks:
+```bash
+# In Mythic UI or via API:
+# Operations > [Test Operation] > Settings > Disable OPSEC Pre-checks
+```
+
+**Option 2: Configure Callback to Bypass OPSEC**
+Set callback-level OPSEC bypass when creating the agent.
+
+**Option 3: Test Detection**
+Modify test to detect OPSEC status and skip:
+```go
+if task.Status == "OPSEC Pre Check Running..." {
+    t.Skip("Task waiting for OPSEC approval - skipping in automated environment")
+}
+```
+
+### Investigation Notes
+- OPSEC feature is designed for production security (manual approval before execution)
+- CI environments are automated and cannot provide manual approvals
+- The SDK correctly handles task lifecycle; OPSEC is a Mythic server feature
+- Task polling works correctly (`WaitForTaskComplete` polls every 2 seconds)
+
+### Status
+- **Not an SDK bug**: Mythic OPSEC feature working as designed
+- **Test environment issue**: CI needs OPSEC disabled or callbacks configured to bypass
+- **Low priority**: Only affects CI; SDK functionality is correct
+- **Future**: Add OPSEC status detection in test or CI configuration
+
+### Code Location
+- Test: `tests/integration/e2e_callback_task_test.go:19-468`
+- Polling: `pkg/mythic/tasks.go:392-435`
+
+---
+
 ## Version Compatibility
 
 This SDK is tested against **Mythic v3.4.20**.

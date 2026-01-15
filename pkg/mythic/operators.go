@@ -486,7 +486,15 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 	}
 
 	// Build variables map with all provided parameters
-	variables := map[string]interface{}{}
+	// CRITICAL: ALL variables referenced in the GraphQL mutation MUST be present in the map
+	// even if they're nil/empty, otherwise GraphQL will error with "unbound variable"
+	variables := map[string]interface{}{
+		"operation_id":   nil,
+		"operation_role": nil,
+		"total":          nil,
+		"name":           nil,
+		"short_code":     nil,
+	}
 
 	if req != nil {
 		if req.OperationID != nil {

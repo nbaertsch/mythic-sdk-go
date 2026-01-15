@@ -40,7 +40,11 @@
       "Bash(git rm:*)",
       "Bash(chmod:*)",
       "Bash(sudo ./mythic-cli start:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(sudo ./mythic-cli stop:*)",
+      "Bash(go install:*)",
+      "Bash(wc:*)",
+      "Bash(xargs basename:*)"
     ]
   }
 }
