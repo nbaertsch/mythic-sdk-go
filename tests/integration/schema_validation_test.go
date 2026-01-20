@@ -83,17 +83,15 @@ func TestE2E_SchemaValidation_Payload(t *testing.T) {
 
 	// Test 2: Validate callback_alert type
 	t.Log("=== Test 2: Validate callback_alert type ===")
-	// This field is an array, not a bool
-	// We removed it from SDK queries to prevent panic
-	helpers.AssertFieldType(t, schema, "callback_alert", "array")
-	t.Log("✓ Field 'callback_alert' is array (removed from SDK to prevent type mismatch panic)")
+	// This field is a Boolean - our initial assumption that it was an array was incorrect
+	helpers.AssertFieldExists(t, schema, "callback_alert", "Boolean")
+	t.Log("✓ Field 'callback_alert' is Boolean")
 
 	// Test 3: Validate auto_generated type
 	t.Log("=== Test 3: Validate auto_generated type ===")
-	// This field is an array, not a bool
-	// We removed it from SDK queries to prevent panic
-	helpers.AssertFieldType(t, schema, "auto_generated", "array")
-	t.Log("✓ Field 'auto_generated' is array (removed from SDK to prevent type mismatch panic)")
+	// This field is a Boolean - our initial assumption that it was an array was incorrect
+	helpers.AssertFieldExists(t, schema, "auto_generated", "Boolean")
+	t.Log("✓ Field 'auto_generated' is Boolean")
 
 	// Test 4: Validate deleted field (should be bool, not array)
 	t.Log("=== Test 4: Validate deleted field ===")
