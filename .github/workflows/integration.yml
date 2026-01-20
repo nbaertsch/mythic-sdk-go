@@ -45,7 +45,7 @@ jobs:
       - name: Verify Test Compilation
         run: |
           echo "::group::Compiling integration tests"
-          if ! go test -c -tags=integration ./tests/integration/... -o /tmp/integration.test; then
+          if ! go test -c -tags=integration ./tests/integration/... -o /dev/null; then
             echo "::error::❌ Integration tests failed to compile"
             exit 1
           fi
