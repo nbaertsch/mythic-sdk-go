@@ -18,11 +18,14 @@ jobs:
       fail-fast: false
       matrix:
         test-group:
+          - "Phase 0: Schema Validation"
           - "Phase 1+2: Core APIs"
           - "Phase 3: Agent Tests"
           - "Phase 4: Advanced APIs"
           - "Phase 5: Edge Cases"
         include:
+          - test-group: "Phase 0: Schema Validation"
+            test-pattern: "TestE2E_SchemaValidation"
           - test-group: "Phase 1+2: Core APIs"
             test-pattern: "TestE2E_Auth|TestE2E_Operations|TestE2E_File|TestE2E_Credential|TestE2E_Artifact|TestE2E_Tag|TestE2E_Operator|TestE2E_C2Profile|TestE2E_MITREAttack|TestE2E_Payload"
           - test-group: "Phase 3: Agent Tests"
