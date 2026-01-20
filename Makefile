@@ -1,4 +1,4 @@
-.PHONY: help test lint coverage integration-test bench install-tools clean build
+.PHONY: help test lint coverage integration-test bench install-tools clean
 
 # Variables
 GO := go
@@ -18,9 +18,8 @@ help:
 	@echo "  make coverage          - Generate coverage report"
 	@echo "  make bench             - Run benchmarks"
 	@echo "  make install-tools     - Install development tools"
-	@echo "  make build             - Build CLI tool"
 	@echo "  make clean             - Clean build artifacts"
-	@echo "  make all               - Run lint, test, and build"
+	@echo "  make all               - Run lint and test"
 
 # Run unit tests
 test:
@@ -60,13 +59,6 @@ install-tools:
 	$(GO) install github.com/golang/mock/mockgen@latest
 	@echo "✓ Tools installed"
 
-# Build CLI tool
-build:
-	@echo "Building CLI tool..."
-	@mkdir -p bin
-	$(GO) build -o bin/mythic-cli ./cmd/mythic-cli
-	@echo "✓ Build complete: bin/mythic-cli"
-
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
@@ -77,7 +69,7 @@ clean:
 	@echo "✓ Cleaned"
 
 # Run all checks
-all: lint test build
+all: lint test
 	@echo "✓ All checks passed"
 
 # Format code

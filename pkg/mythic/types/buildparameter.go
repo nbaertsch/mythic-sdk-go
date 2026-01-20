@@ -10,7 +10,7 @@ import (
 type BuildParameterType struct {
 	ID                 int       `json:"id"`
 	Name               string    `json:"name"`
-	PayloadTypeID      int       `json:"payloadtype_id"`
+	PayloadTypeID      int       `json:"payload_type_id"`
 	Description        string    `json:"description"`
 	Parameter          string    `json:"parameter"` // JSON schema or definition
 	Required           bool      `json:"required"`

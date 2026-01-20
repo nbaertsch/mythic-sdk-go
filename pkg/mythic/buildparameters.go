@@ -17,7 +17,7 @@ func (c *Client) GetBuildParameters(ctx context.Context) ([]*types.BuildParamete
 		BuildParameters []struct {
 			ID                 int    `graphql:"id"`
 			Name               string `graphql:"name"`
-			PayloadTypeID      int    `graphql:"payloadtype_id"`
+			PayloadTypeID      int    `graphql:"payload_type_id"`
 			Description        string `graphql:"description"`
 			Parameter          string `graphql:"parameter"`
 			Required           bool   `graphql:"required"`
@@ -30,7 +30,7 @@ func (c *Client) GetBuildParameters(ctx context.Context) ([]*types.BuildParamete
 			Deleted            bool   `graphql:"deleted"`
 			CreationTime       string `graphql:"creation_time"`
 			ParameterGroupName string `graphql:"parameter_group_name"`
-		} `graphql:"buildparameter(where: {deleted: {_eq: false}}, order_by: {payloadtype_id: asc, name: asc})"`
+		} `graphql:"buildparameter(where: {deleted: {_eq: false}}, order_by: {payload_type_id: asc, name: asc})"`
 	}
 
 	err := c.executeQuery(ctx, &query, nil)
@@ -78,7 +78,7 @@ func (c *Client) GetBuildParametersByPayloadType(ctx context.Context, payloadTyp
 		BuildParameters []struct {
 			ID                 int    `graphql:"id"`
 			Name               string `graphql:"name"`
-			PayloadTypeID      int    `graphql:"payloadtype_id"`
+			PayloadTypeID      int    `graphql:"payload_type_id"`
 			Description        string `graphql:"description"`
 			Parameter          string `graphql:"parameter"`
 			Required           bool   `graphql:"required"`
@@ -91,11 +91,11 @@ func (c *Client) GetBuildParametersByPayloadType(ctx context.Context, payloadTyp
 			Deleted            bool   `graphql:"deleted"`
 			CreationTime       string `graphql:"creation_time"`
 			ParameterGroupName string `graphql:"parameter_group_name"`
-		} `graphql:"buildparameter(where: {payloadtype_id: {_eq: $payloadtype_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
+		} `graphql:"buildparameter(where: {payload_type_id: {_eq: $payload_type_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
 	variables := map[string]interface{}{
-		"payloadtype_id": payloadTypeID,
+		"payload_type_id": payloadTypeID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)
@@ -199,7 +199,7 @@ func (c *Client) GetBuildParameterInstancesByPayload(ctx context.Context, payloa
 			BuildParameter   struct {
 				ID                 int    `graphql:"id"`
 				Name               string `graphql:"name"`
-				PayloadTypeID      int    `graphql:"payloadtype_id"`
+				PayloadTypeID      int    `graphql:"payload_type_id"`
 				Description        string `graphql:"description"`
 				ParameterType      string `graphql:"parameter_type"`
 				Required           bool   `graphql:"required"`

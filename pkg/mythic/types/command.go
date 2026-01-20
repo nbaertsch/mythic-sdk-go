@@ -9,7 +9,7 @@ import (
 type Command struct {
 	ID                  int       `json:"id"`
 	Cmd                 string    `json:"cmd"`
-	PayloadTypeID       int       `json:"payloadtype_id"`
+	PayloadTypeID       int       `json:"payload_type_id"`
 	Description         string    `json:"description"`
 	Help                string    `json:"help_cmd"`
 	Version             int       `json:"version"`

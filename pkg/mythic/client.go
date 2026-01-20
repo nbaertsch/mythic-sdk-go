@@ -194,6 +194,86 @@ func (c *Client) executeMutation(ctx context.Context, mutation interface{}, vari
 	return client.Mutate(ctx, mutation, variables)
 }
 
+// ExecuteRawGraphQL executes a raw GraphQL query and returns the raw JSON response.
+// This is used for GraphQL introspection queries and other cases that don't fit typed structures.
+func (c *Client) ExecuteRawGraphQL(ctx context.Context, query string, variables map[string]interface{}) (map[string]interface{}, error) {
+	if !c.IsAuthenticated() {
+		return nil, ErrNotAuthenticated
+	}
+
+	// Construct GraphQL endpoint URL
+	scheme := "https"
+	if !c.config.SSL {
+		scheme = "http"
+	}
+	url := fmt.Sprintf("%s://%s/graphql/", scheme, stripScheme(c.config.ServerURL))
+
+	// Build GraphQL request
+	requestBody := map[string]interface{}{
+		"query": query,
+	}
+	if variables != nil {
+		requestBody["variables"] = variables
+	}
+
+	// Marshal request
+	reqBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, WrapError("ExecuteRawGraphQL", err, "failed to marshal request")
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return nil, WrapError("ExecuteRawGraphQL", err, "failed to create request")
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	for key, value := range c.getAuthHeaders() {
+		req.Header.Set(key, value)
+	}
+
+	// Execute request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, WrapError("ExecuteRawGraphQL", err, "failed to execute request")
+	}
+	defer resp.Body.Close() //nolint:errcheck // Response body close error not critical
+
+	// Read response
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, WrapError("ExecuteRawGraphQL", err, "failed to read response")
+	}
+
+	// Check status code
+	if resp.StatusCode >= 400 {
+		return nil, WrapError("ExecuteRawGraphQL", ErrAuthenticationFailed,
+			fmt.Sprintf("request failed with status %d: %s", resp.StatusCode, string(respBytes)))
+	}
+
+	// Unmarshal response
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBytes, &result); err != nil {
+		return nil, WrapError("ExecuteRawGraphQL", err,
+			fmt.Sprintf("failed to unmarshal response: %s", string(respBytes)))
+	}
+
+	// Check for GraphQL errors
+	if errors, ok := result["errors"].([]interface{}); ok && len(errors) > 0 {
+		errMsg := "GraphQL errors occurred"
+		if firstErr, ok := errors[0].(map[string]interface{}); ok {
+			if msg, ok := firstErr["message"].(string); ok {
+				errMsg = msg
+			}
+		}
+		return nil, WrapError("ExecuteRawGraphQL", fmt.Errorf("%s", errMsg), "query failed")
+	}
+
+	return result, nil
+}
+
 // getAuthenticatedClient returns a GraphQL client with authentication headers.
 func (c *Client) getAuthenticatedClient() *graphql.Client {
 	headers := c.getAuthHeaders()

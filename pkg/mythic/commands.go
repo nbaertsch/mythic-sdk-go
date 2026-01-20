@@ -18,15 +18,12 @@ func (c *Client) GetCommands(ctx context.Context) ([]*types.Command, error) {
 		Commands []struct {
 			ID             int    `graphql:"id"`
 			Cmd            string `graphql:"cmd"`
-			PayloadTypeID  int    `graphql:"payloadtype_id"`
+			PayloadTypeID  int    `graphql:"payload_type_id"`
 			Description    string `graphql:"description"`
 			Help           string `graphql:"help_cmd"`
 			Version        int    `graphql:"version"`
-			Supported      bool   `graphql:"supported_ui_features"`
 			Author         string `graphql:"author"`
-			Attributes     string `graphql:"attributes"`
 			ScriptOnly     bool   `graphql:"script_only"`
-			AttackMappings string `graphql:"attack"`
 		} `graphql:"command(order_by: {cmd: asc})"`
 	}
 
@@ -38,17 +35,14 @@ func (c *Client) GetCommands(ctx context.Context) ([]*types.Command, error) {
 	commands := make([]*types.Command, len(query.Commands))
 	for i, cmd := range query.Commands {
 		commands[i] = &types.Command{
-			ID:                  cmd.ID,
-			Cmd:                 cmd.Cmd,
-			PayloadTypeID:       cmd.PayloadTypeID,
-			Description:         cmd.Description,
-			Help:                cmd.Help,
-			Version:             cmd.Version,
-			Supported:           cmd.Supported,
-			Author:              cmd.Author,
-			Attributes:          cmd.Attributes,
-			ScriptOnly:          cmd.ScriptOnly,
-			MitreAttackMappings: cmd.AttackMappings,
+			ID:            cmd.ID,
+			Cmd:           cmd.Cmd,
+			PayloadTypeID: cmd.PayloadTypeID,
+			Description:   cmd.Description,
+			Help:          cmd.Help,
+			Version:       cmd.Version,
+			Author:        cmd.Author,
+			ScriptOnly:    cmd.ScriptOnly,
 		}
 	}
 
@@ -182,15 +176,12 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 		Command []struct {
 			ID                int    `graphql:"id"`
 			Cmd               string `graphql:"cmd"`
-			PayloadTypeID     int    `graphql:"payloadtype_id"`
+			PayloadTypeID     int    `graphql:"payload_type_id"`
 			Description       string `graphql:"description"`
 			Help              string `graphql:"help_cmd"`
 			Version           int    `graphql:"version"`
-			Supported         bool   `graphql:"supported_ui_features"`
 			Author            string `graphql:"author"`
-			Attributes        string `graphql:"attributes"`
 			ScriptOnly        bool   `graphql:"script_only"`
-			AttackMappings    string `graphql:"attack"`
 			CommandParameters []struct {
 				ID                          int    `graphql:"id"`
 				CommandID                   int    `graphql:"command_id"`
@@ -207,12 +198,12 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 				ChoiceFilterByCommandAttrib string `graphql:"choice_filter_by_command_attributes"`
 				DynamicQueryFunction        string `graphql:"dynamic_query_function"`
 			} `graphql:"commandparameters(order_by: {name: asc})"`
-		} `graphql:"command(where: {cmd: {_eq: $cmd}, payloadtype_id: {_eq: $payloadtype_id}}, limit: 1)"`
+		} `graphql:"command(where: {cmd: {_eq: $cmd}, payload_type_id: {_eq: $payload_type_id}}, limit: 1)"`
 	}
 
 	variables := map[string]interface{}{
-		"cmd":            commandName,
-		"payloadtype_id": payloadTypeID,
+		"cmd":             commandName,
+		"payload_type_id": payloadTypeID,
 	}
 
 	err := c.executeQuery(ctx, &query, variables)
@@ -226,17 +217,14 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 
 	cmd := query.Command[0]
 	command := &types.Command{
-		ID:                  cmd.ID,
-		Cmd:                 cmd.Cmd,
-		PayloadTypeID:       cmd.PayloadTypeID,
-		Description:         cmd.Description,
-		Help:                cmd.Help,
-		Version:             cmd.Version,
-		Supported:           cmd.Supported,
-		Author:              cmd.Author,
-		Attributes:          cmd.Attributes,
-		ScriptOnly:          cmd.ScriptOnly,
-		MitreAttackMappings: cmd.AttackMappings,
+		ID:            cmd.ID,
+		Cmd:           cmd.Cmd,
+		PayloadTypeID: cmd.PayloadTypeID,
+		Description:   cmd.Description,
+		Help:          cmd.Help,
+		Version:       cmd.Version,
+		Author:        cmd.Author,
+		ScriptOnly:    cmd.ScriptOnly,
 	}
 
 	parameters := make([]*types.CommandParameter, len(cmd.CommandParameters))
