@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -61,7 +62,10 @@ func (c *Client) GetResponsesByTask(ctx context.Context, taskID int) ([]*types.R
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
 		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
-		timestamp, _ := parseTimestamp(resp.Timestamp)
+		timestamp, err := parseTimestamp(resp.Timestamp)
+		if err != nil {
+			timestamp = time.Time{}
+		}
 
 		responses[i] = &types.Response{
 			ID:             resp.ID,
@@ -132,7 +136,10 @@ func (c *Client) GetResponseByID(ctx context.Context, responseID int) (*types.Re
 
 	resp := query.Response[0]
 	// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
-	timestamp, _ := parseTimestamp(resp.Timestamp)
+	timestamp, err := parseTimestamp(resp.Timestamp)
+	if err != nil {
+		timestamp = time.Time{}
+	}
 
 	return &types.Response{
 		ID:             resp.ID,
@@ -209,7 +216,10 @@ func (c *Client) GetResponsesByCallback(ctx context.Context, callbackID int, lim
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
 		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
-		timestamp, _ := parseTimestamp(resp.Timestamp)
+		timestamp, err := parseTimestamp(resp.Timestamp)
+		if err != nil {
+			timestamp = time.Time{}
+		}
 
 		responses[i] = &types.Response{
 			ID:             resp.ID,
@@ -421,7 +431,10 @@ func (c *Client) GetLatestResponses(ctx context.Context, operationID int, limit 
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
 		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
-		timestamp, _ := parseTimestamp(resp.Timestamp)
+		timestamp, err := parseTimestamp(resp.Timestamp)
+		if err != nil {
+			timestamp = time.Time{}
+		}
 
 		responses[i] = &types.Response{
 			ID:             resp.ID,
@@ -514,8 +527,14 @@ func (c *Client) GetResponseStatistics(ctx context.Context, taskID int) (*types.
 
 	if stats.ResponseCount > 0 {
 		// Parse timestamps - Mythic v3.4.20 returns timestamps without timezone
-		firstTimestamp, _ := parseTimestamp(responseQuery.Response[0].Timestamp)
-		latestTimestamp, _ := parseTimestamp(responseQuery.Response[len(responseQuery.Response)-1].Timestamp)
+		firstTimestamp, err := parseTimestamp(responseQuery.Response[0].Timestamp)
+		if err != nil {
+			firstTimestamp = time.Time{}
+		}
+		latestTimestamp, err := parseTimestamp(responseQuery.Response[len(responseQuery.Response)-1].Timestamp)
+		if err != nil {
+			latestTimestamp = time.Time{}
+		}
 
 		stats.FirstResponse = firstTimestamp
 		stats.LatestResponse = latestTimestamp
