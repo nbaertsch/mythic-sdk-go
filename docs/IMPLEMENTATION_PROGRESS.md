@@ -3,7 +3,7 @@
 
 **Started**: 2026-01-20
 **Target Completion**: 2026-03-20 (9 weeks)
-**Current Phase**: Week 1 - Schema Validation Foundation
+**Current Phase**: Week 2-3 - Critical CRUD Operations (Task 2.1 Complete!)
 
 ---
 
@@ -11,14 +11,15 @@
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
-| **Methods Tested** | 11/232 | 232/232 | ████░░░░░░░░░░░░░░░░ 4.7% |
-| **Schema Bugs Fixed** | 6/6 | 6/6 | ████████████████████ 100% |
-| **New Tests Written** | 5/154 | 154/154 | ██░░░░░░░░░░░░░░░░░░ 3.2% |
+| **Methods Tested** | 18/232 | 232/232 | ████░░░░░░░░░░░░░░░░ 7.8% |
+| **Schema Bugs Fixed** | 7/7 | 7/7 | ████████████████████ 100% |
+| **New Tests Written** | 12/154 | 154/154 | ██░░░░░░░░░░░░░░░░░░ 7.8% |
 | **Week 1 Progress** | 7/7 | 7/7 | ████████████████████ 100% |
+| **Week 2-3 Progress** | 7/54 | 54/54 | ███░░░░░░░░░░░░░░░░░ 13% |
 
-**Last Updated**: 2026-01-20 (Session 3)
-**Last Work Session**: Week 1 COMPLETE - All schema validation tests passing in CI
-**Next Milestone**: Begin Week 2-3: Critical CRUD Operations (54 new tests)
+**Last Updated**: 2026-01-22 (Session 4)
+**Last Work Session**: Week 2-3 Task 2.1 COMPLETE - All 7 commands tests passing in CI
+**Next Milestone**: Task 2.2 - Implement Tasks comprehensive tests (15 new tests)
 
 ---
 
@@ -112,41 +113,54 @@
 
 ---
 
-### Week 2-3: Critical CRUD Operations ⏳ READY TO START
+### Week 2-3: Critical CRUD Operations ⏳ IN PROGRESS
 
-**Status**: 🟡 0% Complete (0/54 tasks complete)
-**Target Start**: 2026-01-20 (today!)
+**Status**: 🟡 13% Complete (7/54 tasks complete)
+**Started**: 2026-01-22
 **Target Completion**: 2026-02-10
 
 **Scope**: 54 new tests covering Priority 1 methods
-- Commands & Parameters (7 tests)
-- Task Lifecycle (15 tests)
+- Commands & Parameters (7 tests) ✅ COMPLETE
+- Task Lifecycle (15 tests) - NEXT UP
 - Payload Lifecycle (12 tests)
 - Callback Management (10 tests)
 - File Operations (10 tests)
 
 **Tasks**:
-- [ ] 2.1: Commands tests (0/7) - NEXT UP
-- [ ] 2.2: Tasks tests (0/15)
+- [x] 2.1: Commands tests (7/7) ✅ COMPLETE - 2026-01-22
+- [ ] 2.2: Tasks tests (0/15) - NEXT UP
 - [ ] 2.3: Payloads tests (0/12)
 - [ ] 2.4: Callbacks tests (0/10)
 - [ ] 2.5: Files tests (0/10)
 
 **Deliverables**:
-- [ ] `tests/integration/commands_comprehensive_test.go` - 7 new command tests
+- [x] `tests/integration/commands_comprehensive_test.go` (430 lines) ✅
 - [ ] `tests/integration/tasks_comprehensive_test.go` - 15 new task tests
 - [ ] `tests/integration/payloads_comprehensive_test.go` - 12 new payload tests
 - [ ] `tests/integration/callbacks_complete_test.go` - 10 new callback tests
 - [ ] `tests/integration/files_comprehensive_test.go` - 10 new file tests
 
+**Task 2.1 Details (Commands & Parameters)**: ✅ COMPLETE
+- ✅ TestE2E_Commands_GetAll_SchemaValidation - validates all command field data
+- ✅ TestE2E_Commands_GetParameters_Complete - validates parameter metadata
+- ✅ TestE2E_Commands_GetWithParameters_AllPayloadTypes - tests across payload types
+- ✅ TestE2E_Commands_GetLoaded_WithCallback - validates loaded commands (skips if no callbacks)
+- ✅ TestE2E_Commands_BuildTaskParams_RawString - tests raw string command handling
+- ✅ TestE2E_Commands_BuildTaskParams_JSONParams - tests parameterized commands
+- ✅ TestE2E_Commands_BuildTaskParams_MissingRequired - tests error handling
+- ✅ All tests passing in CI (Phase 4: Advanced APIs)
+- ✅ Fixed GraphQL schema mismatch #4 (commandparameters array fields)
+- ✅ Tests handle real Mythic data variations (empty authors, CredentialJson type)
+
 **Approach**:
-1. Start with Commands & Parameters (highest impact, only 7 tests)
-2. Build on existing test patterns from schema validation
-3. Use existing test helpers (AuthenticateTestClient, etc.)
-4. Each test should validate field presence AND correctness
-5. Add assertions beyond just `err != nil`
+1. ✅ Started with Commands & Parameters (highest impact, only 7 tests)
+2. ✅ Built on existing test patterns from schema validation
+3. ✅ Used existing test helpers (AuthenticateTestClient, etc.)
+4. ✅ Each test validates field presence AND correctness
+5. ✅ Added assertions beyond just `err != nil`
 
 **Blockers**: None
+**Last Work Session**: 2026-01-22 - Completed Task 2.1 (Commands tests)
 
 ---
 
