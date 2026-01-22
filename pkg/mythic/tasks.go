@@ -292,19 +292,19 @@ func (c *Client) GetTasksForCallback(ctx context.Context, callbackDisplayID int,
 
 	var query struct {
 		Task []struct {
-			ID                int       `graphql:"id"`
-			DisplayID         int       `graphql:"display_id"`
-			AgentTaskID       string    `graphql:"agent_task_id"`
-			CommandName       string    `graphql:"command_name"`
-			Params            string    `graphql:"params"`
-			DisplayParams     string    `graphql:"display_params"`
-			Status            string    `graphql:"status"`
-			Completed         bool      `graphql:"completed"`
-			Comment           string    `graphql:"comment"`
-			Timestamp         time.Time `graphql:"timestamp"`
-			CallbackID        int       `graphql:"callback_id"`
-			ResponseCount     int       `graphql:"response_count"`
-			IsInteractiveTask bool      `graphql:"is_interactive_task"`
+			ID                int    `graphql:"id"`
+			DisplayID         int    `graphql:"display_id"`
+			AgentTaskID       string `graphql:"agent_task_id"`
+			CommandName       string `graphql:"command_name"`
+			Params            string `graphql:"params"`
+			DisplayParams     string `graphql:"display_params"`
+			Status            string `graphql:"status"`
+			Completed         bool   `graphql:"completed"`
+			Comment           string `graphql:"comment"`
+			Timestamp         string `graphql:"timestamp"`
+			CallbackID        int    `graphql:"callback_id"`
+			ResponseCount     int    `graphql:"response_count"`
+			IsInteractiveTask bool   `graphql:"is_interactive_task"`
 		} `graphql:"task(where: {callback_id: {_eq: $callback_id}}, order_by: {id: desc}, limit: $limit)"`
 	}
 
@@ -320,6 +320,12 @@ func (c *Client) GetTasksForCallback(ctx context.Context, callbackDisplayID int,
 
 	tasks := make([]*Task, 0, len(query.Task))
 	for _, t := range query.Task {
+		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+		timestamp, err := parseTimestamp(t.Timestamp)
+		if err != nil {
+			timestamp = time.Time{}
+		}
+
 		tasks = append(tasks, &Task{
 			ID:                t.ID,
 			DisplayID:         t.DisplayID,
@@ -330,7 +336,7 @@ func (c *Client) GetTasksForCallback(ctx context.Context, callbackDisplayID int,
 			Status:            t.Status,
 			Completed:         t.Completed,
 			Comment:           t.Comment,
-			Timestamp:         t.Timestamp,
+			Timestamp:         timestamp,
 			CallbackID:        t.CallbackID,
 			ResponseCount:     t.ResponseCount,
 			IsInteractiveTask: t.IsInteractiveTask,
