@@ -354,12 +354,12 @@ func (c *Client) GetTaskOutput(ctx context.Context, taskDisplayID int) ([]*TaskR
 
 	var query struct {
 		Response []struct {
-			ID             int       `graphql:"id"`
-			TaskID         int       `graphql:"task_id"`
-			ResponseText   string    `graphql:"response_text"`
-			IsError        bool      `graphql:"is_error"`
-			Timestamp      time.Time `graphql:"timestamp"`
-			SequenceNumber *int      `graphql:"sequence_number"`
+			ID             int    `graphql:"id"`
+			TaskID         int    `graphql:"task_id"`
+			ResponseText   string `graphql:"response_text"`
+			IsError        bool   `graphql:"is_error"`
+			Timestamp      string `graphql:"timestamp"`
+			SequenceNumber *int   `graphql:"sequence_number"`
 		} `graphql:"response(where: {task_id: {_eq: $task_id}}, order_by: {id: asc})"`
 	}
 
@@ -374,12 +374,19 @@ func (c *Client) GetTaskOutput(ctx context.Context, taskDisplayID int) ([]*TaskR
 
 	responses := make([]*TaskResponse, 0, len(query.Response))
 	for _, r := range query.Response {
+		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+		timestamp, err := parseTimestamp(r.Timestamp)
+		if err != nil {
+			// Log warning but continue - don't fail the entire operation for timestamp parsing
+			timestamp = time.Time{}
+		}
+
 		responses = append(responses, &TaskResponse{
 			ID:             r.ID,
 			TaskID:         r.TaskID,
 			ResponseText:   r.ResponseText,
 			IsError:        r.IsError,
-			Timestamp:      r.Timestamp,
+			Timestamp:      timestamp,
 			SequenceNumber: r.SequenceNumber,
 		})
 	}

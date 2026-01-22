@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -42,11 +41,11 @@ func (c *Client) GetResponsesByTask(ctx context.Context, taskID int) ([]*types.R
 
 	var query struct {
 		Response []struct {
-			ID             int       `graphql:"id"`
-			Response       string    `graphql:"response"`
-			Timestamp      time.Time `graphql:"timestamp"`
-			TaskID         int       `graphql:"task_id"`
-			SequenceNumber *int      `graphql:"sequence_number"`
+			ID             int    `graphql:"id"`
+			Response       string `graphql:"response"`
+			Timestamp      string `graphql:"timestamp"`
+			TaskID         int    `graphql:"task_id"`
+			SequenceNumber *int   `graphql:"sequence_number"`
 		} `graphql:"response(where: {task_id: {_eq: $task_id}}, order_by: {id: asc})"`
 	}
 
@@ -61,10 +60,13 @@ func (c *Client) GetResponsesByTask(ctx context.Context, taskID int) ([]*types.R
 
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
+		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+		timestamp, _ := parseTimestamp(resp.Timestamp)
+
 		responses[i] = &types.Response{
 			ID:             resp.ID,
 			Response:       resp.Response,
-			Timestamp:      resp.Timestamp,
+			Timestamp:      timestamp,
 			TaskID:         resp.TaskID,
 			SequenceNumber: resp.SequenceNumber,
 		}
@@ -101,11 +103,11 @@ func (c *Client) GetResponseByID(ctx context.Context, responseID int) (*types.Re
 
 	var query struct {
 		Response []struct {
-			ID             int       `graphql:"id"`
-			Response       string    `graphql:"response"`
-			Timestamp      time.Time `graphql:"timestamp"`
-			TaskID         int       `graphql:"task_id"`
-			SequenceNumber *int      `graphql:"sequence_number"`
+			ID             int    `graphql:"id"`
+			Response       string `graphql:"response"`
+			Timestamp      string `graphql:"timestamp"`
+			TaskID         int    `graphql:"task_id"`
+			SequenceNumber *int   `graphql:"sequence_number"`
 			Task           struct {
 				ID          int    `graphql:"id"`
 				CommandName string `graphql:"command_name"`
@@ -129,10 +131,13 @@ func (c *Client) GetResponseByID(ctx context.Context, responseID int) (*types.Re
 	}
 
 	resp := query.Response[0]
+	// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+	timestamp, _ := parseTimestamp(resp.Timestamp)
+
 	return &types.Response{
 		ID:             resp.ID,
 		Response:       resp.Response,
-		Timestamp:      resp.Timestamp,
+		Timestamp:      timestamp,
 		TaskID:         resp.TaskID,
 		SequenceNumber: resp.SequenceNumber,
 		TaskCommand:    resp.Task.CommandName,
@@ -179,11 +184,11 @@ func (c *Client) GetResponsesByCallback(ctx context.Context, callbackID int, lim
 
 	var query struct {
 		Response []struct {
-			ID             int       `graphql:"id"`
-			Response       string    `graphql:"response"`
-			Timestamp      time.Time `graphql:"timestamp"`
-			TaskID         int       `graphql:"task_id"`
-			SequenceNumber *int      `graphql:"sequence_number"`
+			ID             int    `graphql:"id"`
+			Response       string `graphql:"response"`
+			Timestamp      string `graphql:"timestamp"`
+			TaskID         int    `graphql:"task_id"`
+			SequenceNumber *int   `graphql:"sequence_number"`
 			Task           struct {
 				ID          int    `graphql:"id"`
 				CommandName string `graphql:"command_name"`
@@ -203,10 +208,13 @@ func (c *Client) GetResponsesByCallback(ctx context.Context, callbackID int, lim
 
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
+		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+		timestamp, _ := parseTimestamp(resp.Timestamp)
+
 		responses[i] = &types.Response{
 			ID:             resp.ID,
 			Response:       resp.Response,
-			Timestamp:      resp.Timestamp,
+			Timestamp:      timestamp,
 			TaskID:         resp.TaskID,
 			SequenceNumber: resp.SequenceNumber,
 			TaskCommand:    resp.Task.CommandName,
@@ -381,11 +389,11 @@ func (c *Client) GetLatestResponses(ctx context.Context, operationID int, limit 
 
 	var query struct {
 		Response []struct {
-			ID             int       `graphql:"id"`
-			Response       string    `graphql:"response"`
-			Timestamp      time.Time `graphql:"timestamp"`
-			TaskID         int       `graphql:"task_id"`
-			SequenceNumber *int      `graphql:"sequence_number"`
+			ID             int    `graphql:"id"`
+			Response       string `graphql:"response"`
+			Timestamp      string `graphql:"timestamp"`
+			TaskID         int    `graphql:"task_id"`
+			SequenceNumber *int   `graphql:"sequence_number"`
 			Task           struct {
 				ID          int    `graphql:"id"`
 				CommandName string `graphql:"command_name"`
@@ -412,10 +420,13 @@ func (c *Client) GetLatestResponses(ctx context.Context, operationID int, limit 
 
 	responses := make([]*types.Response, len(query.Response))
 	for i, resp := range query.Response {
+		// Parse timestamp - Mythic v3.4.20 returns timestamps without timezone
+		timestamp, _ := parseTimestamp(resp.Timestamp)
+
 		responses[i] = &types.Response{
 			ID:             resp.ID,
 			Response:       resp.Response,
-			Timestamp:      resp.Timestamp,
+			Timestamp:      timestamp,
 			TaskID:         resp.TaskID,
 			SequenceNumber: resp.SequenceNumber,
 			TaskCommand:    resp.Task.CommandName,
@@ -482,9 +493,9 @@ func (c *Client) GetResponseStatistics(ctx context.Context, taskID int) (*types.
 	// Get response statistics
 	var responseQuery struct {
 		Response []struct {
-			ID        int       `graphql:"id"`
-			Response  string    `graphql:"response"`
-			Timestamp time.Time `graphql:"timestamp"`
+			ID        int    `graphql:"id"`
+			Response  string `graphql:"response"`
+			Timestamp string `graphql:"timestamp"`
 		} `graphql:"response(where: {task_id: {_eq: $task_id}}, order_by: {timestamp: asc})"`
 	}
 
@@ -502,8 +513,12 @@ func (c *Client) GetResponseStatistics(ctx context.Context, taskID int) (*types.
 	}
 
 	if stats.ResponseCount > 0 {
-		stats.FirstResponse = responseQuery.Response[0].Timestamp
-		stats.LatestResponse = responseQuery.Response[len(responseQuery.Response)-1].Timestamp
+		// Parse timestamps - Mythic v3.4.20 returns timestamps without timezone
+		firstTimestamp, _ := parseTimestamp(responseQuery.Response[0].Timestamp)
+		latestTimestamp, _ := parseTimestamp(responseQuery.Response[len(responseQuery.Response)-1].Timestamp)
+
+		stats.FirstResponse = firstTimestamp
+		stats.LatestResponse = latestTimestamp
 
 		for _, resp := range responseQuery.Response {
 			stats.TotalSize += len(resp.Response)
