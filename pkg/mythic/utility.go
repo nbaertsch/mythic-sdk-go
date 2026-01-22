@@ -2,9 +2,29 @@ package mythic
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
+
+// decodeFilename attempts to decode a base64-encoded filename.
+// In Mythic v3.4.20, filename_text fields are stored as base64.
+// If decoding fails, returns the original string.
+func decodeFilename(encoded string) string {
+	if encoded == "" {
+		return encoded
+	}
+
+	// Try to decode as base64
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		// Not valid base64, return as-is
+		return encoded
+	}
+
+	// Return decoded string
+	return string(decoded)
+}
 
 // CreateRandom generates a random string based on a format string.
 // This is useful for generating random identifiers, callback IDs, payload names,
