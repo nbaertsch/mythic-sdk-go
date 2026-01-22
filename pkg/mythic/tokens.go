@@ -186,10 +186,10 @@ func (c *Client) GetCallbackTokens(ctx context.Context) ([]*types.CallbackToken,
 
 	var query struct {
 		CallbackToken []struct {
-			ID         int       `graphql:"id"`
-			CallbackID int       `graphql:"callback_id"`
-			TokenID    int       `graphql:"token_id"`
-			Timestamp  time.Time `graphql:"timestamp"`
+			ID         int `graphql:"id"`
+			CallbackID int `graphql:"callback_id"`
+			TokenID    int `graphql:"token_id"`
+			// Timestamp field removed - not available in Mythic v3.4.20 callbacktoken schema
 		} `graphql:"callbacktoken(where: {callback: {operation_id: {_eq: $operation_id}}}, order_by: {id: desc})"`
 	}
 
@@ -208,7 +208,7 @@ func (c *Client) GetCallbackTokens(ctx context.Context) ([]*types.CallbackToken,
 			ID:         ct.ID,
 			CallbackID: ct.CallbackID,
 			TokenID:    ct.TokenID,
-			Timestamp:  ct.Timestamp,
+			Timestamp:  time.Time{}, // Timestamp field not available in Mythic v3.4.20 schema
 		}
 	}
 
@@ -227,10 +227,10 @@ func (c *Client) GetCallbackTokensByCallback(ctx context.Context, callbackID int
 
 	var query struct {
 		CallbackToken []struct {
-			ID         int       `graphql:"id"`
-			CallbackID int       `graphql:"callback_id"`
-			TokenID    int       `graphql:"token_id"`
-			Timestamp  time.Time `graphql:"timestamp"`
+			ID         int `graphql:"id"`
+			CallbackID int `graphql:"callback_id"`
+			TokenID    int `graphql:"token_id"`
+			// Timestamp field removed - not available in Mythic v3.4.20 callbacktoken schema
 		} `graphql:"callbacktoken(where: {callback_id: {_eq: $callback_id}}, order_by: {id: desc})"`
 	}
 
@@ -249,7 +249,7 @@ func (c *Client) GetCallbackTokensByCallback(ctx context.Context, callbackID int
 			ID:         ct.ID,
 			CallbackID: ct.CallbackID,
 			TokenID:    ct.TokenID,
-			Timestamp:  ct.Timestamp,
+			Timestamp:  time.Time{}, // Timestamp field not available in Mythic v3.4.20 schema
 		}
 	}
 

@@ -17,12 +17,12 @@ import (
 func TestE2E_Auth_LoginWithCredentials(t *testing.T) {
 	t.Log("=== Test: Login with username and password ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	username := os.Getenv("MYTHIC_USERNAME")
 	password := os.Getenv("MYTHIC_PASSWORD")
 
 	if serverURL == "" || username == "" || password == "" {
-		t.Skip("MYTHIC_SERVER, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
+		t.Skip("MYTHIC_URL, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
 		return
 	}
 
@@ -69,11 +69,11 @@ func TestE2E_Auth_LoginWithCredentials(t *testing.T) {
 func TestE2E_Auth_LoginWithAPIToken(t *testing.T) {
 	t.Log("=== Test: Login with API token ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	apiToken := os.Getenv("MYTHIC_API_TOKEN")
 
 	if serverURL == "" {
-		t.Skip("MYTHIC_SERVER not set")
+		t.Skip("MYTHIC_URL not set")
 		return
 	}
 
@@ -121,9 +121,9 @@ func TestE2E_Auth_LoginWithAPIToken(t *testing.T) {
 func TestE2E_Auth_LoginErrorHandling(t *testing.T) {
 	t.Log("=== Test: Login error handling ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	if serverURL == "" {
-		t.Skip("MYTHIC_SERVER not set")
+		t.Skip("MYTHIC_URL not set")
 		return
 	}
 
@@ -215,7 +215,7 @@ func TestE2E_Auth_GetMe(t *testing.T) {
 
 	// Verify GetMe fails when not authenticated
 	unauthClient, err := mythic.NewClient(&mythic.Config{
-		ServerURL: os.Getenv("MYTHIC_SERVER"),
+		ServerURL: os.Getenv("MYTHIC_URL"),
 		SSL:       false,
 	})
 	require.NoError(t, err, "Client creation should succeed")
@@ -259,12 +259,12 @@ func TestE2E_Auth_CreateAPIToken(t *testing.T) {
 func TestE2E_Auth_RefreshAccessToken(t *testing.T) {
 	t.Log("=== Test: RefreshAccessToken ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	username := os.Getenv("MYTHIC_USERNAME")
 	password := os.Getenv("MYTHIC_PASSWORD")
 
 	if serverURL == "" || username == "" || password == "" {
-		t.Skip("MYTHIC_SERVER, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
+		t.Skip("MYTHIC_URL, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
 		return
 	}
 
@@ -322,12 +322,12 @@ func TestE2E_Auth_RefreshAccessToken(t *testing.T) {
 func TestE2E_Auth_Logout(t *testing.T) {
 	t.Log("=== Test: Logout ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	username := os.Getenv("MYTHIC_USERNAME")
 	password := os.Getenv("MYTHIC_PASSWORD")
 
 	if serverURL == "" || username == "" || password == "" {
-		t.Skip("MYTHIC_SERVER, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
+		t.Skip("MYTHIC_URL, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
 		return
 	}
 
@@ -371,12 +371,12 @@ func TestE2E_Auth_Logout(t *testing.T) {
 func TestE2E_Auth_EnsureAuthenticated(t *testing.T) {
 	t.Log("=== Test: EnsureAuthenticated ===")
 
-	serverURL := os.Getenv("MYTHIC_SERVER")
+	serverURL := os.Getenv("MYTHIC_URL")
 	username := os.Getenv("MYTHIC_USERNAME")
 	password := os.Getenv("MYTHIC_PASSWORD")
 
 	if serverURL == "" || username == "" || password == "" {
-		t.Skip("MYTHIC_SERVER, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
+		t.Skip("MYTHIC_URL, MYTHIC_USERNAME, or MYTHIC_PASSWORD not set")
 		return
 	}
 
