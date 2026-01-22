@@ -34,15 +34,15 @@ func (c *Client) GetTokensByOperation(ctx context.Context, operationID int) ([]*
 
 	var query struct {
 		Token []struct {
-			ID                 int       `graphql:"id"`
-			TokenID            string    `graphql:"token_id"`
-			User               string    `graphql:"user"`
-			Groups             string    `graphql:"groups"`
-			Privileges         string    `graphql:"privileges"`
-			ThreadID           int       `graphql:"thread_id"`
-			ProcessID          int       `graphql:"process_id"`
-			SessionID          int       `graphql:"session_id"`
-			LogonSID           string    `graphql:"logon_sid"`
+			ID         int    `graphql:"id"`
+			TokenID    string `graphql:"token_id"`
+			User       string `graphql:"user"`
+			Groups     string `graphql:"groups"`
+			Privileges string `graphql:"privileges"`
+			ThreadID   int    `graphql:"thread_id"`
+			ProcessID  int    `graphql:"process_id"`
+			SessionID  int    `graphql:"session_id"`
+			LogonSID   string `graphql:"logon_sid"`
 			// IntegrityLevelInt field removed - not available in Mythic v3.4.20 schema
 			Restricted         bool      `graphql:"restricted"`
 			DefaultDACL        string    `graphql:"default_dacl"`
@@ -109,15 +109,15 @@ func (c *Client) GetTokenByID(ctx context.Context, tokenID int) (*types.Token, e
 
 	var query struct {
 		Token []struct {
-			ID                 int       `graphql:"id"`
-			TokenID            string    `graphql:"token_id"`
-			User               string    `graphql:"user"`
-			Groups             string    `graphql:"groups"`
-			Privileges         string    `graphql:"privileges"`
-			ThreadID           int       `graphql:"thread_id"`
-			ProcessID          int       `graphql:"process_id"`
-			SessionID          int       `graphql:"session_id"`
-			LogonSID           string    `graphql:"logon_sid"`
+			ID         int    `graphql:"id"`
+			TokenID    string `graphql:"token_id"`
+			User       string `graphql:"user"`
+			Groups     string `graphql:"groups"`
+			Privileges string `graphql:"privileges"`
+			ThreadID   int    `graphql:"thread_id"`
+			ProcessID  int    `graphql:"process_id"`
+			SessionID  int    `graphql:"session_id"`
+			LogonSID   string `graphql:"logon_sid"`
 			// IntegrityLevelInt field removed - not available in Mythic v3.4.20 schema
 			Restricted         bool      `graphql:"restricted"`
 			DefaultDACL        string    `graphql:"default_dacl"`
