@@ -43,7 +43,7 @@ func (c *Client) GetResponsesByTask(ctx context.Context, taskID int) ([]*types.R
 	var query struct {
 		Response []struct {
 			ID             int    `graphql:"id"`
-			Response       string `graphql:"response"`
+			Response       string `graphql:"response_text"`
 			Timestamp      string `graphql:"timestamp"`
 			TaskID         int    `graphql:"task_id"`
 			SequenceNumber *int   `graphql:"sequence_number"`
@@ -108,7 +108,7 @@ func (c *Client) GetResponseByID(ctx context.Context, responseID int) (*types.Re
 	var query struct {
 		Response []struct {
 			ID             int    `graphql:"id"`
-			Response       string `graphql:"response"`
+			Response       string `graphql:"response_text"`
 			Timestamp      string `graphql:"timestamp"`
 			TaskID         int    `graphql:"task_id"`
 			SequenceNumber *int   `graphql:"sequence_number"`
@@ -192,7 +192,7 @@ func (c *Client) GetResponsesByCallback(ctx context.Context, callbackID int, lim
 	var query struct {
 		Response []struct {
 			ID             int    `graphql:"id"`
-			Response       string `graphql:"response"`
+			Response       string `graphql:"response_text"`
 			Timestamp      string `graphql:"timestamp"`
 			TaskID         int    `graphql:"task_id"`
 			SequenceNumber *int   `graphql:"sequence_number"`
@@ -400,7 +400,7 @@ func (c *Client) GetLatestResponses(ctx context.Context, operationID int, limit 
 	var query struct {
 		Response []struct {
 			ID             int    `graphql:"id"`
-			Response       string `graphql:"response"`
+			Response       string `graphql:"response_text"`
 			Timestamp      string `graphql:"timestamp"`
 			TaskID         int    `graphql:"task_id"`
 			SequenceNumber *int   `graphql:"sequence_number"`
