@@ -16,7 +16,7 @@ import (
 // TestE2E_GetCommands_SchemaValidation validates that GetCommands returns properly
 // populated command objects with all required fields and correct types.
 // This test goes beyond just checking err != nil - it validates the response data.
-func TestE2E_GetCommands_SchemaValidation(t *testing.T) {
+func TestE2E_Commands_GetAll_SchemaValidation(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetCommands comprehensive field validation ===")
@@ -62,7 +62,7 @@ func TestE2E_GetCommands_SchemaValidation(t *testing.T) {
 
 // TestE2E_GetCommandParameters_Complete validates that GetCommandParameters returns
 // complete parameter metadata including types, descriptions, and required flags.
-func TestE2E_GetCommandParameters_Complete(t *testing.T) {
+func TestE2E_Commands_GetParameters_Complete(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetCommandParameters comprehensive validation ===")
@@ -130,7 +130,7 @@ func TestE2E_GetCommandParameters_Complete(t *testing.T) {
 
 // TestE2E_GetCommandWithParameters_AllPayloadTypes validates that GetCommandWithParameters
 // works correctly across all available payload types and returns complete data.
-func TestE2E_GetCommandWithParameters_AllPayloadTypes(t *testing.T) {
+func TestE2E_Commands_GetWithParameters_AllPayloadTypes(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetCommandWithParameters across all payload types ===")
@@ -208,7 +208,7 @@ func TestE2E_GetCommandWithParameters_AllPayloadTypes(t *testing.T) {
 
 // TestE2E_GetLoadedCommands_WithCallback validates that loaded command tracking works
 // correctly after commands are loaded into a callback.
-func TestE2E_GetLoadedCommands_WithCallback(t *testing.T) {
+func TestE2E_Commands_GetLoaded_WithCallback(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetLoadedCommands with active callback ===")
@@ -265,7 +265,7 @@ func TestE2E_GetLoadedCommands_WithCallback(t *testing.T) {
 
 // TestE2E_BuildTaskParams_RawString validates BuildTaskParams for raw string commands
 // (shell, run, execute) that don't have parameter definitions.
-func TestE2E_BuildTaskParams_RawString(t *testing.T) {
+func TestE2E_Commands_BuildTaskParams_RawString(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: BuildTaskParams for raw string commands ===")
@@ -341,7 +341,7 @@ func TestE2E_BuildTaskParams_RawString(t *testing.T) {
 
 // TestE2E_BuildTaskParams_JSONParams validates BuildTaskParams for parameterized commands
 // that expect structured JSON input.
-func TestE2E_BuildTaskParams_JSONParams(t *testing.T) {
+func TestE2E_Commands_BuildTaskParams_JSONParams(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: BuildTaskParams for parameterized commands ===")
@@ -431,7 +431,7 @@ func TestE2E_BuildTaskParams_JSONParams(t *testing.T) {
 
 // TestE2E_BuildTaskParams_MissingRequired validates that BuildTaskParams correctly
 // handles missing required parameters and provides helpful error messages.
-func TestE2E_BuildTaskParams_MissingRequired(t *testing.T) {
+func TestE2E_Commands_BuildTaskParams_MissingRequired(t *testing.T) {
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: BuildTaskParams error handling for missing required params ===")
