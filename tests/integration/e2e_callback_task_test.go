@@ -327,6 +327,9 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	ctx15, cancel15 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel15()
 
+	// Declare callbackHost before goto (Go doesn't allow jumping over declarations)
+	var callbackHost *types.HostInfo
+
 	hosts, err := setup.Client.GetHosts(ctx15, setup.OperationID)
 	if err != nil {
 		// Host table may not exist in all Mythic versions
@@ -341,7 +344,6 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 
 	// Test 22: Find callback's host
 	t.Log("=== Test 22: Find callback's host ===")
-	var callbackHost *types.HostInfo
 	for _, h := range hosts {
 		if h.Hostname == callback.Host {
 			callbackHost = h
