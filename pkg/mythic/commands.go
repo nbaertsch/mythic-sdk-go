@@ -57,20 +57,18 @@ func (c *Client) GetCommandParameters(ctx context.Context) ([]*types.CommandPara
 
 	var query struct {
 		Parameters []struct {
-			ID                          int    `graphql:"id"`
-			CommandID                   int    `graphql:"command_id"`
-			Name                        string `graphql:"name"`
-			Type                        string `graphql:"type"`
-			Description                 string `graphql:"description"`
-			Required                    bool   `graphql:"required"`
-			DefaultValue                string `graphql:"default_value"`
-			Choices                     string `graphql:"choices"`
-			SupportedAgents             string `graphql:"supported_agents"`
-			SupportedAgentBuildParams   string `graphql:"supported_agent_build_parameters"`
-			ChoicesAreAllCommands       bool   `graphql:"choices_are_all_commands"`
-			ChoicesAreLoadedCommands    bool   `graphql:"choices_are_loaded_commands"`
-			ChoiceFilterByCommandAttrib string `graphql:"choice_filter_by_command_attributes"`
-			DynamicQueryFunction        string `graphql:"dynamic_query_function"`
+			ID           int    `graphql:"id"`
+			CommandID    int    `graphql:"command_id"`
+			Name         string `graphql:"name"`
+			Type         string `graphql:"type"`
+			Description  string `graphql:"description"`
+			Required     bool   `graphql:"required"`
+			DefaultValue string `graphql:"default_value"`
+			// Removed: choices, supported_agents, supported_agent_build_parameters,
+			// choice_filter_by_command_attributes, dynamic_query_function
+			// These fields are arrays in the GraphQL schema, not strings
+			ChoicesAreAllCommands    bool `graphql:"choices_are_all_commands"`
+			ChoicesAreLoadedCommands bool `graphql:"choices_are_loaded_commands"`
 		} `graphql:"commandparameters(order_by: {command_id: asc})"`
 	}
 
@@ -82,20 +80,17 @@ func (c *Client) GetCommandParameters(ctx context.Context) ([]*types.CommandPara
 	parameters := make([]*types.CommandParameter, len(query.Parameters))
 	for i, param := range query.Parameters {
 		parameters[i] = &types.CommandParameter{
-			ID:                          param.ID,
-			CommandID:                   param.CommandID,
-			Name:                        param.Name,
-			Type:                        param.Type,
-			Description:                 param.Description,
-			Required:                    param.Required,
-			DefaultValue:                param.DefaultValue,
-			Choices:                     param.Choices,
-			SupportedAgents:             param.SupportedAgents,
-			SupportedAgentBuildParams:   param.SupportedAgentBuildParams,
-			ChoicesAreAllCommands:       param.ChoicesAreAllCommands,
-			ChoicesAreLoadedCommands:    param.ChoicesAreLoadedCommands,
-			ChoiceFilterByCommandAttrib: param.ChoiceFilterByCommandAttrib,
-			DynamicQueryFunction:        param.DynamicQueryFunction,
+			ID:                       param.ID,
+			CommandID:                param.CommandID,
+			Name:                     param.Name,
+			Type:                     param.Type,
+			Description:              param.Description,
+			Required:                 param.Required,
+			DefaultValue:             param.DefaultValue,
+			ChoicesAreAllCommands:    param.ChoicesAreAllCommands,
+			ChoicesAreLoadedCommands: param.ChoicesAreLoadedCommands,
+			// Removed fields (arrays in schema): Choices, SupportedAgents,
+			// SupportedAgentBuildParams, ChoiceFilterByCommandAttrib, DynamicQueryFunction
 		}
 	}
 
@@ -183,20 +178,18 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 			Author            string `graphql:"author"`
 			ScriptOnly        bool   `graphql:"script_only"`
 			CommandParameters []struct {
-				ID                          int    `graphql:"id"`
-				CommandID                   int    `graphql:"command_id"`
-				Name                        string `graphql:"name"`
-				Type                        string `graphql:"type"`
-				Description                 string `graphql:"description"`
-				Required                    bool   `graphql:"required"`
-				DefaultValue                string `graphql:"default_value"`
-				Choices                     string `graphql:"choices"`
-				SupportedAgents             string `graphql:"supported_agents"`
-				SupportedAgentBuildParams   string `graphql:"supported_agent_build_parameters"`
-				ChoicesAreAllCommands       bool   `graphql:"choices_are_all_commands"`
-				ChoicesAreLoadedCommands    bool   `graphql:"choices_are_loaded_commands"`
-				ChoiceFilterByCommandAttrib string `graphql:"choice_filter_by_command_attributes"`
-				DynamicQueryFunction        string `graphql:"dynamic_query_function"`
+				ID           int    `graphql:"id"`
+				CommandID    int    `graphql:"command_id"`
+				Name         string `graphql:"name"`
+				Type         string `graphql:"type"`
+				Description  string `graphql:"description"`
+				Required     bool   `graphql:"required"`
+				DefaultValue string `graphql:"default_value"`
+				// Removed: choices, supported_agents, supported_agent_build_parameters,
+				// choice_filter_by_command_attributes, dynamic_query_function
+				// These fields are arrays in the GraphQL schema, not strings
+				ChoicesAreAllCommands    bool `graphql:"choices_are_all_commands"`
+				ChoicesAreLoadedCommands bool `graphql:"choices_are_loaded_commands"`
 			} `graphql:"commandparameters(order_by: {name: asc})"`
 		} `graphql:"command(where: {cmd: {_eq: $cmd}, payload_type_id: {_eq: $payload_type_id}}, limit: 1)"`
 	}
@@ -230,20 +223,17 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 	parameters := make([]*types.CommandParameter, len(cmd.CommandParameters))
 	for i, param := range cmd.CommandParameters {
 		parameters[i] = &types.CommandParameter{
-			ID:                          param.ID,
-			CommandID:                   param.CommandID,
-			Name:                        param.Name,
-			Type:                        param.Type,
-			Description:                 param.Description,
-			Required:                    param.Required,
-			DefaultValue:                param.DefaultValue,
-			Choices:                     param.Choices,
-			SupportedAgents:             param.SupportedAgents,
-			SupportedAgentBuildParams:   param.SupportedAgentBuildParams,
-			ChoicesAreAllCommands:       param.ChoicesAreAllCommands,
-			ChoicesAreLoadedCommands:    param.ChoicesAreLoadedCommands,
-			ChoiceFilterByCommandAttrib: param.ChoiceFilterByCommandAttrib,
-			DynamicQueryFunction:        param.DynamicQueryFunction,
+			ID:                       param.ID,
+			CommandID:                param.CommandID,
+			Name:                     param.Name,
+			Type:                     param.Type,
+			Description:              param.Description,
+			Required:                 param.Required,
+			DefaultValue:             param.DefaultValue,
+			ChoicesAreAllCommands:    param.ChoicesAreAllCommands,
+			ChoicesAreLoadedCommands: param.ChoicesAreLoadedCommands,
+			// Removed fields (arrays in schema): Choices, SupportedAgents,
+			// SupportedAgentBuildParams, ChoiceFilterByCommandAttrib, DynamicQueryFunction
 		}
 	}
 
