@@ -479,15 +479,25 @@ func (c *Client) UpdateTask(ctx context.Context, displayID int, updates map[stri
 		return WrapError("UpdateTask", err, "failed to get task")
 	}
 
+	// NOTE: GraphQL doesn't support passing object variables to _set parameter
+	// We must explicitly define each field we want to update in the mutation
+	// Currently only supports updating the comment field
+	// For other fields, use the specific API methods (e.g., RequestOpsecBypass)
+
+	comment, hasComment := updates["comment"]
+	if !hasComment {
+		return WrapError("UpdateTask", ErrInvalidInput, "only 'comment' field updates are currently supported")
+	}
+
 	var mutation struct {
 		UpdateTask struct {
 			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_task(where: {id: {_eq: $id}}, _set: $updates)"`
+		} `graphql:"update_task(where: {id: {_eq: $id}}, _set: {comment: $comment})"`
 	}
 
 	variables := map[string]interface{}{
 		"id":      task.ID,
-		"updates": updates,
+		"comment": comment,
 	}
 
 	err = c.executeMutation(ctx, &mutation, variables)

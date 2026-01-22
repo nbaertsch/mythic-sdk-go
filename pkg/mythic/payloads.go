@@ -486,8 +486,7 @@ func (c *Client) GetPayloadOnHost(ctx context.Context, operationID int) ([]*type
 			// Host is a scalar string in Mythic v3.4.20, not an object
 			Host string `graphql:"host"`
 			Payload struct {
-				UUID         string `graphql:"uuid"`
-				FilenameText string `graphql:"filename"`
+				UUID string `graphql:"uuid"`
 			} `graphql:"payload"`
 		} `graphql:"payloadonhost(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
 	}
