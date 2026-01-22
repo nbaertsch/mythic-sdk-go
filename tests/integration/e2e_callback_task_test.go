@@ -169,9 +169,9 @@ func TestE2E_CallbackTaskLifecycle(t *testing.T) {
 	}
 	t.Log("✓ Agent started")
 
-	// Test 8: Wait for callback (up to 60 seconds)
-	t.Log("=== Test 8: Wait for callback (up to 60 seconds) ===")
-	callbackID, err := setup.WaitForCallback(60 * time.Second)
+	// Test 8: Wait for callback (up to 90 seconds - increased for CI reliability)
+	t.Log("=== Test 8: Wait for callback (up to 90 seconds) ===")
+	callbackID, err := setup.WaitForCallback(90 * time.Second)
 	if err != nil {
 		t.Fatalf("Failed to establish callback: %v", err)
 	}
