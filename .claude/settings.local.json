@@ -45,7 +45,15 @@
       "Bash(go install:*)",
       "Bash(wc:*)",
       "Bash(xargs basename:*)",
-      "WebFetch(domain:docs.mythic-c2.net)"
+      "WebFetch(domain:docs.mythic-c2.net)",
+      "Bash(timeout:*)",
+      "Bash(go run:*)",
+      "Bash(make:*)",
+      "Bash(./mythic-tui:*)",
+      "Bash(for file in *.go)",
+      "Bash(do grep -nE \"^func \\(\\\\\\([^\\)]*\\\\\\) \\)?[A-Z]\" \"$file\")",
+      "Bash(while read line)",
+      "Bash(do echo \"$file:$line\")"
     ]
   }
 }
