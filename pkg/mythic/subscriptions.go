@@ -479,22 +479,22 @@ func buildSubscriptionQuery(subType types.SubscriptionType, operationID int, fil
 		// Subscribe to token discoveries
 		var query struct {
 			Token []struct {
-				ID             int    `graphql:"id"`
-				TokenID        string `graphql:"token_id"`
-				User           string `graphql:"user"`
-				Groups         string `graphql:"groups"`
-				Privileges     string `graphql:"privileges"`
-				ThreadID       int    `graphql:"thread_id"`
-				ProcessID      int    `graphql:"process_id"`
-				SessionID      int    `graphql:"session_id"`
-				LogonSID       string `graphql:"logon_sid"`
-				IntegrityLevel int    `graphql:"integrity_level_int"`
-				Restricted     bool   `graphql:"restricted"`
-				TaskID         *int   `graphql:"task_id"`
-				OperationID    int    `graphql:"operation_id"`
-				Timestamp      string `graphql:"timestamp"`
-				Host           string `graphql:"host"`
-				Deleted        bool   `graphql:"deleted"`
+				ID         int    `graphql:"id"`
+				TokenID    string `graphql:"token_id"`
+				User       string `graphql:"user"`
+				Groups     string `graphql:"groups"`
+				Privileges string `graphql:"privileges"`
+				ThreadID   int    `graphql:"thread_id"`
+				ProcessID  int    `graphql:"process_id"`
+				SessionID  int    `graphql:"session_id"`
+				LogonSID   string `graphql:"logon_sid"`
+				// IntegrityLevel field removed - integrity_level_int not available in Mythic v3.4.20 schema
+				Restricted  bool   `graphql:"restricted"`
+				TaskID      *int   `graphql:"task_id"`
+				OperationID int    `graphql:"operation_id"`
+				Timestamp   string `graphql:"timestamp"`
+				Host        string `graphql:"host"`
+				Deleted     bool   `graphql:"deleted"`
 			} `graphql:"token(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {id: desc})"`
 		}
 		return &query, variables

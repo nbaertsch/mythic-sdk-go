@@ -485,15 +485,14 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, err
 	}
 
-	// Build variables map with all provided parameters
-	// CRITICAL: ALL variables referenced in the GraphQL mutation MUST be present in the map
-	// even if they're nil/empty, otherwise GraphQL will error with "unbound variable"
+	// Build variables map with only provided parameters
+	// Using empty strings for optional string params to avoid nil pointer issues
 	variables := map[string]interface{}{
-		"operation_id":   nil,
-		"operation_role": nil,
-		"total":          nil,
-		"name":           nil,
-		"short_code":     nil,
+		"operation_id":   0,
+		"operation_role": "",
+		"total":          0,
+		"name":           "",
+		"short_code":     "",
 	}
 
 	if req != nil {
@@ -546,9 +545,13 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 	// Return the invite link with the short code
 	// Note: Other fields (ID, ExpiresAt, CreatedBy, etc.) are not returned by the mutation
 	// and would need to be retrieved via GetInviteLinks()
+	maxUses := 0
+	if req != nil {
+		maxUses = req.MaxUses
+	}
 	return &types.InviteLink{
 		Code:        shortCode,
-		MaxUses:     req.MaxUses,
+		MaxUses:     maxUses,
 		CurrentUses: 0,
 		Active:      true,
 	}, nil

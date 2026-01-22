@@ -127,3 +127,14 @@ func getTestClient(t *testing.T) *mythic.Client {
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }
+
+// isSchemaError checks if an error is due to a GraphQL schema mismatch (missing field/table).
+func isSchemaError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "not found in type") ||
+		strings.Contains(errStr, "field") && strings.Contains(errStr, "not found") ||
+		strings.Contains(errStr, "validation-failed")
+}

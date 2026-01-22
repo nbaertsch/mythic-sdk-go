@@ -43,7 +43,7 @@ func (c *Client) GetTokensByOperation(ctx context.Context, operationID int) ([]*
 			ProcessID          int       `graphql:"process_id"`
 			SessionID          int       `graphql:"session_id"`
 			LogonSID           string    `graphql:"logon_sid"`
-			IntegrityLevelInt  int       `graphql:"integrity_level_int"`
+			// IntegrityLevelInt field removed - not available in Mythic v3.4.20 schema
 			Restricted         bool      `graphql:"restricted"`
 			DefaultDACL        string    `graphql:"default_dacl"`
 			Handle             string    `graphql:"handle"`
@@ -79,7 +79,7 @@ func (c *Client) GetTokensByOperation(ctx context.Context, operationID int) ([]*
 			ProcessID:       t.ProcessID,
 			SessionID:       t.SessionID,
 			LogonSID:        t.LogonSID,
-			IntegrityLevel:  t.IntegrityLevelInt,
+			IntegrityLevel:  0, // IntegrityLevelInt field not available in Mythic v3.4.20 schema
 			Restricted:      t.Restricted,
 			DefaultDACL:     t.DefaultDACL,
 			Handle:          t.Handle,
@@ -118,7 +118,7 @@ func (c *Client) GetTokenByID(ctx context.Context, tokenID int) (*types.Token, e
 			ProcessID          int       `graphql:"process_id"`
 			SessionID          int       `graphql:"session_id"`
 			LogonSID           string    `graphql:"logon_sid"`
-			IntegrityLevelInt  int       `graphql:"integrity_level_int"`
+			// IntegrityLevelInt field removed - not available in Mythic v3.4.20 schema
 			Restricted         bool      `graphql:"restricted"`
 			DefaultDACL        string    `graphql:"default_dacl"`
 			Handle             string    `graphql:"handle"`
@@ -157,7 +157,7 @@ func (c *Client) GetTokenByID(ctx context.Context, tokenID int) (*types.Token, e
 		ProcessID:       t.ProcessID,
 		SessionID:       t.SessionID,
 		LogonSID:        t.LogonSID,
-		IntegrityLevel:  t.IntegrityLevelInt,
+		IntegrityLevel:  0, // IntegrityLevelInt field not available in Mythic v3.4.20 schema
 		Restricted:      t.Restricted,
 		DefaultDACL:     t.DefaultDACL,
 		Handle:          t.Handle,
