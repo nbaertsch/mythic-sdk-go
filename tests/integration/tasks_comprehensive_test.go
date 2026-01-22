@@ -62,12 +62,12 @@ func TestE2E_Tasks_IssueTask_RawString(t *testing.T) {
 	assert.NotZero(t, task.ID, "Task ID should be assigned")
 	assert.NotZero(t, task.DisplayID, "Task DisplayID should be assigned")
 	assert.Equal(t, callback.ID, task.CallbackID, "Task should have correct CallbackID")
-	assert.Equal(t, "whoami", task.Command, "Task should have correct command name")
+	assert.Equal(t, "whoami", task.CommandName, "Task should have correct command name")
 	assert.NotEmpty(t, task.Status, "Task should have a status")
-	assert.NotNil(t, task.OperatorID, "Task should have operator ID")
+	assert.NotZero(t, task.OperatorID, "Task should have operator ID")
 
 	t.Logf("✓ Task created: ID=%d, DisplayID=%d, Command=%s, Status=%s",
-		task.ID, task.DisplayID, task.Command, task.Status)
+		task.ID, task.DisplayID, task.CommandName, task.Status)
 
 	// Test 2: Validate task is retrievable
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
@@ -135,11 +135,11 @@ func TestE2E_Tasks_IssueTask_WithParams(t *testing.T) {
 
 	// Validate task structure
 	assert.NotZero(t, task.ID, "Task ID should be assigned")
-	assert.Equal(t, paramCommand.Cmd, task.Command, "Task should have correct command")
+	assert.Equal(t, paramCommand.Cmd, task.CommandName, "Task should have correct command")
 	assert.NotEmpty(t, task.Params, "Task params should not be empty")
 
 	t.Logf("✓ Parameterized task created: ID=%d, Command=%s, Params=%s",
-		task.ID, task.Command, task.Params)
+		task.ID, task.CommandName, task.Params)
 
 	t.Log("=== ✓ IssueTask with params validation passed ===")
 }
@@ -211,9 +211,9 @@ func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
 	assert.Equal(t, issuedTask.ID, task.ID, "ID should match")
 	assert.Equal(t, issuedTask.DisplayID, task.DisplayID, "DisplayID should match")
 	assert.Equal(t, callback.ID, task.CallbackID, "CallbackID should match")
-	assert.Equal(t, "whoami", task.Command, "Command should match")
+	assert.Equal(t, "whoami", task.CommandName, "Command should match")
 	assert.NotEmpty(t, task.Status, "Status should be populated")
-	assert.NotNil(t, task.OperatorID, "OperatorID should be populated")
+	assert.NotZero(t, task.OperatorID, "OperatorID should be populated")
 	assert.NotEmpty(t, task.Timestamp, "Timestamp should be populated")
 
 	// Task should have a valid status
@@ -223,8 +223,8 @@ func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
 
 	t.Logf("✓ Task fields validated:")
 	t.Logf("  - ID: %d, DisplayID: %d", task.ID, task.DisplayID)
-	t.Logf("  - Command: %s, Status: %s", task.Command, task.Status)
-	t.Logf("  - CallbackID: %d, OperatorID: %d", task.CallbackID, *task.OperatorID)
+	t.Logf("  - Command: %s, Status: %s", task.CommandName, task.Status)
+	t.Logf("  - CallbackID: %d, OperatorID: %d", task.CallbackID, task.OperatorID)
 	t.Logf("  - Timestamp: %v", task.Timestamp)
 
 	t.Log("=== ✓ GetTask complete validation passed ===")
@@ -270,7 +270,7 @@ func TestE2E_Tasks_GetTaskOutput_MultipleResponses(t *testing.T) {
 			assert.NotZero(t, resp.ID, "Response[%d] should have ID", i)
 			assert.Equal(t, task.ID, resp.TaskID, "Response[%d] should reference correct task", i)
 			// Response field might be empty if task hasn't completed
-			t.Logf("  Response[%d]: ID=%d, Length=%d bytes", i, resp.ID, len(resp.Response))
+			t.Logf("  Response[%d]: ID=%d, Length=%d bytes", i, resp.ID, len(resp.ResponseText))
 		}
 	} else {
 		t.Log("⚠ Task has no responses yet (task may still be processing)")
@@ -404,8 +404,8 @@ func TestE2E_Tasks_UpdateTask_Comment(t *testing.T) {
 	updatedTask, err := client.GetTask(ctx3, task.DisplayID)
 	require.NoError(t, err, "GetTask should retrieve updated task")
 
-	if updatedTask.Comment != nil && *updatedTask.Comment == testComment {
-		t.Logf("✓ Comment persisted correctly: %s", *updatedTask.Comment)
+	if updatedTask.Comment == testComment {
+		t.Logf("✓ Comment persisted correctly: %s", updatedTask.Comment)
 	} else {
 		t.Log("⚠ Comment may not have persisted (check Mythic version)")
 	}
