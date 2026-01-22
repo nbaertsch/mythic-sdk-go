@@ -633,8 +633,8 @@ func TestE2E_Tasks_GetTaskArtifacts(t *testing.T) {
 			assert.Equal(t, task.ID, artifact.TaskID, "Artifact[%d] should reference task", i)
 			assert.NotEmpty(t, artifact.Artifact, "Artifact[%d] should have content", i)
 
-			t.Logf("  Artifact[%d]: ID=%d, Type=%s, Length=%d",
-				i, artifact.ID, artifact.ArtifactType, len(artifact.Artifact))
+			t.Logf("  Artifact[%d]: ID=%d, Artifact=%s, Length=%d",
+				i, artifact.ID, artifact.BaseArtifact, len(artifact.Artifact))
 		}
 	} else {
 		t.Log("⚠ Task has no artifacts (expected for simple commands like whoami)")
