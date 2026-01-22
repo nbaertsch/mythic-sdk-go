@@ -320,28 +320,35 @@ func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateO
 		}
 	}
 
-	// CRITICAL: All variables referenced in the GraphQL query MUST be present in the map
-	// Use nil for optional arrays when not provided
-	var addUsersVar, removeUsersVar, viewOpsVar, viewSpecsVar []int
+	// Build variables map with empty slices for unset parameters
+	// NOTE: We cannot omit parameters because the GraphQL mutation references them all
+	// Using empty slices [] instead of nil to avoid "null value" validation errors
+	addUsersVar := []int{}
 	if len(addUsers) > 0 {
 		addUsersVar = addUsers
 	}
+
+	removeUsersVar := []int{}
 	if len(removeUsers) > 0 {
 		removeUsersVar = removeUsers
 	}
+
+	viewOpsVar := []int{}
 	if len(req.ViewModeOperators) > 0 {
 		viewOpsVar = req.ViewModeOperators
 	}
+
+	viewSpecsVar := []int{}
 	if len(req.ViewModeSpectators) > 0 {
 		viewSpecsVar = req.ViewModeSpectators
 	}
 
 	variables := map[string]interface{}{
 		"operation_id":         req.OperationID,
-		"add_users":            addUsersVar,    // nil or []int
-		"remove_users":         removeUsersVar, // nil or []int
-		"view_mode_operators":  viewOpsVar,     // nil or []int
-		"view_mode_spectators": viewSpecsVar,   // nil or []int
+		"add_users":            addUsersVar,    // []int (empty or with values)
+		"remove_users":         removeUsersVar, // []int (empty or with values)
+		"view_mode_operators":  viewOpsVar,     // []int (empty or with values)
+		"view_mode_spectators": viewSpecsVar,   // []int (empty or with values)
 	}
 
 	var mutation struct {
