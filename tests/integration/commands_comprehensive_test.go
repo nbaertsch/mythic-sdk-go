@@ -43,8 +43,7 @@ func TestE2E_Commands_GetAll_SchemaValidation(t *testing.T) {
 		// Version should be >= 0 (0 is valid for initial version)
 		assert.GreaterOrEqual(t, cmd.Version, 0, "Command[%d] has negative Version", i)
 
-		// Author should not be empty for valid commands
-		assert.NotEmpty(t, cmd.Author, "Command[%d] has empty Author", i)
+		// Note: Author is optional - some commands don't have an author
 
 		// Log first few commands for debugging
 		if i < 5 {
@@ -118,6 +117,7 @@ func TestE2E_Commands_GetParameters_Complete(t *testing.T) {
 		"Array": true, "ChooseOne": true, "ChooseMultiple": true,
 		"File": true, "LinkInfo": true, "AgentConnect": true,
 		"PayloadList": true, "ConnectionInfo": true, "TypedArray": true,
+		"CredentialJson": true, // Added for credential-based parameters
 	}
 
 	for paramType := range typesSeen {
@@ -277,29 +277,27 @@ func TestE2E_Commands_BuildTaskParams_RawString(t *testing.T) {
 	commands, err := client.GetCommands(ctx)
 	require.NoError(t, err)
 
-	// Find shell, run, or execute command
-	var rawCommand *types.Command
+	// Find ANY raw string command by checking if it has no parameters
+	// Don't assume specific names like "shell" or "run" - check actual parameter count
+	var cwp *mythic.CommandWithParameters
 	for _, cmd := range commands {
-		if cmd.Cmd == "shell" || cmd.Cmd == "run" || cmd.Cmd == "execute" {
-			rawCommand = cmd
+		ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
+		testCwp, err := client.GetCommandWithParameters(ctx2, cmd.PayloadTypeID, cmd.Cmd)
+		cancel2()
+
+		if err == nil && testCwp.IsRawStringCommand() {
+			cwp = testCwp
+			t.Logf("✓ Testing with command: %s (no parameters)", cmd.Cmd)
 			break
 		}
 	}
 
-	if rawCommand == nil {
+	if cwp == nil {
 		t.Skip("⚠ No raw string commands found - skipping test")
 		return
 	}
 
-	t.Logf("✓ Testing with command: %s", rawCommand.Cmd)
-
-	// Get command with parameters
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel2()
-
-	cwp, err := client.GetCommandWithParameters(ctx2, rawCommand.PayloadTypeID, rawCommand.Cmd)
-	require.NoError(t, err)
-	require.True(t, cwp.IsRawStringCommand(), "Command should be raw string type")
+	// cwp is now a confirmed raw string command
 
 	// Test 1: Simple string input
 	params1, err := cwp.BuildTaskParams("whoami")
