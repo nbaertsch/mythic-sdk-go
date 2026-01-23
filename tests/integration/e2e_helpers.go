@@ -398,10 +398,22 @@ func EnsureCallbackExists(t *testing.T) int {
 	setup.PayloadPath = payloadPath
 	t.Logf("Payload saved: %s (%d bytes)", payloadPath, len(payloadBytes))
 
-	// Register cleanup to run at test end
+	// Register cleanup to ONLY remove local files (not callback/payload which are shared)
 	t.Cleanup(func() {
-		t.Log("Cleaning up shared callback resources...")
-		setup.Cleanup()
+		t.Log("Cleaning up local files for shared callback...")
+		// Only remove payload file, not the callback or payload in Mythic
+		if setup.PayloadPath != "" {
+			t.Logf("Removing payload file: %s", setup.PayloadPath)
+			_ = os.Remove(setup.PayloadPath)
+		}
+		// Remove temp files
+		for _, file := range setup.TempFiles {
+			t.Logf("Removing temp file: %s", file)
+			_ = os.Remove(file)
+		}
+		// NOTE: We intentionally do NOT delete the callback or payload from Mythic
+		// because they are shared across all tests. The Docker container will be
+		// torn down after the test run anyway.
 	})
 
 	// Start agent in BACKGROUND goroutine
@@ -548,13 +560,9 @@ func EnsurePayloadExists(t *testing.T) string {
 
 	t.Logf("✓ Shared payload created: UUID %s", payload.UUID)
 
-	// Register cleanup to delete payload at test end
-	t.Cleanup(func() {
-		t.Log("Cleaning up shared payload...")
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		_ = client.DeletePayload(ctx, payload.UUID)
-	})
+	// NOTE: We intentionally do NOT register cleanup to delete the payload
+	// because it is shared across all tests. The Docker container will be
+	// torn down after the test run anyway, which will clean up the payload.
 
 	return payload.UUID
 }
