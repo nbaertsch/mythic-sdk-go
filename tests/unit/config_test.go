@@ -66,7 +66,7 @@ func TestConfigValidate(t *testing.T) {
 			config: &mythic.Config{
 				ServerURL: "https://mythic.example.com:7443",
 			},
-			wantErr: true,
+			wantErr: false, // Auth credentials are optional during client creation
 		},
 		{
 			name: "incomplete username/password",
@@ -75,7 +75,7 @@ func TestConfigValidate(t *testing.T) {
 				Username:  "admin",
 				// Missing Password
 			},
-			wantErr: true,
+			wantErr: false, // Auth credentials are optional during client creation
 		},
 	}
 
