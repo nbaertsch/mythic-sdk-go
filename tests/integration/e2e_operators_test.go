@@ -364,7 +364,8 @@ func TestE2E_OperatorManagement(t *testing.T) {
 
 	foundAssignment := false
 	for _, opOp := range opOperators {
-		if opOp.ID == testOperatorID {
+		// Compare OperatorID (operator's ID), not ID (operatoroperation record ID)
+		if opOp.OperatorID == testOperatorID {
 			foundAssignment = true
 			t.Logf("✓ Operator found in operation %d", *operationID)
 			break
