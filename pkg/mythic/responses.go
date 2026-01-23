@@ -507,7 +507,7 @@ func (c *Client) GetResponseStatistics(ctx context.Context, taskID int) (*types.
 	var responseQuery struct {
 		Response []struct {
 			ID        int    `graphql:"id"`
-			Response  string `graphql:"response"`
+			Response  string `graphql:"response_text"`
 			Timestamp string `graphql:"timestamp"`
 		} `graphql:"response(where: {task_id: {_eq: $task_id}}, order_by: {timestamp: asc})"`
 	}

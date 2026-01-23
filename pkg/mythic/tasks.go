@@ -745,7 +745,7 @@ func (c *Client) GetTaskArtifacts(ctx context.Context, taskDisplayID int) ([]*Ta
 		TaskArtifact []struct {
 			ID           int    `graphql:"id"`
 			TaskID       int    `graphql:"task_id"`
-			Artifact     string `graphql:"artifact"`
+			Artifact     string `graphql:"artifact_text"`
 			BaseArtifact string `graphql:"base_artifact"`
 			Host         string `graphql:"host"`
 			Timestamp    string `graphql:"timestamp"`
