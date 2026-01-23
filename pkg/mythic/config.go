@@ -36,19 +36,16 @@ type Config struct {
 }
 
 // Validate checks if the configuration is valid.
+// Note: Authentication credentials are optional during client creation.
+// They will be validated during Login() or EnsureAuthenticated().
 func (c *Config) Validate() error {
 	if c.ServerURL == "" {
 		return fmt.Errorf("ServerURL is required")
 	}
 
-	// Must have either APIToken, Username/Password, or Access/Refresh tokens
-	hasAPIToken := c.APIToken != ""
-	hasUserPass := c.Username != "" && c.Password != ""
-	hasTokens := c.AccessToken != "" && c.RefreshToken != ""
-
-	if !hasAPIToken && !hasUserPass && !hasTokens {
-		return fmt.Errorf("authentication required: provide APIToken, Username/Password, or AccessToken/RefreshToken")
-	}
+	// Authentication credentials are optional - client can be created without them
+	// for testing error handling or for delayed authentication
+	// Login() will fail if no credentials are available when authentication is attempted
 
 	return nil
 }
