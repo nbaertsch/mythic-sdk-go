@@ -38,8 +38,18 @@ func getActiveCallback(t *testing.T, client *mythic.Client) *types.Callback {
 // TestE2E_Tasks_IssueTask_RawString validates IssueTask with raw string commands.
 // Tests basic task creation, field population, and task ID assignment.
 func TestE2E_Tasks_IssueTask_RawString(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: IssueTask with raw string command ===")
 	t.Logf("✓ Using callback %d (Host: %s, User: %s)", callback.ID, callback.Host, callback.User)
@@ -147,8 +157,18 @@ func TestE2E_Tasks_IssueTask_WithParams(t *testing.T) {
 // TestE2E_Tasks_IssueTask_InvalidCommand validates error handling when issuing
 // tasks with non-existent commands.
 func TestE2E_Tasks_IssueTask_InvalidCommand(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: IssueTask error handling for invalid command ===")
 
@@ -181,8 +201,18 @@ func TestE2E_Tasks_IssueTask_InvalidCommand(t *testing.T) {
 // TestE2E_Tasks_GetTask_Complete validates GetTask returns complete task data
 // with all fields properly populated.
 func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: GetTask complete field validation ===")
 
@@ -233,8 +263,18 @@ func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
 // TestE2E_Tasks_GetTaskOutput_MultipleResponses validates GetTaskOutput retrieves
 // all task responses correctly.
 func TestE2E_Tasks_GetTaskOutput_MultipleResponses(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: GetTaskOutput with multiple responses ===")
 
@@ -282,8 +322,18 @@ func TestE2E_Tasks_GetTaskOutput_MultipleResponses(t *testing.T) {
 // TestE2E_Tasks_WaitForTaskComplete_Success validates WaitForTaskComplete waits
 // for task completion and returns success status.
 func TestE2E_Tasks_WaitForTaskComplete_Success(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: WaitForTaskComplete success case ===")
 
@@ -329,8 +379,18 @@ func TestE2E_Tasks_WaitForTaskComplete_Success(t *testing.T) {
 
 // TestE2E_Tasks_WaitForTaskComplete_Timeout validates timeout behavior.
 func TestE2E_Tasks_WaitForTaskComplete_Timeout(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: WaitForTaskComplete timeout handling ===")
 
@@ -365,8 +425,18 @@ func TestE2E_Tasks_WaitForTaskComplete_Timeout(t *testing.T) {
 
 // TestE2E_Tasks_UpdateTask_Comment validates UpdateTask can modify task metadata.
 func TestE2E_Tasks_UpdateTask_Comment(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: UpdateTask comment modification ===")
 
@@ -415,8 +485,18 @@ func TestE2E_Tasks_UpdateTask_Comment(t *testing.T) {
 
 // TestE2E_Tasks_GetTasksByStatus_Filter validates status-based task filtering.
 func TestE2E_Tasks_GetTasksByStatus_Filter(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: GetTasksByStatus filtering ===")
 
@@ -456,8 +536,18 @@ func TestE2E_Tasks_GetTasksByStatus_Filter(t *testing.T) {
 
 // TestE2E_Tasks_ReissueTask validates ReissueTask creates a new task instance.
 func TestE2E_Tasks_ReissueTask(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: ReissueTask creates new task ===")
 
@@ -504,8 +594,18 @@ func TestE2E_Tasks_ReissueTask(t *testing.T) {
 
 // TestE2E_Tasks_RequestOpsecBypass validates OPSEC bypass request workflow.
 func TestE2E_Tasks_RequestOpsecBypass(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: RequestOpsecBypass workflow ===")
 
@@ -540,8 +640,18 @@ func TestE2E_Tasks_RequestOpsecBypass(t *testing.T) {
 
 // TestE2E_Tasks_AddMITREAttack validates MITRE ATT&CK tagging for tasks.
 func TestE2E_Tasks_AddMITREAttack(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: AddMITREAttackToTask tagging ===")
 
@@ -596,8 +706,18 @@ func TestE2E_Tasks_AddMITREAttack(t *testing.T) {
 
 // TestE2E_Tasks_GetTaskArtifacts validates task artifact tracking.
 func TestE2E_Tasks_GetTaskArtifacts(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
-	callback := getActiveCallback(t, client)
+
+	// Get the callback details
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel0()
+	callback, err := client.GetCallbackByID(ctx0, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
+	}
 
 	t.Log("=== Test: GetTaskArtifacts tracking ===")
 

@@ -13,22 +13,18 @@ import (
 // TestE2E_ScreenshotRetrieval tests screenshot retrieval operations.
 // Covers: GetScreenshots, GetScreenshotByID
 func TestE2E_ScreenshotRetrieval(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find a callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetAllActiveCallbacks failed: %v", err)
+		t.Fatalf("Failed to get callback: %v", err)
 	}
-
-	if len(callbacks) == 0 {
-		t.Skip("No callbacks found, skipping screenshot tests")
-	}
-
-	testCallback := callbacks[0]
 	t.Logf("Using callback %d for screenshot tests", testCallback.ID)
 
 	// Test 1: Get screenshots for callback

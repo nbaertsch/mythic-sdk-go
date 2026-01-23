@@ -436,3 +436,125 @@ func EnsureCallbackExists(t *testing.T) int {
 	t.Logf("✓ Shared callback established: ID %d", callbackID)
 	return callbackID
 }
+
+// EnsurePayloadExists checks if any payloads exist, and if not, creates one.
+// This should be called at the start of tests that need a payload but don't
+// care about creating it themselves. Returns the payload UUID.
+//
+// This function is designed to avoid creating multiple payloads - it will
+// reuse existing payloads if available to prevent resource exhaustion.
+func EnsurePayloadExists(t *testing.T) string {
+	t.Helper()
+
+	client := AuthenticateTestClient(t)
+
+	// Check if any payloads already exist
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	payloads, err := client.GetPayloads(ctx)
+	if err != nil {
+		t.Fatalf("Failed to check for existing payloads: %v", err)
+	}
+
+	if len(payloads) > 0 {
+		t.Logf("Using existing payload UUID: %s (no need to create new one)", payloads[0].UUID)
+		return payloads[0].UUID
+	}
+
+	// No payloads exist - need to create one
+	t.Log("No payloads found - creating shared payload for tests")
+
+	// Get Poseidon payload type
+	t.Log("Finding Poseidon payload type...")
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel1()
+
+	payloadTypes, err := client.GetPayloadTypes(ctx1)
+	if err != nil {
+		t.Fatalf("GetPayloadTypes failed: %v", err)
+	}
+
+	var poseidonType *types.PayloadType
+	for i := range payloadTypes {
+		if payloadTypes[i].Name == "poseidon" {
+			poseidonType = payloadTypes[i]
+			break
+		}
+	}
+
+	if poseidonType == nil {
+		t.Skip("Poseidon payload type not found - cannot create payload")
+	}
+
+	if !poseidonType.ContainerRunning {
+		t.Skip("Poseidon container not running - cannot create payload")
+	}
+
+	// Get C2 profile
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel2()
+
+	c2Profiles, err := client.GetC2Profiles(ctx2)
+	if err != nil {
+		t.Fatalf("GetC2Profiles failed: %v", err)
+	}
+
+	var c2Profile *types.C2Profile
+	for i := range c2Profiles {
+		if c2Profiles[i].Name == "http" {
+			c2Profile = c2Profiles[i]
+			break
+		}
+	}
+	if c2Profile == nil && len(c2Profiles) > 0 {
+		c2Profile = c2Profiles[0]
+	}
+	if c2Profile == nil {
+		t.Fatal("No C2 profiles available")
+	}
+
+	// Create payload
+	t.Log("Creating shared test payload...")
+	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel3()
+
+	payloadReq := &types.CreatePayloadRequest{
+		PayloadType: "poseidon",
+		OS:          "linux",
+		Description: "Shared Test Payload",
+		Filename:    "shared_test_payload",
+		Commands: []string{
+			"shell", "ps", "whoami",
+		},
+		BuildParameters: map[string]interface{}{
+			"mode": "default",
+		},
+		C2Profiles: []types.C2ProfileConfig{
+			{
+				Name: c2Profile.Name,
+				Parameters: map[string]interface{}{
+					"callback_host": "http://127.0.0.1",
+					"callback_port": 80,
+				},
+			},
+		},
+	}
+
+	payload, err := client.CreatePayload(ctx3, payloadReq)
+	if err != nil {
+		t.Fatalf("CreatePayload failed: %v", err)
+	}
+
+	t.Logf("✓ Shared payload created: UUID %s", payload.UUID)
+
+	// Register cleanup to delete payload at test end
+	t.Cleanup(func() {
+		t.Log("Cleaning up shared payload...")
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = client.DeletePayload(ctx, payload.UUID)
+	})
+
+	return payload.UUID
+}

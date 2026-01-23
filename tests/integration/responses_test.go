@@ -16,27 +16,17 @@ import (
 // TestE2E_ResponseRetrieval tests comprehensive response retrieval operations.
 // Covers: GetResponsesByTask, GetResponseByID, GetResponsesByCallback, GetLatestResponses
 func TestE2E_ResponseRetrieval(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping response tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task to generate responses
@@ -162,27 +152,17 @@ func TestE2E_ResponseRetrieval(t *testing.T) {
 // TestE2E_ResponseSearch tests response search functionality.
 // Covers: SearchResponses with various filters
 func TestE2E_ResponseSearch(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping search tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task with known output
@@ -323,27 +303,17 @@ func TestE2E_ResponseSearch(t *testing.T) {
 // TestE2E_ResponseStatistics tests response statistics and aggregation.
 // Covers: GetResponseStatistics
 func TestE2E_ResponseStatistics(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping statistics tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task
@@ -474,27 +444,17 @@ func TestE2E_ResponseErrorHandling(t *testing.T) {
 
 // TestE2E_ResponseLargeOutput tests handling of large response outputs.
 func TestE2E_ResponseLargeOutput(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping large output tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Test: Get responses from callback with limit
@@ -556,27 +516,17 @@ func TestE2E_ResponseLargeOutput(t *testing.T) {
 
 // TestE2E_ResponseOrdering tests response ordering and sequencing.
 func TestE2E_ResponseOrdering(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping ordering tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task

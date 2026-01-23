@@ -210,23 +210,20 @@ func TestE2E_Commands_GetWithParameters_AllPayloadTypes(t *testing.T) {
 // TestE2E_GetLoadedCommands_WithCallback validates that loaded command tracking works
 // correctly after commands are loaded into a callback.
 func TestE2E_Commands_GetLoaded_WithCallback(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetLoadedCommands with active callback ===")
 
-	// Find an active callback
+	// Get the callback details
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel1()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx1)
-	require.NoError(t, err, "GetAllActiveCallbacks should succeed")
-
-	if len(callbacks) == 0 {
-		t.Skip("⚠ No active callbacks found - skipping loaded commands test")
-		return
+	testCallback, err := client.GetCallbackByID(ctx1, callbackID)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
 	}
-
-	testCallback := callbacks[0]
 	t.Logf("✓ Using callback: %d (Host:%s, User:%s)", testCallback.ID, testCallback.Host, testCallback.User)
 
 	// Get loaded commands for this callback

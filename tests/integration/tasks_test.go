@@ -15,27 +15,17 @@ import (
 // TestE2E_TaskLifecycle tests the complete task execution lifecycle.
 // Covers: IssueTask, GetTask, GetTaskOutput, WaitForTaskComplete, UpdateTask
 func TestE2E_TaskLifecycle(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping task tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 	t.Logf("Using callback %d (Host: %s, User: %s)", testCallback.ID, testCallback.Host, testCallback.User)
 
@@ -140,27 +130,17 @@ func TestE2E_TaskLifecycle(t *testing.T) {
 // TestE2E_TaskQueries tests various task query operations.
 // Covers: GetTasksForCallback, GetTasksByStatus
 func TestE2E_TaskQueries(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping task query tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Test 1: Get all tasks for callback
@@ -236,27 +216,17 @@ func TestE2E_TaskQueries(t *testing.T) {
 // TestE2E_TaskReissue tests task reissue functionality.
 // Covers: ReissueTask, ReissueTaskWithHandler
 func TestE2E_TaskReissue(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback and get a completed task
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping task reissue tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Find a completed task to reissue
@@ -305,27 +275,17 @@ func TestE2E_TaskReissue(t *testing.T) {
 // TestE2E_TaskOPSEC tests OPSEC-related task functionality.
 // Covers: RequestOpsecBypass
 func TestE2E_TaskOPSEC(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping OPSEC tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task to test OPSEC bypass
@@ -362,27 +322,17 @@ func TestE2E_TaskOPSEC(t *testing.T) {
 // TestE2E_TaskMITREAttack tests MITRE ATT&CK tagging for tasks.
 // Covers: AddMITREAttackToTask
 func TestE2E_TaskMITREAttack(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping MITRE ATT&CK tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Issue a task
@@ -417,27 +367,17 @@ func TestE2E_TaskMITREAttack(t *testing.T) {
 // TestE2E_TaskArtifacts tests task artifact retrieval.
 // Covers: GetTaskArtifacts
 func TestE2E_TaskArtifacts(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping task artifact tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Get tasks and find one with artifacts
@@ -548,25 +488,15 @@ func TestE2E_TaskErrorHandling(t *testing.T) {
 	// Test 5: Add MITRE ATT&CK with invalid attack ID
 	t.Log("=== Test 5: Add invalid MITRE ATT&CK tag ===")
 
-	// First get a real task
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackIDForTest5 := EnsureCallbackExists(t)
+
+	// Get the callback details
 	ctx5a, cancel5a := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel5a()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx5a)
-	if err != nil || len(callbacks) == 0 {
-		t.Skip("No callbacks found, skipping MITRE error test")
-	}
-
-	var activeCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			activeCallback = cb
-			break
-		}
-	}
-
-	if activeCallback == nil {
-		t.Skip("No active callbacks found")
+	activeCallback, err := client.GetCallbackByID(ctx5a, callbackIDForTest5)
+	if err != nil {
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	ctx5b, cancel5b := context.WithTimeout(context.Background(), 30*time.Second)
@@ -599,27 +529,17 @@ func TestE2E_TaskErrorHandling(t *testing.T) {
 
 // TestE2E_TaskConcurrency tests concurrent task operations.
 func TestE2E_TaskConcurrency(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	callbackID := EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
-	// Find an active callback
+	// Get the callback details
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
-
-	callbacks, err := client.GetAllActiveCallbacks(ctx0)
+	testCallback, err := client.GetCallbackByID(ctx0, callbackID)
 	if err != nil {
-		t.Fatalf("GetCallbacks failed: %v", err)
-	}
-
-	var testCallback *types.Callback
-	for _, cb := range callbacks {
-		if cb.Active {
-			testCallback = cb
-			break
-		}
-	}
-
-	if testCallback == nil {
-		t.Skip("No active callbacks found, skipping concurrency tests")
+		t.Fatalf("Failed to get callback: %v", err)
 	}
 
 	// Test: Issue multiple tasks concurrently

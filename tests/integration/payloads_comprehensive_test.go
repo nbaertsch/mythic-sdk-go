@@ -65,36 +65,24 @@ func TestE2E_Payloads_GetAll_SchemaValidation(t *testing.T) {
 // TestE2E_Payloads_GetByUUID_Complete validates GetPayloadByUUID returns complete
 // payload data with all fields populated correctly.
 func TestE2E_Payloads_GetByUUID_Complete(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetPayloadByUUID complete field validation ===")
-
-	// First get all payloads to find one to test with
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel1()
-
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
-
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test GetPayloadByUUID")
-		return
-	}
-
-	testPayload := payloads[0]
-	t.Logf("✓ Testing with payload: %s", testPayload.UUID)
+	t.Logf("✓ Testing with payload: %s", payloadUUID)
 
 	// Get the specific payload
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel2()
 
-	payload, err := client.GetPayloadByUUID(ctx2, testPayload.UUID)
+	payload, err := client.GetPayloadByUUID(ctx2, payloadUUID)
 	require.NoError(t, err, "GetPayloadByUUID should succeed")
 	require.NotNil(t, payload, "Payload should not be nil")
 
 	// Validate all fields
-	assert.Equal(t, testPayload.ID, payload.ID, "ID should match")
-	assert.Equal(t, testPayload.UUID, payload.UUID, "UUID should match")
+	assert.Equal(t, payloadUUID, payload.UUID, "UUID should match")
 	assert.NotZero(t, payload.OperatorID, "OperatorID should be populated")
 	assert.NotZero(t, payload.OperationID, "OperationID should be populated")
 	assert.NotEmpty(t, payload.OS, "OS should be populated")
@@ -224,48 +212,33 @@ func TestE2E_Payloads_Create_Minimal(t *testing.T) {
 // TestE2E_Payloads_WaitForComplete validates WaitForPayloadComplete correctly waits
 // for build completion or timeout.
 func TestE2E_Payloads_WaitForComplete(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: WaitForPayloadComplete ===")
+	t.Logf("✓ Testing with payload: %s", payloadUUID)
 
-	// Get existing payloads to find one that's complete
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	// Get the payload to check its state
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel1()
 
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
+	payload, err := client.GetPayloadByUUID(ctx1, payloadUUID)
+	require.NoError(t, err, "GetPayloadByUUID should succeed")
 
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test WaitForPayloadComplete")
-		return
-	}
+	t.Logf("  Current BuildPhase: %s", payload.BuildPhase)
 
-	// Find a completed payload to test with
-	var completePayload *types.Payload
-	for _, p := range payloads {
-		if p.IsReady() {
-			completePayload = p
-			break
-		}
-	}
-
-	if completePayload == nil {
-		t.Log("⚠ No completed payloads found, testing with first available payload")
-		completePayload = payloads[0]
-	}
-
-	t.Logf("✓ Testing with payload: %s (Phase: %s)", completePayload.UUID, completePayload.BuildPhase)
-
-	// Test waiting for already-complete payload (should return immediately)
+	// Test waiting for payload completion
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel2()
 
-	err = client.WaitForPayloadComplete(ctx2, completePayload.UUID, 5)
+	err = client.WaitForPayloadComplete(ctx2, payloadUUID, 5)
 
-	if completePayload.IsReady() {
+	if payload.IsReady() {
 		assert.NoError(t, err, "WaitForPayloadComplete should succeed for ready payload")
 		t.Log("✓ WaitForPayloadComplete returned immediately for ready payload")
-	} else if completePayload.IsFailed() {
+	} else if payload.IsFailed() {
 		assert.Error(t, err, "WaitForPayloadComplete should error for failed payload")
 		t.Logf("✓ WaitForPayloadComplete correctly errored for failed payload: %v", err)
 	} else {
@@ -279,41 +252,27 @@ func TestE2E_Payloads_WaitForComplete(t *testing.T) {
 // TestE2E_Payloads_GetCommands validates GetPayloadCommands retrieves commands
 // for a specific payload.
 func TestE2E_Payloads_GetCommands(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: GetPayloadCommands ===")
 
-	// Get payloads to find one with commands
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	// Get the payload to obtain its ID
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel1()
 
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
+	payload, err := client.GetPayloadByUUID(ctx1, payloadUUID)
+	require.NoError(t, err, "GetPayloadByUUID should succeed")
 
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test GetPayloadCommands")
-		return
-	}
-
-	// Find a successful payload (more likely to have commands)
-	var testPayload *types.Payload
-	for _, p := range payloads {
-		if p.IsReady() {
-			testPayload = p
-			break
-		}
-	}
-	if testPayload == nil {
-		testPayload = payloads[0]
-	}
-
-	t.Logf("✓ Testing with payload ID: %d (UUID: %s)", testPayload.ID, testPayload.UUID)
+	t.Logf("✓ Testing with payload ID: %d (UUID: %s)", payload.ID, payloadUUID)
 
 	// Get commands
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel2()
 
-	commands, err := client.GetPayloadCommands(ctx2, testPayload.ID)
+	commands, err := client.GetPayloadCommands(ctx2, payload.ID)
 	require.NoError(t, err, "GetPayloadCommands should succeed")
 	require.NotNil(t, commands, "Commands should not be nil")
 
@@ -334,30 +293,19 @@ func TestE2E_Payloads_GetCommands(t *testing.T) {
 // TestE2E_Payloads_ExportConfig validates ExportPayloadConfig exports payload
 // configuration as JSON.
 func TestE2E_Payloads_ExportConfig(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: ExportPayloadConfig ===")
-
-	// Get a payload to export
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel1()
-
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
-
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test ExportPayloadConfig")
-		return
-	}
-
-	testPayload := payloads[0]
-	t.Logf("✓ Exporting config for payload: %s", testPayload.UUID)
+	t.Logf("✓ Exporting config for payload: %s", payloadUUID)
 
 	// Export config
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel2()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	config, err := client.ExportPayloadConfig(ctx2, testPayload.UUID)
+	config, err := client.ExportPayloadConfig(ctx, payloadUUID)
 
 	// Export may fail if the GraphQL endpoint isn't available in all Mythic versions
 	if err != nil {
@@ -378,41 +326,19 @@ func TestE2E_Payloads_ExportConfig(t *testing.T) {
 
 // TestE2E_Payloads_Rebuild validates RebuildPayload triggers a payload rebuild.
 func TestE2E_Payloads_Rebuild(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: RebuildPayload ===")
-
-	// Get a payload to rebuild
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel1()
-
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
-
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test RebuildPayload")
-		return
-	}
-
-	// Find a successfully built payload to rebuild
-	var testPayload *types.Payload
-	for _, p := range payloads {
-		if p.IsReady() {
-			testPayload = p
-			break
-		}
-	}
-	if testPayload == nil {
-		testPayload = payloads[0]
-	}
-
-	t.Logf("✓ Rebuilding payload: %s", testPayload.UUID)
+	t.Logf("✓ Rebuilding payload: %s", payloadUUID)
 
 	// Rebuild the payload
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel2()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	rebuiltPayload, err := client.RebuildPayload(ctx2, testPayload.UUID)
+	rebuiltPayload, err := client.RebuildPayload(ctx, payloadUUID)
 
 	// Rebuild may fail if not supported or payload in wrong state
 	if err != nil {
@@ -422,7 +348,7 @@ func TestE2E_Payloads_Rebuild(t *testing.T) {
 	}
 
 	require.NotNil(t, rebuiltPayload, "Rebuilt payload should not be nil")
-	assert.Equal(t, testPayload.UUID, rebuiltPayload.UUID, "UUID should remain the same")
+	assert.Equal(t, payloadUUID, rebuiltPayload.UUID, "UUID should remain the same")
 	t.Logf("✓ Payload rebuilt: UUID=%s, BuildPhase=%s", rebuiltPayload.UUID, rebuiltPayload.BuildPhase)
 
 	t.Log("=== ✓ RebuildPayload validation passed ===")
@@ -430,43 +356,32 @@ func TestE2E_Payloads_Rebuild(t *testing.T) {
 
 // TestE2E_Payloads_Download validates DownloadPayload retrieves payload binary.
 func TestE2E_Payloads_Download(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: DownloadPayload ===")
 
-	// Get a completed payload to download
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	// Get the payload to check if it's ready
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel1()
 
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
+	payload, err := client.GetPayloadByUUID(ctx1, payloadUUID)
+	require.NoError(t, err, "GetPayloadByUUID should succeed")
 
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test DownloadPayload")
+	if !payload.IsReady() {
+		t.Skipf("⚠ Payload %s is not ready (BuildPhase: %s) - cannot test DownloadPayload", payloadUUID, payload.BuildPhase)
 		return
 	}
 
-	// Find a ready payload (must be successfully built to download)
-	var readyPayload *types.Payload
-	for _, p := range payloads {
-		if p.IsReady() {
-			readyPayload = p
-			break
-		}
-	}
-
-	if readyPayload == nil {
-		t.Skip("⚠ No ready payloads found - cannot test DownloadPayload")
-		return
-	}
-
-	t.Logf("✓ Downloading payload: %s", readyPayload.UUID)
+	t.Logf("✓ Downloading payload: %s", payloadUUID)
 
 	// Download the payload
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel2()
 
-	data, err := client.DownloadPayload(ctx2, readyPayload.UUID)
+	data, err := client.DownloadPayload(ctx2, payloadUUID)
 	require.NoError(t, err, "DownloadPayload should succeed for ready payload")
 	require.NotNil(t, data, "Downloaded data should not be nil")
 	assert.NotEmpty(t, data, "Downloaded data should not be empty")
@@ -536,24 +451,13 @@ func TestE2E_Payloads_GetOnHost(t *testing.T) {
 // TestE2E_Payloads_UpdateAndDelete validates UpdatePayload and DeletePayload operations.
 // Combined test since both have limited support in current API.
 func TestE2E_Payloads_UpdateAndDelete(t *testing.T) {
+	// Ensure at least one payload exists (reuses existing or creates one)
+	payloadUUID := EnsurePayloadExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: UpdatePayload and DeletePayload ===")
-
-	// Get a payload to test with
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel1()
-
-	payloads, err := client.GetPayloads(ctx1)
-	require.NoError(t, err, "GetPayloads should succeed")
-
-	if len(payloads) == 0 {
-		t.Skip("⚠ No payloads found - cannot test Update/Delete")
-		return
-	}
-
-	testPayload := payloads[0]
-	t.Logf("✓ Testing with payload: %s", testPayload.UUID)
+	t.Logf("✓ Testing with payload: %s", payloadUUID)
 
 	// Test Update (limited support)
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
@@ -561,7 +465,7 @@ func TestE2E_Payloads_UpdateAndDelete(t *testing.T) {
 
 	newDesc := "Updated description from comprehensive test"
 	updateReq := &types.UpdatePayloadRequest{
-		UUID:        testPayload.UUID,
+		UUID:        payloadUUID,
 		Description: &newDesc,
 	}
 
@@ -579,7 +483,7 @@ func TestE2E_Payloads_UpdateAndDelete(t *testing.T) {
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel3()
 
-	err = client.DeletePayload(ctx3, testPayload.UUID)
+	err = client.DeletePayload(ctx3, payloadUUID)
 
 	// Delete may not be fully supported - just verify it doesn't crash
 	if err != nil {
