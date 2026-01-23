@@ -112,30 +112,19 @@ func TestE2E_Tasks_IssueTask_WithParams(t *testing.T) {
 	// Find a loaded command with parameters (OS-compatible by definition)
 	var paramCommand *types.Command
 	for _, loadedCmd := range loadedCommands {
-		// Get full command details
-		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
-		commands, err := client.GetCommands(ctx1)
-		cancel1()
-		if err != nil {
+		// LoadedCommand has a nested Command field with full details
+		if loadedCmd.Command == nil {
 			continue
 		}
 
-		// Find matching command in full list
-		for _, cmd := range commands {
-			if cmd.Cmd == loadedCmd {
-				// Try to get command with parameters
-				ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
-				cwp, err := client.GetCommandWithParameters(ctx2, cmd.PayloadTypeID, cmd.Cmd)
-				cancel2()
+		// Try to get command with parameters
+		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
+		cwp, err := client.GetCommandWithParameters(ctx1, loadedCmd.Command.PayloadTypeID, loadedCmd.Command.Cmd)
+		cancel1()
 
-				if err == nil && !cwp.IsRawStringCommand() {
-					paramCommand = &cmd
-					t.Logf("✓ Testing with command: %s (%d parameters)", cmd.Cmd, len(cwp.Parameters))
-					break
-				}
-			}
-		}
-		if paramCommand != nil {
+		if err == nil && !cwp.IsRawStringCommand() {
+			paramCommand = loadedCmd.Command
+			t.Logf("✓ Testing with command: %s (%d parameters)", loadedCmd.Command.Cmd, len(cwp.Parameters))
 			break
 		}
 	}
