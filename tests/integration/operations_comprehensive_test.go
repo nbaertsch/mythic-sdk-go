@@ -167,18 +167,20 @@ func TestE2E_Operations_EventLog(t *testing.T) {
 
 	t.Log("=== Test: Operation event log ===")
 
-	// Get current operation
+	// Get current operation (event logs are created for operator's current operation)
+	currentOpID := client.GetCurrentOperation()
+	require.NotNil(t, currentOpID, "Should have a current operation")
+
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel1()
 
-	operations, err := client.GetOperations(ctx1)
-	require.NoError(t, err, "GetOperations should succeed")
-	require.NotEmpty(t, operations, "Should have at least one operation")
-
-	currentOp := operations[0]
-	t.Logf("✓ Testing with operation: %s (ID: %d)", currentOp.Name, currentOp.ID)
+	currentOp, err := client.GetOperationByID(ctx1, *currentOpID)
+	require.NoError(t, err, "GetOperationByID should succeed")
+	t.Logf("✓ Testing with current operation: %s (ID: %d)", currentOp.Name, currentOp.ID)
 
 	// Create an event log entry
+	// NOTE: In Mythic v3.4.20, event logs are created for the operator's current operation
+	// The OperationID in the request is for reference only
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel2()
 
@@ -194,7 +196,8 @@ func TestE2E_Operations_EventLog(t *testing.T) {
 	require.NotNil(t, logEntry, "Log entry should not be nil")
 
 	assert.NotZero(t, logEntry.ID, "Log entry should have ID")
-	assert.Equal(t, currentOp.ID, logEntry.OperationID, "Log entry should match operation")
+	// Event log will have the operator's current operation ID
+	assert.Equal(t, currentOp.ID, logEntry.OperationID, "Log entry should match current operation")
 	assert.Equal(t, createReq.Message, logEntry.Message, "Message should match")
 	assert.Equal(t, "info", logEntry.Level, "Level should match")
 	assert.Equal(t, "sdk_test", logEntry.Source, "Source should match")

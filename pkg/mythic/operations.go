@@ -451,19 +451,22 @@ func (c *Client) CreateOperationEventLog(ctx context.Context, req *types.CreateO
 		source = req.Source
 	}
 
+	// NOTE: In Mythic v3.4.20, operationeventlog insert does not accept operation_id parameter
+	// Event logs are automatically created for the operator's current operation
+	// To create a log for a specific operation, switch to that operation first using UpdateCurrentOperationForUser
+
 	var mutation struct {
 		CreateOperationEventLog struct {
 			Returning []struct {
 				ID int `graphql:"id"`
 			} `graphql:"returning"`
-		} `graphql:"insert_operationeventlog(objects: [{operation_id: $operation_id, message: $message, level: $level, source: $source}])"`
+		} `graphql:"insert_operationeventlog(objects: [{message: $message, level: $level, source: $source}])"`
 	}
 
 	variables := map[string]interface{}{
-		"operation_id": req.OperationID,
-		"message":      req.Message,
-		"level":        level,
-		"source":       source,
+		"message": req.Message,
+		"level":   level,
+		"source":  source,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
