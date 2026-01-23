@@ -253,6 +253,9 @@ func TestE2E_CallbackUpdate(t *testing.T) {
 	}
 	t.Logf("✓ Description updated to: %s", newDesc)
 
+	// Wait briefly for Mythic to propagate the update
+	time.Sleep(1 * time.Second)
+
 	// Verify update
 	ctx1v, cancel1v := context.WithTimeout(context.Background(), 30*time.Second)
 	updated, err := client.GetCallbackByID(ctx1v, testCallback.DisplayID)
