@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
-	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // TestE2E_TaskLifecycle tests the complete task execution lifecycle.
