@@ -64,50 +64,47 @@ func (c *Client) GetScreenshots(ctx context.Context, callbackID int, limit int) 
 			Timestamp           time.Time `graphql:"timestamp"`
 			Deleted             bool      `graphql:"deleted"`
 			TaskID              *int      `graphql:"task_id"`
-			CallbackID          *int      `graphql:"callback_id"`
-		} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
+			Task                *struct {
+				CallbackID int `graphql:"callback_id"`
+			} `graphql:"task"`
+		} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}}, order_by: {timestamp: desc}, limit: $limit)"`
 	}
 
-	variables := map[string]interface{}{}
+	variables := map[string]interface{}{
+		"callback_id": callbackID,
+		"limit":       limit,
+	}
 
 	err := c.executeQuery(ctx, &query, variables)
 	if err != nil {
 		return nil, WrapError("GetScreenshots", err, "failed to query screenshots")
 	}
 
-	// Filter by callback_id in code (Mythic v3.4.20 doesn't support callback_id in filemeta where clause)
-	var filtered []*FileMeta
-	for _, file := range query.FileMeta {
-		if file.CallbackID != nil && *file.CallbackID == callbackID {
-			filtered = append(filtered, &FileMeta{
-				ID:                  file.ID,
-				AgentFileID:         file.AgentFileID,
-				TotalChunks:         file.TotalChunks,
-				ChunksReceived:      file.ChunksReceived,
-				Complete:            file.Complete,
-				FullRemotePath:      file.FullRemotePath,
-				Host:                file.Host,
-				IsPayload:           file.IsPayload,
-				IsScreenshot:        file.IsScreenshot,
-				IsDownloadFromAgent: file.IsDownloadFromAgent,
-				Filename:            decodeFilename(file.Filename),
-				MD5:                 file.MD5,
-				SHA1:                file.SHA1,
-				Comment:             file.Comment,
-				OperatorID:          file.OperatorID,
-				Timestamp:           file.Timestamp,
-				Deleted:             file.Deleted,
-				TaskID:              file.TaskID,
-			})
-
-			// Apply limit
-			if len(filtered) >= limit {
-				break
-			}
+	screenshots := make([]*FileMeta, len(query.FileMeta))
+	for i, file := range query.FileMeta {
+		screenshots[i] = &FileMeta{
+			ID:                  file.ID,
+			AgentFileID:         file.AgentFileID,
+			TotalChunks:         file.TotalChunks,
+			ChunksReceived:      file.ChunksReceived,
+			Complete:            file.Complete,
+			FullRemotePath:      file.FullRemotePath,
+			Host:                file.Host,
+			IsPayload:           file.IsPayload,
+			IsScreenshot:        file.IsScreenshot,
+			IsDownloadFromAgent: file.IsDownloadFromAgent,
+			Filename:            decodeFilename(file.Filename),
+			MD5:                 file.MD5,
+			SHA1:                file.SHA1,
+			Comment:             file.Comment,
+			OperatorID:          file.OperatorID,
+			Timestamp:           file.Timestamp,
+			Deleted:             file.Deleted,
+			TaskID:              file.TaskID,
 		}
 	}
 
-	return filtered, nil
+	return screenshots, nil
 }
 
 // GetScreenshotByID retrieves a specific screenshot's metadata by its database ID.
