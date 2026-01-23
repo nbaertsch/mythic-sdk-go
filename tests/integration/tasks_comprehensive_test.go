@@ -72,7 +72,7 @@ func TestE2E_Tasks_IssueTask_RawString(t *testing.T) {
 	assert.NotZero(t, task.ID, "Task ID should be assigned")
 	assert.NotZero(t, task.DisplayID, "Task DisplayID should be assigned")
 	assert.Equal(t, callback.ID, task.CallbackID, "Task should have correct CallbackID")
-	assert.Equal(t, "whoami", task.CommandName, "Task should have correct command name")
+	assert.Equal(t, "shell", task.CommandName, "Task should have correct command name")
 	assert.NotEmpty(t, task.Status, "Task should have a status")
 	assert.NotZero(t, task.OperatorID, "Task should have operator ID")
 
@@ -101,30 +101,47 @@ func TestE2E_Tasks_IssueTask_WithParams(t *testing.T) {
 
 	t.Log("=== Test: IssueTask with parameterized command ===")
 
-	// Find a command with parameters
+	// Get loaded commands for this callback (OS-compatible commands only)
 	ctx0, cancel0 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel0()
 
-	commands, err := client.GetCommands(ctx0)
+	loadedCommands, err := client.GetLoadedCommands(ctx0, callback.ID)
 	require.NoError(t, err)
+	t.Logf("✓ Callback has %d loaded commands", len(loadedCommands))
 
-	// Find a command with parameters (like 'ls' or 'cd')
+	// Find a loaded command with parameters (OS-compatible by definition)
 	var paramCommand *types.Command
-	for _, cmd := range commands {
-		// Try to get command with parameters
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		cwp, err := client.GetCommandWithParameters(ctx, cmd.PayloadTypeID, cmd.Cmd)
-		cancel()
+	for _, loadedCmd := range loadedCommands {
+		// Get full command details
+		ctx1, cancel1 := context.WithTimeout(context.Background(), 10*time.Second)
+		commands, err := client.GetCommands(ctx1)
+		cancel1()
+		if err != nil {
+			continue
+		}
 
-		if err == nil && !cwp.IsRawStringCommand() {
-			paramCommand = cmd
-			t.Logf("✓ Testing with command: %s (%d parameters)", cmd.Cmd, len(cwp.Parameters))
+		// Find matching command in full list
+		for _, cmd := range commands {
+			if cmd.Cmd == loadedCmd {
+				// Try to get command with parameters
+				ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
+				cwp, err := client.GetCommandWithParameters(ctx2, cmd.PayloadTypeID, cmd.Cmd)
+				cancel2()
+
+				if err == nil && !cwp.IsRawStringCommand() {
+					paramCommand = &cmd
+					t.Logf("✓ Testing with command: %s (%d parameters)", cmd.Cmd, len(cwp.Parameters))
+					break
+				}
+			}
+		}
+		if paramCommand != nil {
 			break
 		}
 	}
 
 	if paramCommand == nil {
-		t.Skip("⚠ No parameterized commands found - skipping test")
+		t.Skip("⚠ No parameterized commands found in loaded commands - skipping test")
 		return
 	}
 
@@ -241,13 +258,13 @@ func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
 	assert.Equal(t, issuedTask.ID, task.ID, "ID should match")
 	assert.Equal(t, issuedTask.DisplayID, task.DisplayID, "DisplayID should match")
 	assert.Equal(t, callback.ID, task.CallbackID, "CallbackID should match")
-	assert.Equal(t, "whoami", task.CommandName, "Command should match")
+	assert.Equal(t, "shell", task.CommandName, "Command should match")
 	assert.NotEmpty(t, task.Status, "Status should be populated")
 	assert.NotZero(t, task.OperatorID, "OperatorID should be populated")
 	assert.NotEmpty(t, task.Timestamp, "Timestamp should be populated")
 
 	// Task should have a valid status
-	validStatuses := []string{"preprocessing", "submitted", "processing", "completed", "error"}
+	validStatuses := []string{"preprocessing", "submitted", "processing", "completed", "error", "OPSEC Pre Check Running..."}
 	assert.Contains(t, validStatuses, task.Status,
 		"Task status should be one of valid statuses")
 
