@@ -290,6 +290,7 @@ func (c *Client) GetOperatorPreferences(ctx context.Context, operatorID int) (*t
 	return &types.OperatorPreferences{
 		OperatorID:      operatorID,
 		PreferencesJSON: string(prefsJSON),
+		Preferences:     response.Preferences, // Also populate the map field
 	}, nil
 }
 
