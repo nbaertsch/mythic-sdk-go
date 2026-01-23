@@ -59,7 +59,7 @@ func TestE2E_Tasks_IssueTask_RawString(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -221,7 +221,7 @@ func TestE2E_Tasks_GetTask_Complete(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -283,7 +283,7 @@ func TestE2E_Tasks_GetTaskOutput_MultipleResponses(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -342,7 +342,7 @@ func TestE2E_Tasks_WaitForTaskComplete_Success(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -399,7 +399,7 @@ func TestE2E_Tasks_WaitForTaskComplete_Timeout(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -445,7 +445,7 @@ func TestE2E_Tasks_UpdateTask_Comment(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -556,7 +556,7 @@ func TestE2E_Tasks_ReissueTask(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -660,7 +660,7 @@ func TestE2E_Tasks_AddMITREAttack(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
@@ -726,7 +726,7 @@ func TestE2E_Tasks_GetTaskArtifacts(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}

@@ -35,7 +35,7 @@ func TestE2E_ResponseRetrieval(t *testing.T) {
 	defer cancel01()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}
@@ -172,7 +172,7 @@ func TestE2E_ResponseSearch(t *testing.T) {
 
 	searchMarker := fmt.Sprintf("SEARCH_TEST_%d", time.Now().Unix())
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     searchMarker,
 		CallbackID: &testCallback.ID,
 	}
@@ -322,7 +322,7 @@ func TestE2E_ResponseStatistics(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}
@@ -535,7 +535,7 @@ func TestE2E_ResponseOrdering(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}

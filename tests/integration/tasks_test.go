@@ -34,7 +34,7 @@ func TestE2E_TaskLifecycle(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}
@@ -293,7 +293,7 @@ func TestE2E_TaskOPSEC(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}
@@ -340,7 +340,7 @@ func TestE2E_TaskMITREAttack(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &testCallback.ID,
 	}
@@ -437,7 +437,7 @@ func TestE2E_TaskErrorHandling(t *testing.T) {
 
 	invalidCallbackID := 999999
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &invalidCallbackID,
 	}
@@ -502,7 +502,7 @@ func TestE2E_TaskErrorHandling(t *testing.T) {
 	defer cancel5b()
 
 	taskReq = &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &activeCallback.ID,
 	}
@@ -554,7 +554,7 @@ func TestE2E_TaskConcurrency(t *testing.T) {
 			defer cancel()
 
 			taskReq := &mythic.TaskRequest{
-				Command:    "whoami",
+				Command:    "shell",
 				Params:     fmt.Sprintf("whoami # concurrent test %d", taskNum),
 				CallbackID: &testCallback.ID,
 			}

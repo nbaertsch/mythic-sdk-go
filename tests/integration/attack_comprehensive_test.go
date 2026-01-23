@@ -163,7 +163,7 @@ func TestE2E_Attack_GetByTask(t *testing.T) {
 	defer cancel1()
 
 	taskReq := &mythic.TaskRequest{
-		Command:    "whoami",
+		Command:    "shell",
 		Params:     "whoami",
 		CallbackID: &callback.ID,
 	}
