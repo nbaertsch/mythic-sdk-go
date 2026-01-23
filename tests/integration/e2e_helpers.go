@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -249,4 +250,188 @@ func (s *E2ETestSetup) AddTempFile(path string) {
 // GetContext returns the E2E test context
 func (s *E2ETestSetup) GetContext() context.Context {
 	return s.ctx
+}
+
+// EnsureCallbackExists checks if any active callbacks exist, and if not,
+// creates a payload and starts an agent in the background to establish one.
+// This should be called at the start of tests that need a callback but don't
+// care about creating it themselves. Returns the callback ID.
+//
+// This function is designed to avoid creating multiple callbacks - it will
+// reuse existing callbacks if available to prevent resource exhaustion.
+func EnsureCallbackExists(t *testing.T) int {
+	t.Helper()
+
+	client := AuthenticateTestClient(t)
+
+	// Check if any active callbacks already exist
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	callbacks, err := client.GetAllActiveCallbacks(ctx)
+	if err != nil {
+		t.Fatalf("Failed to check for existing callbacks: %v", err)
+	}
+
+	if len(callbacks) > 0 {
+		t.Logf("Using existing callback ID: %d (no need to create new one)", callbacks[0].ID)
+		return callbacks[0].ID
+	}
+
+	// No callbacks exist - need to create one
+	t.Log("No active callbacks found - creating shared callback for tests")
+
+	// Create E2E setup
+	setup := SetupE2ETest(t)
+
+	// Get Poseidon payload type
+	t.Log("Finding Poseidon payload type...")
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel1()
+
+	payloadTypes, err := client.GetPayloadTypes(ctx1)
+	if err != nil {
+		t.Fatalf("GetPayloadTypes failed: %v", err)
+	}
+
+	var poseidonType *mythic.PayloadType
+	for i := range payloadTypes {
+		if payloadTypes[i].Name == "poseidon" {
+			poseidonType = &payloadTypes[i]
+			break
+		}
+	}
+
+	if poseidonType == nil {
+		t.Skip("Poseidon payload type not found - cannot create callback")
+	}
+
+	if !poseidonType.ContainerRunning {
+		t.Skip("Poseidon container not running - cannot create callback")
+	}
+
+	// Get C2 profile
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel2()
+
+	c2Profiles, err := client.GetC2Profiles(ctx2)
+	if err != nil {
+		t.Fatalf("GetC2Profiles failed: %v", err)
+	}
+
+	var c2Profile *mythic.C2Profile
+	for i := range c2Profiles {
+		if c2Profiles[i].Name == "http" {
+			c2Profile = &c2Profiles[i]
+			break
+		}
+	}
+	if c2Profile == nil && len(c2Profiles) > 0 {
+		c2Profile = &c2Profiles[0]
+	}
+	if c2Profile == nil {
+		t.Fatal("No C2 profiles available")
+	}
+
+	// Create payload
+	t.Log("Creating Poseidon payload...")
+	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel3()
+
+	payloadReq := &mythic.CreatePayloadRequest{
+		PayloadType: "poseidon",
+		OS:          "linux",
+		Description: "Shared Test Callback",
+		Filename:    "shared_test_agent",
+		Commands: []string{
+			"shell", "ps", "whoami",
+		},
+		BuildParameters: map[string]interface{}{
+			"mode": "default",
+		},
+		C2Profiles: []mythic.C2ProfileConfig{
+			{
+				Name: c2Profile.Name,
+				Parameters: map[string]interface{}{
+					"callback_host": "http://127.0.0.1",
+					"callback_port": 80,
+				},
+			},
+		},
+	}
+
+	payload, err := client.CreatePayload(ctx3, payloadReq)
+	if err != nil {
+		t.Fatalf("CreatePayload failed: %v", err)
+	}
+	setup.PayloadUUID = payload.UUID
+	t.Logf("Payload created: %s", payload.UUID)
+
+	// Wait for build
+	t.Log("Waiting for payload build...")
+	ctx4, cancel4 := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel4()
+
+	err = client.WaitForPayloadComplete(ctx4, payload.UUID, 90)
+	if err != nil {
+		t.Fatalf("Payload build failed: %v", err)
+	}
+
+	// Download payload
+	t.Log("Downloading payload...")
+	ctx5, cancel5 := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel5()
+
+	payloadBytes, err := client.DownloadPayload(ctx5, payload.UUID)
+	if err != nil {
+		t.Fatalf("DownloadPayload failed: %v", err)
+	}
+
+	// Save payload to temp file
+	tmpDir := os.TempDir()
+	payloadPath := filepath.Join(tmpDir, "shared_test_agent_"+payload.UUID[:8])
+	err = os.WriteFile(payloadPath, payloadBytes, 0755)
+	if err != nil {
+		t.Fatalf("Failed to write payload: %v", err)
+	}
+	setup.PayloadPath = payloadPath
+	t.Logf("Payload saved: %s (%d bytes)", payloadPath, len(payloadBytes))
+
+	// Register cleanup to run at test end
+	t.Cleanup(func() {
+		t.Log("Cleaning up shared callback resources...")
+		setup.Cleanup()
+	})
+
+	// Start agent in BACKGROUND goroutine
+	t.Log("Starting agent in background...")
+	agentStarted := make(chan error, 1)
+	go func() {
+		if err := setup.StartAgent(); err != nil {
+			agentStarted <- err
+		} else {
+			agentStarted <- nil
+		}
+	}()
+
+	// Wait for agent to start
+	select {
+	case err := <-agentStarted:
+		if err != nil {
+			t.Fatalf("Failed to start agent in background: %v", err)
+		}
+		t.Log("Agent started in background")
+	case <-time.After(10 * time.Second):
+		t.Fatal("Timeout waiting for agent to start")
+	}
+
+	// Wait for callback to establish
+	t.Log("Waiting for callback to establish...")
+	callbackID, err := setup.WaitForCallback(90 * time.Second)
+	if err != nil {
+		t.Fatalf("Failed to establish callback: %v", err)
+	}
+
+	t.Logf("✓ Shared callback established: ID %d", callbackID)
+	return callbackID
 }

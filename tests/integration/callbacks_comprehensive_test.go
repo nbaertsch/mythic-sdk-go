@@ -14,6 +14,9 @@ import (
 // TestE2E_CallbackRetrieval tests comprehensive callback retrieval operations.
 // Covers: GetAllCallbacks, GetAllActiveCallbacks, GetCallbackByID
 func TestE2E_CallbackRetrieval(t *testing.T) {
+	// Ensure at least one callback exists (reuses existing or creates one)
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	// Test 1: Get all callbacks
@@ -28,7 +31,7 @@ func TestE2E_CallbackRetrieval(t *testing.T) {
 	t.Logf("✓ Retrieved %d total callbacks", len(allCallbacks))
 
 	if len(allCallbacks) == 0 {
-		t.Skip("No callbacks found, skipping callback tests")
+		t.Fatal("No callbacks found after EnsureCallbackExists()")
 	}
 
 	// Validate callback structure
@@ -122,6 +125,9 @@ func TestE2E_CallbackRetrieval(t *testing.T) {
 
 // TestE2E_CallbackAttributes tests callback attribute analysis.
 func TestE2E_CallbackAttributes(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: Analyze callback attributes ===")
@@ -134,7 +140,7 @@ func TestE2E_CallbackAttributes(t *testing.T) {
 	}
 
 	if len(callbacks) == 0 {
-		t.Skip("No callbacks found for attribute analysis")
+		t.Fatal("No callbacks found after EnsureCallbackExists()")
 	}
 
 	t.Logf("✓ Analyzing %d callbacks", len(callbacks))
@@ -207,6 +213,9 @@ func TestE2E_CallbackAttributes(t *testing.T) {
 // TestE2E_CallbackUpdate tests callback update operations.
 // Covers: UpdateCallback
 func TestE2E_CallbackUpdate(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	// Get an active callback
@@ -219,7 +228,7 @@ func TestE2E_CallbackUpdate(t *testing.T) {
 	}
 
 	if len(callbacks) == 0 {
-		t.Skip("No active callbacks found, skipping update tests")
+		t.Fatal("No active callbacks found after EnsureCallbackExists()")
 	}
 
 	testCallback := callbacks[0]
@@ -274,6 +283,9 @@ func TestE2E_CallbackUpdate(t *testing.T) {
 // TestE2E_CallbackGraph tests callback graph operations.
 // Covers: AddCallbackGraphEdge, RemoveCallbackGraphEdge
 func TestE2E_CallbackGraph(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	// Get at least 2 active callbacks for graph testing
@@ -286,7 +298,7 @@ func TestE2E_CallbackGraph(t *testing.T) {
 	}
 
 	if len(callbacks) < 2 {
-		t.Skip("Need at least 2 active callbacks for graph tests")
+		t.Skip("Need at least 2 active callbacks for graph tests (currently have 1)")
 	}
 
 	sourceCallback := callbacks[0]
@@ -324,6 +336,9 @@ func TestE2E_CallbackGraph(t *testing.T) {
 // TestE2E_CallbackConfigExport tests callback configuration export.
 // Covers: ExportCallbackConfig
 func TestE2E_CallbackConfigExport(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	// Get an active callback
@@ -336,7 +351,7 @@ func TestE2E_CallbackConfigExport(t *testing.T) {
 	}
 
 	if len(callbacks) == 0 {
-		t.Skip("No active callbacks found, skipping config export tests")
+		t.Fatal("No active callbacks found after EnsureCallbackExists()")
 	}
 
 	testCallback := callbacks[0]
@@ -500,6 +515,9 @@ func TestE2E_CallbackErrorHandling(t *testing.T) {
 
 // TestE2E_CallbackTimestamps tests callback timestamp analysis.
 func TestE2E_CallbackTimestamps(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: Callback timestamp analysis ===")
@@ -512,7 +530,7 @@ func TestE2E_CallbackTimestamps(t *testing.T) {
 	}
 
 	if len(callbacks) == 0 {
-		t.Skip("No callbacks found for timestamp analysis")
+		t.Fatal("No callbacks found after EnsureCallbackExists()")
 	}
 
 	t.Logf("✓ Analyzing %d callbacks", len(callbacks))
@@ -567,6 +585,9 @@ func TestE2E_CallbackTimestamps(t *testing.T) {
 
 // TestE2E_CallbackIntegrityLevels tests callback integrity level analysis.
 func TestE2E_CallbackIntegrityLevels(t *testing.T) {
+	// Ensure at least one callback exists
+	_ = EnsureCallbackExists(t)
+
 	client := AuthenticateTestClient(t)
 
 	t.Log("=== Test: Callback integrity level analysis ===")
@@ -579,7 +600,7 @@ func TestE2E_CallbackIntegrityLevels(t *testing.T) {
 	}
 
 	if len(callbacks) == 0 {
-		t.Skip("No callbacks found for integrity level analysis")
+		t.Fatal("No callbacks found after EnsureCallbackExists()")
 	}
 
 	t.Logf("✓ Analyzing %d callbacks", len(callbacks))
