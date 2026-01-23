@@ -28,10 +28,11 @@ func TestE2E_Auth_LoginWithCredentials(t *testing.T) {
 
 	// Create a new client without authenticating
 	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		Username:  username,
-		Password:  password,
-		SSL:       false,
+		ServerURL:     serverURL,
+		Username:      username,
+		Password:      password,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 	require.NotNil(t, client, "Client should not be nil")
@@ -85,9 +86,10 @@ func TestE2E_Auth_LoginWithAPIToken(t *testing.T) {
 
 	// Create a new client with API token
 	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		APIToken:  apiToken,
-		SSL:       false,
+		ServerURL:     serverURL,
+		APIToken:      apiToken,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 	require.NotNil(t, client, "Client should not be nil")
@@ -130,10 +132,11 @@ func TestE2E_Auth_LoginErrorHandling(t *testing.T) {
 	// Test 1: Login with invalid credentials
 	t.Log("  Testing login with invalid credentials...")
 	client1, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		Username:  "invalid_user_that_does_not_exist",
-		Password:  "invalid_password",
-		SSL:       false,
+		ServerURL:     serverURL,
+		Username:      "invalid_user_that_does_not_exist",
+		Password:      "invalid_password",
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -150,8 +153,9 @@ func TestE2E_Auth_LoginErrorHandling(t *testing.T) {
 	// Test 2: Login with missing credentials
 	t.Log("  Testing login with missing credentials...")
 	client2, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		SSL:       false,
+		ServerURL:     serverURL,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -168,9 +172,10 @@ func TestE2E_Auth_LoginErrorHandling(t *testing.T) {
 	// Test 3: Login with invalid API token
 	t.Log("  Testing login with invalid API token...")
 	client3, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		APIToken:  "invalid_token_xyz123",
-		SSL:       false,
+		ServerURL:     serverURL,
+		APIToken:      "invalid_token_xyz123",
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -215,8 +220,9 @@ func TestE2E_Auth_GetMe(t *testing.T) {
 
 	// Verify GetMe fails when not authenticated
 	unauthClient, err := mythic.NewClient(&mythic.Config{
-		ServerURL: os.Getenv("MYTHIC_URL"),
-		SSL:       false,
+		ServerURL:     os.Getenv("MYTHIC_URL"),
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -270,10 +276,11 @@ func TestE2E_Auth_RefreshAccessToken(t *testing.T) {
 
 	// Create and login with credentials to get refresh token
 	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		Username:  username,
-		Password:  password,
-		SSL:       false,
+		ServerURL:     serverURL,
+		Username:      username,
+		Password:      password,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -333,10 +340,11 @@ func TestE2E_Auth_Logout(t *testing.T) {
 
 	// Create and login
 	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		Username:  username,
-		Password:  password,
-		SSL:       false,
+		ServerURL:     serverURL,
+		Username:      username,
+		Password:      password,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
@@ -382,10 +390,11 @@ func TestE2E_Auth_EnsureAuthenticated(t *testing.T) {
 
 	// Create client without logging in
 	client, err := mythic.NewClient(&mythic.Config{
-		ServerURL: serverURL,
-		Username:  username,
-		Password:  password,
-		SSL:       false,
+		ServerURL:     serverURL,
+		Username:      username,
+		Password:      password,
+		SSL:           true,
+		SkipTLSVerify: true,
 	})
 	require.NoError(t, err, "Client creation should succeed")
 
