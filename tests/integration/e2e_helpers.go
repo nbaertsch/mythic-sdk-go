@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic"
+	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
 // E2ETestSetup contains all resources needed for E2E testing
@@ -294,7 +295,7 @@ func EnsureCallbackExists(t *testing.T) int {
 		t.Fatalf("GetPayloadTypes failed: %v", err)
 	}
 
-	var poseidonType *mythic.PayloadType
+	var poseidonType *types.PayloadType
 	for i := range payloadTypes {
 		if payloadTypes[i].Name == "poseidon" {
 			poseidonType = &payloadTypes[i]
@@ -319,7 +320,7 @@ func EnsureCallbackExists(t *testing.T) int {
 		t.Fatalf("GetC2Profiles failed: %v", err)
 	}
 
-	var c2Profile *mythic.C2Profile
+	var c2Profile *types.C2Profile
 	for i := range c2Profiles {
 		if c2Profiles[i].Name == "http" {
 			c2Profile = &c2Profiles[i]
@@ -338,7 +339,7 @@ func EnsureCallbackExists(t *testing.T) int {
 	ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel3()
 
-	payloadReq := &mythic.CreatePayloadRequest{
+	payloadReq := &types.CreatePayloadRequest{
 		PayloadType: "poseidon",
 		OS:          "linux",
 		Description: "Shared Test Callback",
@@ -349,7 +350,7 @@ func EnsureCallbackExists(t *testing.T) int {
 		BuildParameters: map[string]interface{}{
 			"mode": "default",
 		},
-		C2Profiles: []mythic.C2ProfileConfig{
+		C2Profiles: []types.C2ProfileConfig{
 			{
 				Name: c2Profile.Name,
 				Parameters: map[string]interface{}{
