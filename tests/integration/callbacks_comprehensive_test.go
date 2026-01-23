@@ -239,7 +239,6 @@ func TestE2E_CallbackUpdate(t *testing.T) {
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel1()
 
-	originalDesc := testCallback.Description
 	newDesc := "Test description updated at " + time.Now().Format(time.RFC3339)
 
 	updateReq := &types.CallbackUpdateRequest{
