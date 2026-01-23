@@ -298,7 +298,7 @@ func EnsureCallbackExists(t *testing.T) int {
 	var poseidonType *types.PayloadType
 	for i := range payloadTypes {
 		if payloadTypes[i].Name == "poseidon" {
-			poseidonType = &payloadTypes[i]
+			poseidonType = payloadTypes[i]
 			break
 		}
 	}
@@ -323,12 +323,12 @@ func EnsureCallbackExists(t *testing.T) int {
 	var c2Profile *types.C2Profile
 	for i := range c2Profiles {
 		if c2Profiles[i].Name == "http" {
-			c2Profile = &c2Profiles[i]
+			c2Profile = c2Profiles[i]
 			break
 		}
 	}
 	if c2Profile == nil && len(c2Profiles) > 0 {
-		c2Profile = &c2Profiles[0]
+		c2Profile = c2Profiles[0]
 	}
 	if c2Profile == nil {
 		t.Fatal("No C2 profiles available")
