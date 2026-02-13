@@ -250,6 +250,22 @@ func (c *Client) Logout() {
 	c.currentOperationID = nil
 }
 
+// SetCredentials updates the username and password used for authentication.
+// Call this before Login() to re-authenticate as a different user.
+// This also clears any existing tokens so the next Login() performs a fresh
+// username/password authentication instead of reusing stale tokens.
+func (c *Client) SetCredentials(username, password string) {
+	c.authMutex.Lock()
+	defer c.authMutex.Unlock()
+
+	c.config.Username = username
+	c.config.Password = password
+	c.config.AccessToken = ""
+	c.config.RefreshToken = ""
+	c.config.APIToken = ""
+	c.authenticated = false
+}
+
 // ClearRefreshToken clears only the refresh token.
 // This is primarily for testing scenarios where you need to simulate a missing refresh token.
 func (c *Client) ClearRefreshToken() {
