@@ -46,17 +46,18 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 		operationID = *currentOp
 	}
 
+	// Mythic has no dedicated "host" table. Hosts are derived from unique
+	// host values in the callback table and enriched with mythictree data.
 	var query struct {
-		Host []struct {
-			ID           int       `graphql:"id"`
+		Callback []struct {
 			Host         string    `graphql:"host"`
-			IP           string    `graphql:"ip"`
+			Os           string    `graphql:"os"`
 			Domain       string    `graphql:"domain"`
-			OS           string    `graphql:"os"`
 			Architecture string    `graphql:"architecture"`
+			IP           string    `graphql:"ip"`
 			OperationID  int       `graphql:"operation_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
-		} `graphql:"host(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
+			LastCheckin  time.Time `graphql:"last_checkin"`
+		} `graphql:"callback(where: {operation_id: {_eq: $operation_id}}, distinct_on: host, order_by: {host: asc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -68,17 +69,17 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 		return nil, WrapError("GetHosts", err, "failed to query hosts")
 	}
 
-	hosts := make([]*types.HostInfo, len(query.Host))
-	for i, hostData := range query.Host {
+	hosts := make([]*types.HostInfo, len(query.Callback))
+	for i, cbData := range query.Callback {
 		hosts[i] = &types.HostInfo{
-			ID:           hostData.ID,
-			Hostname:     hostData.Host,
-			IP:           hostData.IP,
-			Domain:       hostData.Domain,
-			OS:           hostData.OS,
-			Architecture: hostData.Architecture,
-			OperationID:  hostData.OperationID,
-			Timestamp:    hostData.Timestamp,
+			ID:           i + 1, // synthetic ID since hosts are derived
+			Hostname:     cbData.Host,
+			IP:           cbData.IP,
+			Domain:       cbData.Domain,
+			OS:           cbData.Os,
+			Architecture: cbData.Architecture,
+			OperationID:  cbData.OperationID,
+			Timestamp:    cbData.LastCheckin,
 		}
 	}
 
@@ -112,17 +113,20 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 		return nil, WrapError("GetHostByID", ErrInvalidInput, "host ID is required")
 	}
 
+	// Mythic has no dedicated host table. Look up a callback by ID and
+	// return its host information as a HostInfo. This provides backward
+	// compatibility while using the actual Mythic schema.
 	var query struct {
-		Host []struct {
+		Callback []struct {
 			ID           int       `graphql:"id"`
 			Host         string    `graphql:"host"`
 			IP           string    `graphql:"ip"`
 			Domain       string    `graphql:"domain"`
-			OS           string    `graphql:"os"`
+			Os           string    `graphql:"os"`
 			Architecture string    `graphql:"architecture"`
 			OperationID  int       `graphql:"operation_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
-		} `graphql:"host(where: {id: {_eq: $host_id}})"`
+			LastCheckin  time.Time `graphql:"last_checkin"`
+		} `graphql:"callback(where: {id: {_eq: $host_id}})"`
 	}
 
 	variables := map[string]interface{}{
@@ -134,20 +138,20 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 		return nil, WrapError("GetHostByID", err, "failed to query host")
 	}
 
-	if len(query.Host) == 0 {
+	if len(query.Callback) == 0 {
 		return nil, WrapError("GetHostByID", ErrNotFound, fmt.Sprintf("host %d not found", hostID))
 	}
 
-	hostData := query.Host[0]
+	cbData := query.Callback[0]
 	return &types.HostInfo{
-		ID:           hostData.ID,
-		Hostname:     hostData.Host,
-		IP:           hostData.IP,
-		Domain:       hostData.Domain,
-		OS:           hostData.OS,
-		Architecture: hostData.Architecture,
-		OperationID:  hostData.OperationID,
-		Timestamp:    hostData.Timestamp,
+		ID:           cbData.ID,
+		Hostname:     cbData.Host,
+		IP:           cbData.IP,
+		Domain:       cbData.Domain,
+		OS:           cbData.Os,
+		Architecture: cbData.Architecture,
+		OperationID:  cbData.OperationID,
+		Timestamp:    cbData.LastCheckin,
 	}, nil
 }
 
@@ -179,17 +183,19 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 		return nil, WrapError("GetHostByHostname", ErrInvalidInput, "hostname is required")
 	}
 
+	// Hosts are derived from callbacks — find the most recent callback
+	// matching this hostname.
 	var query struct {
-		Host []struct {
+		Callback []struct {
 			ID           int       `graphql:"id"`
 			Host         string    `graphql:"host"`
 			IP           string    `graphql:"ip"`
 			Domain       string    `graphql:"domain"`
-			OS           string    `graphql:"os"`
+			Os           string    `graphql:"os"`
 			Architecture string    `graphql:"architecture"`
 			OperationID  int       `graphql:"operation_id"`
-			Timestamp    time.Time `graphql:"timestamp"`
-		} `graphql:"host(where: {host: {_ilike: $hostname}}, limit: 1)"`
+			LastCheckin  time.Time `graphql:"last_checkin"`
+		} `graphql:"callback(where: {host: {_ilike: $hostname}}, order_by: {last_checkin: desc}, limit: 1)"`
 	}
 
 	variables := map[string]interface{}{
@@ -201,20 +207,20 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 		return nil, WrapError("GetHostByHostname", err, "failed to query host")
 	}
 
-	if len(query.Host) == 0 {
+	if len(query.Callback) == 0 {
 		return nil, WrapError("GetHostByHostname", ErrNotFound, fmt.Sprintf("host '%s' not found", hostname))
 	}
 
-	hostData := query.Host[0]
+	cbData := query.Callback[0]
 	return &types.HostInfo{
-		ID:           hostData.ID,
-		Hostname:     hostData.Host,
-		IP:           hostData.IP,
-		Domain:       hostData.Domain,
-		OS:           hostData.OS,
-		Architecture: hostData.Architecture,
-		OperationID:  hostData.OperationID,
-		Timestamp:    hostData.Timestamp,
+		ID:           cbData.ID,
+		Hostname:     cbData.Host,
+		IP:           cbData.IP,
+		Domain:       cbData.Domain,
+		OS:           cbData.Os,
+		Architecture: cbData.Architecture,
+		OperationID:  cbData.OperationID,
+		Timestamp:    cbData.LastCheckin,
 	}, nil
 }
 

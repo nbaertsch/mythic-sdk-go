@@ -2,41 +2,94 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
+// mythictreeProcess is the internal GraphQL shape for a process entry in mythictree.
+type mythictreeProcess struct {
+	ID          int             `graphql:"id"`
+	Name        string          `graphql:"name"`
+	FullPath    string          `graphql:"full_path"`
+	Host        string          `graphql:"host"`
+	Metadata    json.RawMessage `graphql:"metadata"`
+	CallbackID  *int            `graphql:"callback_id"`
+	TaskID      *int            `graphql:"task_id"`
+	OperationID int             `graphql:"operation_id"`
+	Timestamp   time.Time       `graphql:"timestamp"`
+	Deleted     bool            `graphql:"deleted"`
+	Os          string          `graphql:"os"`
+	ParentPath  string          `graphql:"parent_path"`
+}
+
+// processMetadata captures the dynamic fields Mythic stores in the metadata JSONB column.
+type processMetadata struct {
+	ProcessID       int    `json:"process_id"`
+	ParentProcessID int    `json:"parent_process_id"`
+	Architecture    string `json:"architecture"`
+	User            string `json:"user"`
+	CommandLine     string `json:"command_line"`
+	BinPath         string `json:"bin_path"`
+	IntegrityLevel  int    `json:"integrity_level"`
+	StartTime       int64  `json:"start_time"` // unix epoch millis
+	Description     string `json:"description"`
+}
+
+// toProcess converts a mythictree row into the SDK Process type.
+func (m *mythictreeProcess) toProcess() *types.Process {
+	var meta processMetadata
+	if len(m.Metadata) > 0 {
+		_ = json.Unmarshal(m.Metadata, &meta)
+	}
+
+	var startTime time.Time
+	if meta.StartTime > 0 {
+		startTime = time.UnixMilli(meta.StartTime)
+	}
+
+	binPath := meta.BinPath
+	if binPath == "" {
+		binPath = m.FullPath
+	}
+	name := m.Name
+	if name == "" && meta.BinPath != "" {
+		name = meta.BinPath
+	}
+
+	return &types.Process{
+		ID:              m.ID,
+		Name:            name,
+		ProcessID:       meta.ProcessID,
+		ParentProcessID: meta.ParentProcessID,
+		Architecture:    meta.Architecture,
+		BinPath:         binPath,
+		User:            meta.User,
+		CommandLine:     meta.CommandLine,
+		IntegrityLevel:  meta.IntegrityLevel,
+		StartTime:       startTime,
+		Description:     meta.Description,
+		OperationID:     m.OperationID,
+		CallbackID:      m.CallbackID,
+		TaskID:          m.TaskID,
+		Timestamp:       m.Timestamp,
+		Deleted:         m.Deleted,
+		Host: &types.Host{
+			Host: m.Host,
+		},
+	}
+}
+
 // GetProcesses retrieves all processes for the current operation.
+// Processes in Mythic are stored in the mythictree table with tree_type = "process".
 func (c *Client) GetProcesses(ctx context.Context) ([]*types.Process, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
 	var query struct {
-		Process []struct {
-			ID              int       `graphql:"id"`
-			Name            string    `graphql:"name"`
-			ProcessID       int       `graphql:"process_id"`
-			ParentProcessID int       `graphql:"parent_process_id"`
-			Architecture    string    `graphql:"architecture"`
-			BinPath         string    `graphql:"bin_path"`
-			User            string    `graphql:"user"`
-			CommandLine     string    `graphql:"command_line"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			StartTime       time.Time `graphql:"start_time"`
-			Description     string    `graphql:"description"`
-			OperationID     int       `graphql:"operation_id"`
-			HostID          int       `graphql:"host_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			TaskID          *int      `graphql:"task_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			Deleted         bool      `graphql:"deleted"`
-			Host            struct {
-				ID   int    `graphql:"id"`
-				Host string `graphql:"host"`
-			} `graphql:"host"`
-		} `graphql:"process(where: {deleted: {_eq: false}}, order_by: {timestamp: desc})"`
+		Mythictree []mythictreeProcess `graphql:"mythictree(where: {tree_type: {_eq: \"process\"}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
 	}
 
 	err := c.executeQuery(ctx, &query, nil)
@@ -44,31 +97,9 @@ func (c *Client) GetProcesses(ctx context.Context) ([]*types.Process, error) {
 		return nil, WrapError("GetProcesses", err, "failed to query processes")
 	}
 
-	processes := make([]*types.Process, len(query.Process))
-	for i, proc := range query.Process {
-		processes[i] = &types.Process{
-			ID:              proc.ID,
-			Name:            proc.Name,
-			ProcessID:       proc.ProcessID,
-			ParentProcessID: proc.ParentProcessID,
-			Architecture:    proc.Architecture,
-			BinPath:         proc.BinPath,
-			User:            proc.User,
-			CommandLine:     proc.CommandLine,
-			IntegrityLevel:  proc.IntegrityLevel,
-			StartTime:       proc.StartTime,
-			Description:     proc.Description,
-			OperationID:     proc.OperationID,
-			HostID:          proc.HostID,
-			CallbackID:      proc.CallbackID,
-			TaskID:          proc.TaskID,
-			Timestamp:       proc.Timestamp,
-			Deleted:         proc.Deleted,
-			Host: &types.Host{
-				ID:   proc.Host.ID,
-				Host: proc.Host.Host,
-			},
-		}
+	processes := make([]*types.Process, len(query.Mythictree))
+	for i, mt := range query.Mythictree {
+		processes[i] = mt.toProcess()
 	}
 
 	return processes, nil
@@ -85,29 +116,7 @@ func (c *Client) GetProcessesByOperation(ctx context.Context, operationID int) (
 	}
 
 	var query struct {
-		Process []struct {
-			ID              int       `graphql:"id"`
-			Name            string    `graphql:"name"`
-			ProcessID       int       `graphql:"process_id"`
-			ParentProcessID int       `graphql:"parent_process_id"`
-			Architecture    string    `graphql:"architecture"`
-			BinPath         string    `graphql:"bin_path"`
-			User            string    `graphql:"user"`
-			CommandLine     string    `graphql:"command_line"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			StartTime       time.Time `graphql:"start_time"`
-			Description     string    `graphql:"description"`
-			OperationID     int       `graphql:"operation_id"`
-			HostID          int       `graphql:"host_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			TaskID          *int      `graphql:"task_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			Deleted         bool      `graphql:"deleted"`
-			Host            struct {
-				ID   int    `graphql:"id"`
-				Host string `graphql:"host"`
-			} `graphql:"host"`
-		} `graphql:"process(where: {operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
+		Mythictree []mythictreeProcess `graphql:"mythictree(where: {tree_type: {_eq: \"process\"}, operation_id: {_eq: $operation_id}, deleted: {_eq: false}}, order_by: {timestamp: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -119,31 +128,9 @@ func (c *Client) GetProcessesByOperation(ctx context.Context, operationID int) (
 		return nil, WrapError("GetProcessesByOperation", err, "failed to query processes")
 	}
 
-	processes := make([]*types.Process, len(query.Process))
-	for i, proc := range query.Process {
-		processes[i] = &types.Process{
-			ID:              proc.ID,
-			Name:            proc.Name,
-			ProcessID:       proc.ProcessID,
-			ParentProcessID: proc.ParentProcessID,
-			Architecture:    proc.Architecture,
-			BinPath:         proc.BinPath,
-			User:            proc.User,
-			CommandLine:     proc.CommandLine,
-			IntegrityLevel:  proc.IntegrityLevel,
-			StartTime:       proc.StartTime,
-			Description:     proc.Description,
-			OperationID:     proc.OperationID,
-			HostID:          proc.HostID,
-			CallbackID:      proc.CallbackID,
-			TaskID:          proc.TaskID,
-			Timestamp:       proc.Timestamp,
-			Deleted:         proc.Deleted,
-			Host: &types.Host{
-				ID:   proc.Host.ID,
-				Host: proc.Host.Host,
-			},
-		}
+	processes := make([]*types.Process, len(query.Mythictree))
+	for i, mt := range query.Mythictree {
+		processes[i] = mt.toProcess()
 	}
 
 	return processes, nil
@@ -160,29 +147,7 @@ func (c *Client) GetProcessesByCallback(ctx context.Context, callbackID int) ([]
 	}
 
 	var query struct {
-		Process []struct {
-			ID              int       `graphql:"id"`
-			Name            string    `graphql:"name"`
-			ProcessID       int       `graphql:"process_id"`
-			ParentProcessID int       `graphql:"parent_process_id"`
-			Architecture    string    `graphql:"architecture"`
-			BinPath         string    `graphql:"bin_path"`
-			User            string    `graphql:"user"`
-			CommandLine     string    `graphql:"command_line"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			StartTime       time.Time `graphql:"start_time"`
-			Description     string    `graphql:"description"`
-			OperationID     int       `graphql:"operation_id"`
-			HostID          int       `graphql:"host_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			TaskID          *int      `graphql:"task_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			Deleted         bool      `graphql:"deleted"`
-			Host            struct {
-				ID   int    `graphql:"id"`
-				Host string `graphql:"host"`
-			} `graphql:"host"`
-		} `graphql:"process(where: {callback_id: {_eq: $callback_id}, deleted: {_eq: false}}, order_by: {process_id: asc})"`
+		Mythictree []mythictreeProcess `graphql:"mythictree(where: {tree_type: {_eq: \"process\"}, callback_id: {_eq: $callback_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -194,31 +159,9 @@ func (c *Client) GetProcessesByCallback(ctx context.Context, callbackID int) ([]
 		return nil, WrapError("GetProcessesByCallback", err, "failed to query processes")
 	}
 
-	processes := make([]*types.Process, len(query.Process))
-	for i, proc := range query.Process {
-		processes[i] = &types.Process{
-			ID:              proc.ID,
-			Name:            proc.Name,
-			ProcessID:       proc.ProcessID,
-			ParentProcessID: proc.ParentProcessID,
-			Architecture:    proc.Architecture,
-			BinPath:         proc.BinPath,
-			User:            proc.User,
-			CommandLine:     proc.CommandLine,
-			IntegrityLevel:  proc.IntegrityLevel,
-			StartTime:       proc.StartTime,
-			Description:     proc.Description,
-			OperationID:     proc.OperationID,
-			HostID:          proc.HostID,
-			CallbackID:      proc.CallbackID,
-			TaskID:          proc.TaskID,
-			Timestamp:       proc.Timestamp,
-			Deleted:         proc.Deleted,
-			Host: &types.Host{
-				ID:   proc.Host.ID,
-				Host: proc.Host.Host,
-			},
-		}
+	processes := make([]*types.Process, len(query.Mythictree))
+	for i, mt := range query.Mythictree {
+		processes[i] = mt.toProcess()
 	}
 
 	return processes, nil
@@ -289,66 +232,29 @@ func (c *Client) GetProcessesByHost(ctx context.Context, hostID int) ([]*types.P
 		return nil, WrapError("GetProcessesByHost", ErrInvalidInput, "host ID is required")
 	}
 
+	// Look up host info first (hosts are derived from callbacks)
+	host, err := c.GetHostByID(ctx, hostID)
+	if err != nil {
+		return nil, WrapError("GetProcessesByHost", err, "failed to resolve host")
+	}
+
+	// Query mythictree processes matching this hostname
 	var query struct {
-		Process []struct {
-			ID              int       `graphql:"id"`
-			Name            string    `graphql:"name"`
-			ProcessID       int       `graphql:"process_id"`
-			ParentProcessID int       `graphql:"parent_process_id"`
-			Architecture    string    `graphql:"architecture"`
-			BinPath         string    `graphql:"bin_path"`
-			User            string    `graphql:"user"`
-			CommandLine     string    `graphql:"command_line"`
-			IntegrityLevel  int       `graphql:"integrity_level"`
-			StartTime       time.Time `graphql:"start_time"`
-			Description     string    `graphql:"description"`
-			OperationID     int       `graphql:"operation_id"`
-			HostID          int       `graphql:"host_id"`
-			CallbackID      *int      `graphql:"callback_id"`
-			TaskID          *int      `graphql:"task_id"`
-			Timestamp       time.Time `graphql:"timestamp"`
-			Deleted         bool      `graphql:"deleted"`
-			Host            struct {
-				ID   int    `graphql:"id"`
-				Host string `graphql:"host"`
-			} `graphql:"host"`
-		} `graphql:"process(where: {host_id: {_eq: $host_id}, deleted: {_eq: false}}, order_by: {process_id: asc})"`
+		Mythictree []mythictreeProcess `graphql:"mythictree(where: {tree_type: {_eq: \"process\"}, host: {_ilike: $hostname}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
 	variables := map[string]interface{}{
-		"host_id": hostID,
+		"hostname": host.Hostname,
 	}
 
-	err := c.executeQuery(ctx, &query, variables)
+	err = c.executeQuery(ctx, &query, variables)
 	if err != nil {
 		return nil, WrapError("GetProcessesByHost", err, "failed to query processes")
 	}
 
-	processes := make([]*types.Process, len(query.Process))
-	for i, proc := range query.Process {
-		processes[i] = &types.Process{
-			ID:              proc.ID,
-			Name:            proc.Name,
-			ProcessID:       proc.ProcessID,
-			ParentProcessID: proc.ParentProcessID,
-			Architecture:    proc.Architecture,
-			BinPath:         proc.BinPath,
-			User:            proc.User,
-			CommandLine:     proc.CommandLine,
-			IntegrityLevel:  proc.IntegrityLevel,
-			StartTime:       proc.StartTime,
-			Description:     proc.Description,
-			OperationID:     proc.OperationID,
-			HostID:          proc.HostID,
-			CallbackID:      proc.CallbackID,
-			TaskID:          proc.TaskID,
-			Timestamp:       proc.Timestamp,
-			Deleted:         proc.Deleted,
-			Host: &types.Host{
-				ID:   proc.Host.ID,
-				Host: proc.Host.Host,
-			},
-		}
+	processes := make([]*types.Process, len(query.Mythictree))
+	for i, mt := range query.Mythictree {
+		processes[i] = mt.toProcess()
 	}
 
 	return processes, nil

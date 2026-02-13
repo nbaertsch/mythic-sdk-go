@@ -22,7 +22,9 @@ func (c *Client) GetKeylogs(ctx context.Context) ([]*types.Keylog, error) {
 			Timestamp   time.Time `graphql:"timestamp"`
 			OperationID int       `graphql:"operation_id"`
 			User        string    `graphql:"user"`
-			CallbackID  int       `graphql:"callback_id"`
+			Task        struct {
+				CallbackID int `graphql:"callback_id"`
+			} `graphql:"task"`
 		} `graphql:"keylog(order_by: {timestamp: desc})"`
 	}
 
@@ -41,7 +43,7 @@ func (c *Client) GetKeylogs(ctx context.Context) ([]*types.Keylog, error) {
 			Timestamp:   kl.Timestamp,
 			OperationID: kl.OperationID,
 			User:        kl.User,
-			CallbackID:  kl.CallbackID,
+			CallbackID:  kl.Task.CallbackID,
 		}
 	}
 
@@ -67,7 +69,9 @@ func (c *Client) GetKeylogsByOperation(ctx context.Context, operationID int) ([]
 			Timestamp   time.Time `graphql:"timestamp"`
 			OperationID int       `graphql:"operation_id"`
 			User        string    `graphql:"user"`
-			CallbackID  int       `graphql:"callback_id"`
+			Task        struct {
+				CallbackID int `graphql:"callback_id"`
+			} `graphql:"task"`
 		} `graphql:"keylog(where: {operation_id: {_eq: $operation_id}}, order_by: {timestamp: desc})"`
 	}
 
@@ -90,7 +94,7 @@ func (c *Client) GetKeylogsByOperation(ctx context.Context, operationID int) ([]
 			Timestamp:   kl.Timestamp,
 			OperationID: kl.OperationID,
 			User:        kl.User,
-			CallbackID:  kl.CallbackID,
+			CallbackID:  kl.Task.CallbackID,
 		}
 	}
 
@@ -116,8 +120,10 @@ func (c *Client) GetKeylogsByCallback(ctx context.Context, callbackID int) ([]*t
 			Timestamp   time.Time `graphql:"timestamp"`
 			OperationID int       `graphql:"operation_id"`
 			User        string    `graphql:"user"`
-			CallbackID  int       `graphql:"callback_id"`
-		} `graphql:"keylog(where: {callback_id: {_eq: $callback_id}}, order_by: {timestamp: desc})"`
+			Task        struct {
+				CallbackID int `graphql:"callback_id"`
+			} `graphql:"task"`
+		} `graphql:"keylog(where: {task: {callback_id: {_eq: $callback_id}}}, order_by: {timestamp: desc})"`
 	}
 
 	variables := map[string]interface{}{
@@ -139,7 +145,7 @@ func (c *Client) GetKeylogsByCallback(ctx context.Context, callbackID int) ([]*t
 			Timestamp:   kl.Timestamp,
 			OperationID: kl.OperationID,
 			User:        kl.User,
-			CallbackID:  kl.CallbackID,
+			CallbackID:  kl.Task.CallbackID,
 		}
 	}
 
