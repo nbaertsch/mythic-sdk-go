@@ -176,13 +176,66 @@ func (c *Client) CreateAPIToken(ctx context.Context) (string, error) {
 	return mutation.CreateAPIToken.TokenValue, nil
 }
 
+// getMeIdentity calls the /me REST endpoint to extract the user_id from
+// the current JWT or API token claims.
+func (c *Client) getMeIdentity(ctx context.Context) (int, error) {
+	scheme := "https"
+	if !c.config.SSL {
+		scheme = "http"
+	}
+	meURL := fmt.Sprintf("%s://%s/me", scheme, stripScheme(c.config.ServerURL))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", meURL, nil)
+	if err != nil {
+		return 0, WrapError("getMeIdentity", err, "failed to create /me request")
+	}
+	for k, v := range c.getAuthHeaders() {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return 0, WrapError("getMeIdentity", err, "failed to call /me endpoint")
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, WrapError("getMeIdentity", err, "failed to read /me response")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, WrapError("getMeIdentity", ErrAuthenticationFailed,
+			fmt.Sprintf("/me returned status %d: %s", resp.StatusCode, string(body)))
+	}
+
+	var meResp struct {
+		UserID int `json:"user_id"`
+	}
+	if err := json.Unmarshal(body, &meResp); err != nil {
+		return 0, WrapError("getMeIdentity", err, "failed to parse /me response")
+	}
+	if meResp.UserID == 0 {
+		return 0, WrapError("getMeIdentity", ErrInvalidResponse, "no user_id in /me response")
+	}
+	return meResp.UserID, nil
+}
+
 // GetMe returns information about the currently authenticated user.
+// It calls the /me REST endpoint to resolve the caller's identity from
+// the JWT/apitoken claims, then fetches the full operator record by ID.
 func (c *Client) GetMe(ctx context.Context) (*Operator, error) {
 	if !c.IsAuthenticated() {
 		return nil, ErrNotAuthenticated
 	}
 
-	// Query operator - filter by operation if we have one
+	// Resolve the current user's ID from the token claims
+	userID, err := c.getMeIdentity(ctx)
+	if err != nil {
+		return nil, WrapError("GetMe", err, "failed to resolve current user identity")
+	}
+
+	// Query the specific operator by ID
 	var query struct {
 		Operator []struct {
 			ID                 int    `graphql:"id"`
@@ -190,10 +243,14 @@ func (c *Client) GetMe(ctx context.Context) (*Operator, error) {
 			Admin              bool   `graphql:"admin"`
 			Active             bool   `graphql:"active"`
 			CurrentOperationID int    `graphql:"current_operation_id"`
-		} `graphql:"operator(order_by: {id: asc}, limit: 1)"`
+		} `graphql:"operator(where: {id: {_eq: $user_id}})"`
 	}
 
-	err := c.executeQuery(ctx, &query, nil)
+	variables := map[string]interface{}{
+		"user_id": userID,
+	}
+
+	err = c.executeQuery(ctx, &query, variables)
 	if err != nil {
 		return nil, WrapError("GetMe", err, "failed to get current user")
 	}
