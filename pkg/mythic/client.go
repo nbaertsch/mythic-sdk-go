@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"strings"
 	"sync"
 
 	"github.com/hasura/go-graphql-client"
@@ -61,6 +62,15 @@ func NewClient(config *Config) (*Client, error) {
 
 	if err := config.Validate(); err != nil {
 		return nil, WrapError("NewClient", err, "invalid configuration")
+	}
+
+	// Detect if the APIToken is actually a JWT (starts with "eyJ" — the
+	// base64 encoding of '{"'). JWTs must be sent via "Authorization:
+	// Bearer" header, not the "apitoken" header which is reserved for
+	// Mythic's long-lived API tokens stored in the database.
+	if config.APIToken != "" && strings.HasPrefix(config.APIToken, "eyJ") {
+		config.AccessToken = config.APIToken
+		config.APIToken = ""
 	}
 
 	// Create cookie jar for session management
