@@ -2,6 +2,7 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -381,19 +382,19 @@ func (c *Client) GetC2ProfileParameters(ctx context.Context, profileID int) ([]*
 
 	var query struct {
 		C2ProfileParameters []struct {
-			ID            int           `graphql:"id"`
-			C2ProfileID   int           `graphql:"c2_profile_id"`
-			Name          string        `graphql:"name"`
-			Description   string        `graphql:"description"`
-			DefaultValue  string        `graphql:"default_value"`
-			ParameterType string        `graphql:"parameter_type"`
-			Required      bool          `graphql:"required"`
-			Randomize     bool          `graphql:"randomize"`
-			FormatString  string        `graphql:"format_string"`
-			VerifierRegex string        `graphql:"verifier_regex"`
-			IsCryptoType  bool          `graphql:"crypto_type"`
-			Deleted       bool          `graphql:"deleted"`
-			Choices       []interface{} `graphql:"choices"`
+			ID            int             `graphql:"id"`
+			C2ProfileID   int             `graphql:"c2_profile_id"`
+			Name          string          `graphql:"name"`
+			Description   string          `graphql:"description"`
+			DefaultValue  string          `graphql:"default_value"`
+			ParameterType string          `graphql:"parameter_type"`
+			Required      bool            `graphql:"required"`
+			Randomize     bool            `graphql:"randomize"`
+			FormatString  string          `graphql:"format_string"`
+			VerifierRegex string          `graphql:"verifier_regex"`
+			IsCryptoType  bool            `graphql:"crypto_type"`
+			Deleted       bool            `graphql:"deleted"`
+			Choices       json.RawMessage `graphql:"choices"`
 		} `graphql:"c2profileparameters(where: {c2_profile_id: {_eq: $profile_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
@@ -421,7 +422,7 @@ func (c *Client) GetC2ProfileParameters(ctx context.Context, profileID int) ([]*
 			VerifierRegex: p.VerifierRegex,
 			IsCryptoType:  p.IsCryptoType,
 			Deleted:       p.Deleted,
-			Choices:       formatChoices(p.Choices),
+			Choices:       formatRawJSON(p.Choices),
 		}
 	}
 

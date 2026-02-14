@@ -2,6 +2,7 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -15,24 +16,24 @@ func (c *Client) GetBuildParameters(ctx context.Context) ([]*types.BuildParamete
 
 	var query struct {
 		BuildParameters []struct {
-			ID                   int           `graphql:"id"`
-			Name                 string        `graphql:"name"`
-			PayloadTypeID        int           `graphql:"payload_type_id"`
-			Description          string        `graphql:"description"`
-			Required             bool          `graphql:"required"`
-			VerifierRegex        string        `graphql:"verifier_regex"`
-			DefaultValue         string        `graphql:"default_value"`
-			Randomize            bool          `graphql:"randomize"`
-			FormatString         string        `graphql:"format_string"`
-			ParameterType        string        `graphql:"parameter_type"`
-			IsCryptoType         bool          `graphql:"crypto_type"`
-			Deleted              bool          `graphql:"deleted"`
-			GroupName            string        `graphql:"group_name"`
-			Choices              []interface{} `graphql:"choices"`
-			SupportedOS          []interface{} `graphql:"supported_os"`
-			HideConditions       []interface{} `graphql:"hide_conditions"`
-			DynamicQueryFunction string        `graphql:"dynamic_query_function"`
-			UIPosition           int           `graphql:"ui_position"`
+			ID                   int             `graphql:"id"`
+			Name                 string          `graphql:"name"`
+			PayloadTypeID        int             `graphql:"payload_type_id"`
+			Description          string          `graphql:"description"`
+			Required             bool            `graphql:"required"`
+			VerifierRegex        string          `graphql:"verifier_regex"`
+			DefaultValue         string          `graphql:"default_value"`
+			Randomize            bool            `graphql:"randomize"`
+			FormatString         string          `graphql:"format_string"`
+			ParameterType        string          `graphql:"parameter_type"`
+			IsCryptoType         bool            `graphql:"crypto_type"`
+			Deleted              bool            `graphql:"deleted"`
+			GroupName            string          `graphql:"group_name"`
+			Choices              json.RawMessage `graphql:"choices"`
+			SupportedOS          json.RawMessage `graphql:"supported_os"`
+			HideConditions       json.RawMessage `graphql:"hide_conditions"`
+			DynamicQueryFunction string          `graphql:"dynamic_query_function"`
+			UIPosition           int             `graphql:"ui_position"`
 		} `graphql:"buildparameter(where: {deleted: {_eq: false}}, order_by: {payload_type_id: asc, name: asc})"`
 	}
 
@@ -57,9 +58,9 @@ func (c *Client) GetBuildParameters(ctx context.Context) ([]*types.BuildParamete
 			IsCryptoType:         param.IsCryptoType,
 			Deleted:              param.Deleted,
 			GroupName:            param.GroupName,
-			Choices:              formatChoices(param.Choices),
-			SupportedOS:          formatChoices(param.SupportedOS),
-			HideConditions:       formatChoices(param.HideConditions),
+			Choices:              formatRawJSON(param.Choices),
+			SupportedOS:          formatRawJSON(param.SupportedOS),
+			HideConditions:       formatRawJSON(param.HideConditions),
 			DynamicQueryFunction: param.DynamicQueryFunction,
 			UIPosition:           param.UIPosition,
 		}
@@ -80,24 +81,24 @@ func (c *Client) GetBuildParametersByPayloadType(ctx context.Context, payloadTyp
 
 	var query struct {
 		BuildParameters []struct {
-			ID                   int           `graphql:"id"`
-			Name                 string        `graphql:"name"`
-			PayloadTypeID        int           `graphql:"payload_type_id"`
-			Description          string        `graphql:"description"`
-			Required             bool          `graphql:"required"`
-			VerifierRegex        string        `graphql:"verifier_regex"`
-			DefaultValue         string        `graphql:"default_value"`
-			Randomize            bool          `graphql:"randomize"`
-			FormatString         string        `graphql:"format_string"`
-			ParameterType        string        `graphql:"parameter_type"`
-			IsCryptoType         bool          `graphql:"crypto_type"`
-			Deleted              bool          `graphql:"deleted"`
-			GroupName            string        `graphql:"group_name"`
-			Choices              []interface{} `graphql:"choices"`
-			SupportedOS          []interface{} `graphql:"supported_os"`
-			HideConditions       []interface{} `graphql:"hide_conditions"`
-			DynamicQueryFunction string        `graphql:"dynamic_query_function"`
-			UIPosition           int           `graphql:"ui_position"`
+			ID                   int             `graphql:"id"`
+			Name                 string          `graphql:"name"`
+			PayloadTypeID        int             `graphql:"payload_type_id"`
+			Description          string          `graphql:"description"`
+			Required             bool            `graphql:"required"`
+			VerifierRegex        string          `graphql:"verifier_regex"`
+			DefaultValue         string          `graphql:"default_value"`
+			Randomize            bool            `graphql:"randomize"`
+			FormatString         string          `graphql:"format_string"`
+			ParameterType        string          `graphql:"parameter_type"`
+			IsCryptoType         bool            `graphql:"crypto_type"`
+			Deleted              bool            `graphql:"deleted"`
+			GroupName            string          `graphql:"group_name"`
+			Choices              json.RawMessage `graphql:"choices"`
+			SupportedOS          json.RawMessage `graphql:"supported_os"`
+			HideConditions       json.RawMessage `graphql:"hide_conditions"`
+			DynamicQueryFunction string          `graphql:"dynamic_query_function"`
+			UIPosition           int             `graphql:"ui_position"`
 		} `graphql:"buildparameter(where: {payload_type_id: {_eq: $payload_type_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
@@ -126,9 +127,9 @@ func (c *Client) GetBuildParametersByPayloadType(ctx context.Context, payloadTyp
 			IsCryptoType:         param.IsCryptoType,
 			Deleted:              param.Deleted,
 			GroupName:            param.GroupName,
-			Choices:              formatChoices(param.Choices),
-			SupportedOS:          formatChoices(param.SupportedOS),
-			HideConditions:       formatChoices(param.HideConditions),
+			Choices:              formatRawJSON(param.Choices),
+			SupportedOS:          formatRawJSON(param.SupportedOS),
+			HideConditions:       formatRawJSON(param.HideConditions),
 			DynamicQueryFunction: param.DynamicQueryFunction,
 			UIPosition:           param.UIPosition,
 		}

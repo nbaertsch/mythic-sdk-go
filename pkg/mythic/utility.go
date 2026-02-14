@@ -165,15 +165,11 @@ func (c *Client) ConfigCheck(ctx context.Context) (*types.ConfigCheckResponse, e
 	return response, nil
 }
 
-// formatChoices converts a jsonb choices slice ([]interface{}) to a JSON string
-// for storage in type structs. Returns "[]" for nil/empty slices.
-func formatChoices(choices []interface{}) string {
-	if len(choices) == 0 {
+// formatRawJSON converts a json.RawMessage (from Hasura jsonb scalars) to a JSON string.
+// Returns "[]" for nil/empty values.
+func formatRawJSON(raw json.RawMessage) string {
+	if len(raw) == 0 {
 		return "[]"
 	}
-	data, err := json.Marshal(choices)
-	if err != nil {
-		return "[]"
-	}
-	return string(data)
+	return string(raw)
 }
