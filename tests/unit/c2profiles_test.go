@@ -1,6 +1,7 @@
 package unit
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -368,4 +369,111 @@ func findSubstr(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+// TestC2ProfileParameterType tests the C2ProfileParameter struct fields and methods
+func TestC2ProfileParameterType(t *testing.T) {
+	param := types.C2ProfileParameter{
+		ID:            1,
+		C2ProfileID:   2,
+		Name:          "callback_host",
+		Description:   "The callback host for the agent",
+		DefaultValue:  "https://127.0.0.1",
+		ParameterType: "String",
+		Required:      true,
+		Randomize:     false,
+		FormatString:  "",
+		VerifierRegex: `^https?://.*`,
+		IsCryptoType:  false,
+		Deleted:       false,
+		Choices:       `["option1","option2","option3"]`,
+	}
+
+	// Test basic fields
+	if param.ID != 1 {
+		t.Errorf("Expected ID 1, got %d", param.ID)
+	}
+	if param.C2ProfileID != 2 {
+		t.Errorf("Expected C2ProfileID 2, got %d", param.C2ProfileID)
+	}
+	if param.Name != "callback_host" {
+		t.Errorf("Expected Name 'callback_host', got %q", param.Name)
+	}
+	if !param.Required {
+		t.Error("Expected Required to be true")
+	}
+
+	// Test Choices is a JSON string (not a Go type that would fail on jsonb)
+	if param.Choices != `["option1","option2","option3"]` {
+		t.Errorf("Expected Choices as JSON string, got %q", param.Choices)
+	}
+
+	// Test String() method
+	str := param.String()
+	if str == "" {
+		t.Error("String() should not return empty string")
+	}
+	if !strings.Contains(str, "callback_host") {
+		t.Errorf("String() = %q, should contain name", str)
+	}
+	if !strings.Contains(str, "required") {
+		t.Errorf("String() = %q, should indicate required", str)
+	}
+}
+
+// TestC2ProfileParameterChoicesEmpty tests empty choices handling
+func TestC2ProfileParameterChoicesEmpty(t *testing.T) {
+	param := types.C2ProfileParameter{
+		ID:            1,
+		Name:          "callback_port",
+		ParameterType: "Number",
+		Choices:       "[]",
+	}
+
+	if param.Choices != "[]" {
+		t.Errorf("Expected empty choices '[]', got %q", param.Choices)
+	}
+}
+
+// TestBuildParameterTypeNewFields tests the new fields added to BuildParameterType
+func TestBuildParameterTypeNewFields(t *testing.T) {
+	param := types.BuildParameterType{
+		ID:                   1,
+		Name:                 "output_type",
+		PayloadTypeID:        3,
+		Description:          "Output type for the payload",
+		Required:             true,
+		DefaultValue:         "exe",
+		ParameterType:        types.BuildParameterTypeChooseOne,
+		GroupName:            "Build Options",
+		Choices:              `["exe","dll","shellcode"]`,
+		SupportedOS:          `["windows","linux"]`,
+		HideConditions:       `[]`,
+		DynamicQueryFunction: "get_output_types",
+		UIPosition:           2,
+	}
+
+	if param.GroupName != "Build Options" {
+		t.Errorf("Expected GroupName 'Build Options', got %q", param.GroupName)
+	}
+	if param.Choices != `["exe","dll","shellcode"]` {
+		t.Errorf("Expected Choices JSON string, got %q", param.Choices)
+	}
+	if param.SupportedOS != `["windows","linux"]` {
+		t.Errorf("Expected SupportedOS JSON string, got %q", param.SupportedOS)
+	}
+	if param.HideConditions != `[]` {
+		t.Errorf("Expected HideConditions '[]', got %q", param.HideConditions)
+	}
+	if param.DynamicQueryFunction != "get_output_types" {
+		t.Errorf("Expected DynamicQueryFunction 'get_output_types', got %q", param.DynamicQueryFunction)
+	}
+	if param.UIPosition != 2 {
+		t.Errorf("Expected UIPosition 2, got %d", param.UIPosition)
+	}
+
+	// Verify old removed fields are gone (these should NOT compile if someone adds them back)
+	// param.Parameter - removed (field never existed in GraphQL schema)
+	// param.CreationTime - removed (field never existed in GraphQL schema)
+	// param.ParameterGroupName - renamed to GroupName (matching GraphQL group_name)
 }

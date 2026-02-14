@@ -8,21 +8,24 @@ import (
 // BuildParameterType represents the definition of a build parameter for a payload type.
 // This defines what parameters are available when building payloads of a specific type.
 type BuildParameterType struct {
-	ID                 int       `json:"id"`
-	Name               string    `json:"name"`
-	PayloadTypeID      int       `json:"payload_type_id"`
-	Description        string    `json:"description"`
-	Parameter          string    `json:"parameter"` // JSON schema or definition
-	Required           bool      `json:"required"`
-	VerifierRegex      string    `json:"verifier_regex"`
-	DefaultValue       string    `json:"default_value"`
-	Randomize          bool      `json:"randomize"`
-	FormatString       string    `json:"format_string"`
-	ParameterType      string    `json:"parameter_type"` // String, Boolean, Number, ChooseOne, etc.
-	IsCryptoType       bool      `json:"crypto_type"`
-	Deleted            bool      `json:"deleted"`
-	CreationTime       time.Time `json:"creation_time"`
-	ParameterGroupName string    `json:"parameter_group_name"`
+	ID                   int    `json:"id"`
+	Name                 string `json:"name"`
+	PayloadTypeID        int    `json:"payload_type_id"`
+	Description          string `json:"description"`
+	Required             bool   `json:"required"`
+	VerifierRegex        string `json:"verifier_regex"`
+	DefaultValue         string `json:"default_value"`
+	Randomize            bool   `json:"randomize"`
+	FormatString         string `json:"format_string"`
+	ParameterType        string `json:"parameter_type"` // String, Boolean, Number, ChooseOne, etc.
+	IsCryptoType         bool   `json:"crypto_type"`
+	Deleted              bool   `json:"deleted"`
+	GroupName            string `json:"group_name"`
+	Choices              string `json:"choices"`         // JSON array of choices
+	SupportedOS          string `json:"supported_os"`    // JSON array of supported OS
+	HideConditions       string `json:"hide_conditions"` // JSON array of hide conditions
+	DynamicQueryFunction string `json:"dynamic_query_function"`
+	UIPosition           int    `json:"ui_position"`
 }
 
 // BuildParameterInstance represents an actual value set for a build parameter in a specific payload.

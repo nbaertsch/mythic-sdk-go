@@ -380,20 +380,20 @@ func (c *Client) GetC2ProfileParameters(ctx context.Context, profileID int) ([]*
 	}
 
 	var query struct {
-		Parameters []struct {
-			ID            int    `graphql:"id"`
-			C2ProfileID   int    `graphql:"c2_profile_id"`
-			Name          string `graphql:"name"`
-			Description   string `graphql:"description"`
-			DefaultValue  string `graphql:"default_value"`
-			ParameterType string `graphql:"parameter_type"`
-			Required      bool   `graphql:"required"`
-			Randomize     bool   `graphql:"randomize"`
-			FormatString  string `graphql:"format_string"`
-			VerifierRegex string `graphql:"verifier_regex"`
-			IsCryptoType  bool   `graphql:"crypto_type"`
-			Deleted       bool   `graphql:"deleted"`
-			Choices       string `graphql:"choices"`
+		C2ProfileParameters []struct {
+			ID            int           `graphql:"id"`
+			C2ProfileID   int           `graphql:"c2_profile_id"`
+			Name          string        `graphql:"name"`
+			Description   string        `graphql:"description"`
+			DefaultValue  string        `graphql:"default_value"`
+			ParameterType string        `graphql:"parameter_type"`
+			Required      bool          `graphql:"required"`
+			Randomize     bool          `graphql:"randomize"`
+			FormatString  string        `graphql:"format_string"`
+			VerifierRegex string        `graphql:"verifier_regex"`
+			IsCryptoType  bool          `graphql:"crypto_type"`
+			Deleted       bool          `graphql:"deleted"`
+			Choices       []interface{} `graphql:"choices"`
 		} `graphql:"c2profileparameters(where: {c2_profile_id: {_eq: $profile_id}, deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
@@ -406,8 +406,8 @@ func (c *Client) GetC2ProfileParameters(ctx context.Context, profileID int) ([]*
 		return nil, WrapError("GetC2ProfileParameters", err, "failed to query C2 profile parameters")
 	}
 
-	parameters := make([]*types.C2ProfileParameter, len(query.Parameters))
-	for i, p := range query.Parameters {
+	parameters := make([]*types.C2ProfileParameter, len(query.C2ProfileParameters))
+	for i, p := range query.C2ProfileParameters {
 		parameters[i] = &types.C2ProfileParameter{
 			ID:            p.ID,
 			C2ProfileID:   p.C2ProfileID,
@@ -421,7 +421,7 @@ func (c *Client) GetC2ProfileParameters(ctx context.Context, profileID int) ([]*
 			VerifierRegex: p.VerifierRegex,
 			IsCryptoType:  p.IsCryptoType,
 			Deleted:       p.Deleted,
-			Choices:       p.Choices,
+			Choices:       formatChoices(p.Choices),
 		}
 	}
 

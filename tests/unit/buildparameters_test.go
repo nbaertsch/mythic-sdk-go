@@ -341,23 +341,25 @@ func TestBuildParameterInstanceGetValue(t *testing.T) {
 
 // TestBuildParameterTypeFields tests the BuildParameterType structure
 func TestBuildParameterTypeFields(t *testing.T) {
-	now := time.Now()
 	param := types.BuildParameterType{
-		ID:                 1,
-		Name:               "callback_host",
-		PayloadTypeID:      5,
-		Description:        "The callback host for the agent",
-		Parameter:          `{"type": "string"}`,
-		Required:           true,
-		VerifierRegex:      `^https?://.*`,
-		DefaultValue:       "https://127.0.0.1:443",
-		Randomize:          false,
-		FormatString:       "",
-		ParameterType:      types.BuildParameterTypeString,
-		IsCryptoType:       false,
-		Deleted:            false,
-		CreationTime:       now,
-		ParameterGroupName: "C2 Configuration",
+		ID:                   1,
+		Name:                 "callback_host",
+		PayloadTypeID:        5,
+		Description:          "The callback host for the agent",
+		Required:             true,
+		VerifierRegex:        `^https?://.*`,
+		DefaultValue:         "https://127.0.0.1:443",
+		Randomize:            false,
+		FormatString:         "",
+		ParameterType:        types.BuildParameterTypeString,
+		IsCryptoType:         false,
+		Deleted:              false,
+		GroupName:            "C2 Configuration",
+		Choices:              `["option1","option2"]`,
+		SupportedOS:          `["linux","windows"]`,
+		HideConditions:       `[]`,
+		DynamicQueryFunction: "",
+		UIPosition:           1,
 	}
 
 	if param.ID != 1 {
@@ -378,8 +380,17 @@ func TestBuildParameterTypeFields(t *testing.T) {
 	if param.DefaultValue != "https://127.0.0.1:443" {
 		t.Errorf("Expected DefaultValue 'https://127.0.0.1:443', got %q", param.DefaultValue)
 	}
-	if param.ParameterGroupName != "C2 Configuration" {
-		t.Errorf("Expected ParameterGroupName 'C2 Configuration', got %q", param.ParameterGroupName)
+	if param.GroupName != "C2 Configuration" {
+		t.Errorf("Expected GroupName 'C2 Configuration', got %q", param.GroupName)
+	}
+	if param.Choices != `["option1","option2"]` {
+		t.Errorf("Expected Choices '[\"option1\",\"option2\"]', got %q", param.Choices)
+	}
+	if param.SupportedOS != `["linux","windows"]` {
+		t.Errorf("Expected SupportedOS '[\"linux\",\"windows\"]', got %q", param.SupportedOS)
+	}
+	if param.UIPosition != 1 {
+		t.Errorf("Expected UIPosition 1, got %d", param.UIPosition)
 	}
 }
 
