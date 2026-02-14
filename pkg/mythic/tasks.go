@@ -2,7 +2,6 @@ package mythic
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -110,27 +109,10 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 
 	// Build request payload - only include non-nil/non-empty values
 	// This allows the webhook to properly distinguish "not provided" from "empty"
-	//
-	// Handle params smartly: if the params string is valid JSON (object or array),
-	// embed it as a raw JSON value so it doesn't get double-encoded as a string.
-	// Mythic's webhook expects params as a JSON object for commands with defined
-	// parameters (e.g., {"pid": 999999} for kill, {"path": "/tmp"} for mkdir),
-	// but as a plain string for commands like shell (e.g., "whoami").
-	var paramsValue interface{}
-	if len(req.Params) > 0 && (req.Params[0] == '{' || req.Params[0] == '[') {
-		if json.Valid([]byte(req.Params)) {
-			paramsValue = json.RawMessage(req.Params)
-		} else {
-			paramsValue = req.Params
-		}
-	} else {
-		paramsValue = req.Params
-	}
-
 	payload := map[string]interface{}{
 		"input": map[string]interface{}{
 			"command":             req.Command,
-			"params":              paramsValue,
+			"params":              req.Params,
 			"is_interactive_task": req.IsInteractiveTask,
 		},
 	}
