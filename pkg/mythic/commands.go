@@ -315,3 +315,52 @@ func (cwp *CommandWithParameters) BuildTaskParams(input interface{}) (string, er
 
 	return string(paramsJSON), nil
 }
+
+// GetCommandsByPayloadType retrieves all commands for a specific payload type.
+func (c *Client) GetCommandsByPayloadType(ctx context.Context, payloadTypeID int) ([]*types.Command, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if payloadTypeID == 0 {
+		return nil, WrapError("GetCommandsByPayloadType", ErrInvalidInput, "payload type ID is required")
+	}
+
+	var query struct {
+		Commands []struct {
+			ID            int    `graphql:"id"`
+			Cmd           string `graphql:"cmd"`
+			PayloadTypeID int    `graphql:"payload_type_id"`
+			Description   string `graphql:"description"`
+			Help          string `graphql:"help_cmd"`
+			Version       int    `graphql:"version"`
+			Author        string `graphql:"author"`
+			ScriptOnly    bool   `graphql:"script_only"`
+		} `graphql:"command(where: {payload_type_id: {_eq: $payload_type_id}}, order_by: {cmd: asc})"`
+	}
+
+	variables := map[string]interface{}{
+		"payload_type_id": payloadTypeID,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetCommandsByPayloadType", err, "failed to query commands")
+	}
+
+	commands := make([]*types.Command, len(query.Commands))
+	for i, cmd := range query.Commands {
+		commands[i] = &types.Command{
+			ID:            cmd.ID,
+			Cmd:           cmd.Cmd,
+			PayloadTypeID: cmd.PayloadTypeID,
+			Description:   cmd.Description,
+			Help:          cmd.Help,
+			Version:       cmd.Version,
+			Author:        cmd.Author,
+			ScriptOnly:    cmd.ScriptOnly,
+		}
+	}
+
+	return commands, nil
+}
