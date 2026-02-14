@@ -178,6 +178,12 @@ func (c *Client) CreateAPIToken(ctx context.Context) (string, error) {
 
 // getMeIdentity calls the /me REST endpoint to extract the user_id from
 // the current JWT or API token claims.
+//
+// The /me endpoint accepts both "apitoken: <token>" (for real Mythic API
+// tokens) and "Authorization: Bearer <jwt>" headers. When the caller has
+// set APIToken in the config this might actually be a JWT (e.g. passed via
+// MYTHIC_API_TOKEN env var), so if the first attempt returns 401 we retry
+// with Authorization: Bearer as a fallback.
 func (c *Client) getMeIdentity(ctx context.Context) (int, error) {
 	scheme := "https"
 	if !c.config.SSL {
@@ -185,40 +191,61 @@ func (c *Client) getMeIdentity(ctx context.Context) (int, error) {
 	}
 	meURL := fmt.Sprintf("%s://%s/me", scheme, stripScheme(c.config.ServerURL))
 
-	req, err := http.NewRequestWithContext(ctx, "GET", meURL, nil)
-	if err != nil {
-		return 0, WrapError("getMeIdentity", err, "failed to create /me request")
-	}
-	for k, v := range c.getAuthHeaders() {
-		req.Header.Set(k, v)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return 0, WrapError("getMeIdentity", err, "failed to call /me endpoint")
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, WrapError("getMeIdentity", err, "failed to read /me response")
+	// Build the list of header sets to try.
+	// Primary: whatever getAuthHeaders() returns (apitoken or Bearer).
+	// Fallback: if APIToken is set and first attempt gets 401, try the
+	// token as a Bearer JWT in case the caller supplied a JWT instead of
+	// a real Mythic API token.
+	type headerSet = map[string]string
+	attempts := []headerSet{c.getAuthHeaders()}
+	if c.config.APIToken != "" {
+		attempts = append(attempts, headerSet{
+			"Authorization": "Bearer " + c.config.APIToken,
+		})
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return 0, WrapError("getMeIdentity", ErrAuthenticationFailed,
-			fmt.Sprintf("/me returned status %d: %s", resp.StatusCode, string(body)))
+	var lastStatus int
+	var lastBody []byte
+
+	for _, headers := range attempts {
+		req, err := http.NewRequestWithContext(ctx, "GET", meURL, nil)
+		if err != nil {
+			return 0, WrapError("getMeIdentity", err, "failed to create /me request")
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return 0, WrapError("getMeIdentity", err, "failed to call /me endpoint")
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return 0, WrapError("getMeIdentity", readErr, "failed to read /me response")
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			var meResp struct {
+				UserID int `json:"user_id"`
+			}
+			if err := json.Unmarshal(body, &meResp); err != nil {
+				return 0, WrapError("getMeIdentity", err, "failed to parse /me response")
+			}
+			if meResp.UserID == 0 {
+				return 0, WrapError("getMeIdentity", ErrInvalidResponse, "no user_id in /me response")
+			}
+			return meResp.UserID, nil
+		}
+
+		lastStatus = resp.StatusCode
+		lastBody = body
 	}
 
-	var meResp struct {
-		UserID int `json:"user_id"`
-	}
-	if err := json.Unmarshal(body, &meResp); err != nil {
-		return 0, WrapError("getMeIdentity", err, "failed to parse /me response")
-	}
-	if meResp.UserID == 0 {
-		return 0, WrapError("getMeIdentity", ErrInvalidResponse, "no user_id in /me response")
-	}
-	return meResp.UserID, nil
+	return 0, WrapError("getMeIdentity", ErrAuthenticationFailed,
+		fmt.Sprintf("/me returned status %d: %s", lastStatus, string(lastBody)))
 }
 
 // GetMe returns information about the currently authenticated user.
