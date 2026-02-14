@@ -47,6 +47,7 @@ type PayloadType struct {
 	Deleted             bool      `json:"deleted"`
 	ContainerRunning    bool      `json:"container_running"`
 	OS                  string    `json:"mythic_encrypts"` // Actually the OS field in GraphQL
+	SupportedC2Profiles []string  `json:"supported_c2_profiles,omitempty"`
 }
 
 // PayloadCommand represents a command available in a payload.

@@ -396,16 +396,21 @@ func (c *Client) GetPayloadTypes(ctx context.Context) ([]*types.PayloadType, err
 
 	var query struct {
 		PayloadType []struct {
-			ID                  int    `graphql:"id"`
-			Name                string `graphql:"name"`
-			FileExtension       string `graphql:"file_extension"`
-			Author              string `graphql:"author"`
-			WrapperMode         bool   `graphql:"wrapper"`
-			Note                string `graphql:"note"`
-			SupportsDynamicLoad bool   `graphql:"supports_dynamic_loading"`
-			Deleted             bool   `graphql:"deleted"`
-			ContainerRunning    bool   `graphql:"container_running"`
-			CreationTime        string `graphql:"creation_time"`
+			ID                    int    `graphql:"id"`
+			Name                  string `graphql:"name"`
+			FileExtension         string `graphql:"file_extension"`
+			Author                string `graphql:"author"`
+			WrapperMode           bool   `graphql:"wrapper"`
+			Note                  string `graphql:"note"`
+			SupportsDynamicLoad   bool   `graphql:"supports_dynamic_loading"`
+			Deleted               bool   `graphql:"deleted"`
+			ContainerRunning      bool   `graphql:"container_running"`
+			CreationTime          string `graphql:"creation_time"`
+			PayloadTypeC2Profiles []struct {
+				C2Profile struct {
+					Name string `graphql:"name"`
+				} `graphql:"c2profile"`
+			} `graphql:"payloadtypec2profiles"`
 		} `graphql:"payloadtype(where: {deleted: {_eq: false}}, order_by: {name: asc})"`
 	}
 
@@ -417,6 +422,10 @@ func (c *Client) GetPayloadTypes(ctx context.Context) ([]*types.PayloadType, err
 	payloadTypes := make([]*types.PayloadType, len(query.PayloadType))
 	for i, pt := range query.PayloadType {
 		creationTime, _ := parseTime(pt.CreationTime) //nolint:errcheck // Timestamp parse errors not critical
+		c2Names := make([]string, len(pt.PayloadTypeC2Profiles))
+		for j, ptc2 := range pt.PayloadTypeC2Profiles {
+			c2Names[j] = ptc2.C2Profile.Name
+		}
 		payloadTypes[i] = &types.PayloadType{
 			ID:                  pt.ID,
 			Name:                pt.Name,
@@ -428,6 +437,7 @@ func (c *Client) GetPayloadTypes(ctx context.Context) ([]*types.PayloadType, err
 			Deleted:             pt.Deleted,
 			ContainerRunning:    pt.ContainerRunning,
 			CreationTime:        creationTime,
+			SupportedC2Profiles: c2Names,
 		}
 	}
 
