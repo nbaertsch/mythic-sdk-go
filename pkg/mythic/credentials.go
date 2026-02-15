@@ -14,7 +14,7 @@ import (
 var credentialFieldGraphQLTypes = map[string]string{
 	"account":        "String",
 	"comment":        "String",
-	"credential_raw": "String",
+	"credential_raw": "bytea",
 	"deleted":        "Boolean",
 	"metadata":       "String",
 	"realm":          "String",
