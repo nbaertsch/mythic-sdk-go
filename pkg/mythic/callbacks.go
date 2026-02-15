@@ -2,6 +2,7 @@ package mythic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
@@ -433,30 +434,36 @@ func (c *Client) DeleteCallback(ctx context.Context, callbackIDs []int) error {
 		return WrapError("DeleteCallback", ErrInvalidInput, "at least one callback ID required")
 	}
 
-	var mutation struct {
-		DeleteTasksAndCallbacks struct {
-			Status          string `graphql:"status"`
-			Error           string `graphql:"error"`
-			FailedTasks     []int  `graphql:"failed_tasks"`
-			FailedCallbacks []int  `graphql:"failed_callbacks"`
-		} `graphql:"deleteTasksAndCallbacks(callbacks: $callbacks)"`
-	}
+	query := `mutation deleteCallbacks($callbacks: [Int]) {
+		deleteTasksAndCallbacks(callbacks: $callbacks) {
+			status
+			error
+			failed_callbacks
+		}
+	}`
 
 	variables := map[string]interface{}{
 		"callbacks": callbackIDs,
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return WrapError("DeleteCallback", err, "failed to delete callbacks")
 	}
 
-	if mutation.DeleteTasksAndCallbacks.Status != "success" {
-		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("deletion failed: %s", mutation.DeleteTasksAndCallbacks.Error))
+	data, ok := result["deleteTasksAndCallbacks"].(map[string]interface{})
+	if !ok {
+		return WrapError("DeleteCallback", ErrInvalidResponse, "unexpected response format")
 	}
 
-	if len(mutation.DeleteTasksAndCallbacks.FailedCallbacks) > 0 {
-		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("failed to delete some callbacks: %v", mutation.DeleteTasksAndCallbacks.FailedCallbacks))
+	status, _ := data["status"].(string)
+	if status != "success" {
+		errMsg, _ := data["error"].(string)
+		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("deletion failed: %s", errMsg))
+	}
+
+	if failedCallbacks, ok := data["failed_callbacks"].([]interface{}); ok && len(failedCallbacks) > 0 {
+		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("failed to delete some callbacks: %v", failedCallbacks))
 	}
 
 	return nil
@@ -579,30 +586,37 @@ func (c *Client) ImportCallbackConfig(ctx context.Context, config string) error 
 		return WrapError("ImportCallbackConfig", ErrInvalidInput, "config is required")
 	}
 
-	// Parse config as JSON to pass as jsonb
-	var configMap map[string]interface{}
-	if err := parseJSON([]byte(config), &configMap); err != nil {
+	// Parse config as JSON to validate and pass as jsonb
+	var configObj interface{}
+	if err := json.Unmarshal([]byte(config), &configObj); err != nil {
 		return WrapError("ImportCallbackConfig", err, "invalid config JSON")
 	}
 
-	var mutation struct {
-		ImportCallbackConfig struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"importCallbackConfig(config: $config)"`
-	}
+	query := `mutation importConfig($config: jsonb!) {
+		importCallbackConfig(config: $config) {
+			status
+			error
+		}
+	}`
 
 	variables := map[string]interface{}{
-		"config": configMap,
+		"config": configObj,
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return WrapError("ImportCallbackConfig", err, "failed to import callback config")
 	}
 
-	if mutation.ImportCallbackConfig.Status != "success" {
-		return WrapError("ImportCallbackConfig", ErrInvalidResponse, fmt.Sprintf("import failed: %s", mutation.ImportCallbackConfig.Error))
+	data, ok := result["importCallbackConfig"].(map[string]interface{})
+	if !ok {
+		return WrapError("ImportCallbackConfig", ErrInvalidResponse, "unexpected response format")
+	}
+
+	status, _ := data["status"].(string)
+	if status != "success" {
+		errMsg, _ := data["error"].(string)
+		return WrapError("ImportCallbackConfig", ErrInvalidResponse, fmt.Sprintf("import failed: %s", errMsg))
 	}
 
 	return nil
