@@ -227,18 +227,20 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 // GetCallbacksForHost retrieves all callbacks associated with a specific host.
 //
 // This shows which agents are currently running on the host and their status.
+// Mythic has no dedicated host table, so this queries callbacks by hostname
+// using a case-insensitive match.
 //
 // Parameters:
 //   - ctx: Context for cancellation and timeout
-//   - hostID: Database ID of the host
+//   - hostname: Hostname to search for (case-insensitive)
 //
 // Returns:
 //   - []*types.Callback: List of callbacks on the host
-//   - error: Error if host ID is invalid or query fails
+//   - error: Error if hostname is empty or query fails
 //
 // Example:
 //
-//	callbacks, err := client.GetCallbacksForHost(ctx, 42)
+//	callbacks, err := client.GetCallbacksForHost(ctx, "WORKSTATION-01")
 //	if err != nil {
 //	    return err
 //	}
@@ -251,22 +253,16 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 //	    fmt.Printf("  - Callback %d: %s@%s (%s)\n",
 //	        cb.ID, cb.User, cb.Host, status)
 //	}
-func (c *Client) GetCallbacksForHost(ctx context.Context, hostID int) ([]*types.Callback, error) {
+func (c *Client) GetCallbacksForHost(ctx context.Context, hostname string) ([]*types.Callback, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
-	if hostID == 0 {
-		return nil, WrapError("GetCallbacksForHost", ErrInvalidInput, "host ID is required")
+	if hostname == "" {
+		return nil, WrapError("GetCallbacksForHost", ErrInvalidInput, "hostname is required")
 	}
 
-	// First get the host to find its hostname
-	host, err := c.GetHostByID(ctx, hostID)
-	if err != nil {
-		return nil, WrapError("GetCallbacksForHost", err, "failed to get host")
-	}
-
-	// Query callbacks by matching hostname
+	// Query callbacks by matching hostname directly
 	var query struct {
 		Callback []struct {
 			ID                  int       `graphql:"id"`
@@ -295,10 +291,10 @@ func (c *Client) GetCallbacksForHost(ctx context.Context, hostID int) ([]*types.
 	}
 
 	variables := map[string]interface{}{
-		"hostname": host.Hostname,
+		"hostname": hostname,
 	}
 
-	err = c.executeQuery(ctx, &query, variables)
+	err := c.executeQuery(ctx, &query, variables)
 	if err != nil {
 		return nil, WrapError("GetCallbacksForHost", err, "failed to query callbacks")
 	}
@@ -393,7 +389,7 @@ func (c *Client) GetHostNetworkMap(ctx context.Context, operationID int) (*types
 
 	// Enrich each host with callback information
 	for _, host := range hosts {
-		callbacks, err := c.GetCallbacksForHost(ctx, host.ID)
+		callbacks, err := c.GetCallbacksForHost(ctx, host.Hostname)
 		if err != nil {
 			// Log error but continue with other hosts
 			continue

@@ -215,37 +215,50 @@ func (c *Client) UpdatePasswordAndEmail(ctx context.Context, req *types.UpdatePa
 		return WrapError("UpdatePasswordAndEmail", ErrInvalidInput, "new password must be at least 12 characters long")
 	}
 
-	// Build the input object
-	input := map[string]interface{}{
-		"operator_id":  req.OperatorID,
-		"old_password": req.OldPassword,
+	// Build dynamic query with only provided fields
+	varDecls := []string{"$user_id: Int!"}
+	args := []string{"user_id: $user_id"}
+	variables := map[string]interface{}{
+		"user_id": req.OperatorID,
 	}
+
+	// old_password is always sent
+	varDecls = append(varDecls, "$old_password: String")
+	args = append(args, "old_password: $old_password")
+	variables["old_password"] = req.OldPassword
 
 	if req.NewPassword != nil {
-		input["new_password"] = *req.NewPassword
+		varDecls = append(varDecls, "$new_password: String")
+		args = append(args, "new_password: $new_password")
+		variables["new_password"] = *req.NewPassword
 	}
 	if req.Email != nil {
-		input["email"] = *req.Email
+		varDecls = append(varDecls, "$email: String")
+		args = append(args, "email: $email")
+		variables["email"] = *req.Email
 	}
 
-	var mutation struct {
-		UpdatePasswordAndEmail struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updatePasswordAndEmail(input: $input)"`
-	}
+	query := fmt.Sprintf(`mutation updatePwEmail(%s) {
+		updatePasswordAndEmail(%s) {
+			status
+			error
+		}
+	}`, strings.Join(varDecls, ", "), strings.Join(args, ", "))
 
-	variables := map[string]interface{}{
-		"input": input,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return WrapError("UpdatePasswordAndEmail", err, "failed to update password and email")
 	}
 
-	if mutation.UpdatePasswordAndEmail.Status != "success" {
-		return WrapError("UpdatePasswordAndEmail", ErrOperationFailed, mutation.UpdatePasswordAndEmail.Error)
+	data, ok := result["updatePasswordAndEmail"].(map[string]interface{})
+	if !ok {
+		return WrapError("UpdatePasswordAndEmail", ErrInvalidResponse, "unexpected response format")
+	}
+
+	status, _ := data["status"].(string)
+	if status != "success" {
+		errMsg, _ := data["error"].(string)
+		return WrapError("UpdatePasswordAndEmail", ErrOperationFailed, errMsg)
 	}
 
 	return nil
