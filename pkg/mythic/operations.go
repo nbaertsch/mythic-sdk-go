@@ -219,6 +219,9 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 
 	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
+		if strings.Contains(err.Error(), "field 'updateOperation' not found") {
+			return c.updateOperationByPKFallback(ctx, req)
+		}
 		return nil, WrapError("UpdateOperation", err, "failed to update operation")
 	}
 
@@ -230,9 +233,58 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 			}
 			return nil, WrapError("UpdateOperation", ErrOperationFailed, errMsg)
 		}
+	} else {
+		return c.updateOperationByPKFallback(ctx, req)
 	}
 
 	// Fetch the updated operation
+	return c.GetOperationByID(ctx, req.OperationID)
+}
+
+func (c *Client) updateOperationByPKFallback(ctx context.Context, req *types.UpdateOperationRequest) (*types.Operation, error) {
+	setFields := map[string]interface{}{}
+
+	if req.Name != nil {
+		setFields["name"] = *req.Name
+	}
+	if req.Channel != nil {
+		setFields["channel"] = *req.Channel
+	}
+	if req.Complete != nil {
+		setFields["complete"] = *req.Complete
+	}
+	if req.Webhook != nil {
+		setFields["webhook"] = *req.Webhook
+	}
+	if req.AdminID != nil {
+		setFields["admin_id"] = *req.AdminID
+	}
+	if req.BannerText != nil {
+		setFields["banner_text"] = *req.BannerText
+	}
+	if req.BannerColor != nil {
+		setFields["banner_color"] = *req.BannerColor
+	}
+
+	query := `mutation UpdateOperationByPK($operation_id: Int!, $set: operation_set_input!) {
+		update_operation_by_pk(pk_columns: {id: $operation_id}, _set: $set) {
+			id
+		}
+	}`
+
+	result, err := c.ExecuteRawGraphQL(ctx, query, map[string]interface{}{
+		"operation_id": req.OperationID,
+		"set":          setFields,
+	})
+	if err != nil {
+		return nil, WrapError("UpdateOperation", err, "failed to update operation via update_operation_by_pk fallback")
+	}
+
+	node, exists := result["update_operation_by_pk"]
+	if !exists || node == nil {
+		return nil, WrapError("UpdateOperation", ErrNotFound, fmt.Sprintf("operation %d not found", req.OperationID))
+	}
+
 	return c.GetOperationByID(ctx, req.OperationID)
 }
 
