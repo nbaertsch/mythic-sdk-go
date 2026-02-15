@@ -376,7 +376,7 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 				Timestamp           time.Time `graphql:"timestamp"`
 				Deleted             bool      `graphql:"deleted"`
 				TaskID              *int      `graphql:"task_id"`
-			} `graphql:"filemeta(where: {callback_id: {_eq: $callback_id}, is_screenshot: {_eq: true}, deleted: {_eq: false}, timestamp: {_gte: $start_time, _lte: $end_time}}, order_by: {timestamp: asc})"`
+			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_gte: $start_time, _lte: $end_time}}, order_by: {timestamp: asc})"`
 		}
 
 		variables["start_time"] = startTime.Format(time.RFC3339)
@@ -434,7 +434,7 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 				Timestamp           time.Time `graphql:"timestamp"`
 				Deleted             bool      `graphql:"deleted"`
 				TaskID              *int      `graphql:"task_id"`
-			} `graphql:"filemeta(where: {callback_id: {_eq: $callback_id}, is_screenshot: {_eq: true}, deleted: {_eq: false}, timestamp: {_gte: $start_time}}, order_by: {timestamp: asc})"`
+			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_gte: $start_time}}, order_by: {timestamp: asc})"`
 		}
 
 		variables["start_time"] = startTime.Format(time.RFC3339)
@@ -491,7 +491,7 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 				Timestamp           time.Time `graphql:"timestamp"`
 				Deleted             bool      `graphql:"deleted"`
 				TaskID              *int      `graphql:"task_id"`
-			} `graphql:"filemeta(where: {callback_id: {_eq: $callback_id}, is_screenshot: {_eq: true}, deleted: {_eq: false}, timestamp: {_lte: $end_time}}, order_by: {timestamp: asc})"`
+			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_lte: $end_time}}, order_by: {timestamp: asc})"`
 		}
 
 		variables["end_time"] = endTime.Format(time.RFC3339)
