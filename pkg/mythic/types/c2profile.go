@@ -50,8 +50,9 @@ type CreateC2InstanceRequest struct {
 
 // ImportC2InstanceRequest represents a request to import a C2 instance configuration.
 type ImportC2InstanceRequest struct {
-	Config string `json:"config"` // JSON string of configuration
-	Name   string `json:"name"`
+	C2ProfileName string `json:"c2profile_name"` // Name of the C2 profile type (e.g. "http")
+	InstanceName  string `json:"instance_name"`  // Name for this imported instance
+	C2Instance    string `json:"c2_instance"`    // JSON string of the instance configuration
 }
 
 // StartStopProfileRequest represents a request to start or stop a C2 profile.

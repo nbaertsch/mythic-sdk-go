@@ -3,6 +3,7 @@ package mythic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -135,39 +136,52 @@ func (c *Client) CreateC2Instance(ctx context.Context, req *types.CreateC2Instan
 }
 
 // ImportC2Instance imports a C2 instance configuration.
-func (c *Client) ImportC2Instance(ctx context.Context, req *types.ImportC2InstanceRequest) (*types.C2Profile, error) {
+// The mutation takes c2_instance (jsonb), c2profile_name (String), and instance_name (String).
+func (c *Client) ImportC2Instance(ctx context.Context, req *types.ImportC2InstanceRequest) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
-		return nil, err
+		return err
 	}
 
-	if req == nil || req.Config == "" || req.Name == "" {
-		return nil, WrapError("ImportC2Instance", ErrInvalidInput, "config and name are required")
+	if req == nil || req.C2ProfileName == "" || req.InstanceName == "" || req.C2Instance == "" {
+		return WrapError("ImportC2Instance", ErrInvalidInput, "c2profile_name, instance_name, and c2_instance are required")
 	}
 
-	var mutation struct {
-		ImportC2Instance struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-			ID     int    `graphql:"id"`
-		} `graphql:"import_c2_instance(name: $name, config: $config)"`
+	// Parse the c2_instance JSON string into a map for jsonb param
+	var c2InstanceData interface{}
+	if err := json.Unmarshal([]byte(req.C2Instance), &c2InstanceData); err != nil {
+		return WrapError("ImportC2Instance", ErrInvalidInput, fmt.Sprintf("c2_instance must be valid JSON: %v", err))
 	}
+
+	mutation := `mutation ImportC2Instance($c2_instance: jsonb!, $c2profile_name: String!, $instance_name: String!) {
+		import_c2_instance(c2_instance: $c2_instance, c2profile_name: $c2profile_name, instance_name: $instance_name) {
+			status
+			error
+		}
+	}`
 
 	variables := map[string]interface{}{
-		"name":   req.Name,
-		"config": req.Config,
+		"c2_instance":   c2InstanceData,
+		"c2profile_name": req.C2ProfileName,
+		"instance_name":  req.InstanceName,
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, mutation, variables)
 	if err != nil {
-		return nil, WrapError("ImportC2Instance", err, "failed to import C2 instance")
+		return WrapError("ImportC2Instance", err, "failed to import C2 instance")
 	}
 
-	if mutation.ImportC2Instance.Status != "success" {
-		return nil, WrapError("ImportC2Instance", ErrOperationFailed, mutation.ImportC2Instance.Error)
+	// Parse the response
+	importResult, ok := result["import_c2_instance"].(map[string]interface{})
+	if !ok {
+		return WrapError("ImportC2Instance", ErrOperationFailed, "unexpected response format")
 	}
 
-	// Fetch the imported profile
-	return c.GetC2ProfileByID(ctx, mutation.ImportC2Instance.ID)
+	if status, _ := importResult["status"].(string); status != "success" {
+		errMsg, _ := importResult["error"].(string)
+		return WrapError("ImportC2Instance", ErrOperationFailed, errMsg)
+	}
+
+	return nil
 }
 
 // StartStopProfile starts or stops a C2 profile.
