@@ -205,8 +205,15 @@ func (c *Client) IssueScriptOnlyTask(ctx context.Context, req *ScriptOnlyTaskReq
 		return nil, WrapError("IssueScriptOnlyTask", ErrInvalidInput, "callback_id is required")
 	}
 
+	// CallbackID is a display_id. Resolve to internal ID for GraphQL queries.
+	callback, err := c.GetCallbackByID(ctx, req.CallbackID)
+	if err != nil {
+		return nil, WrapError("IssueScriptOnlyTask", err, "failed to resolve callback")
+	}
+
 	// Look up the command in the callback's loaded commands to find its payload type
-	loadedCmds, err := c.GetLoadedCommands(ctx, req.CallbackID)
+	// GetLoadedCommands expects the internal callback_id, not display_id
+	loadedCmds, err := c.GetLoadedCommands(ctx, callback.ID)
 	if err != nil {
 		return nil, WrapError("IssueScriptOnlyTask", err, "failed to get loaded commands")
 	}
