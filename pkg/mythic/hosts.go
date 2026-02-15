@@ -56,7 +56,7 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 			Architecture string    `graphql:"architecture"`
 			IP           string    `graphql:"ip"`
 			OperationID  int       `graphql:"operation_id"`
-			LastCheckin  time.Time `graphql:"last_checkin"`
+			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {operation_id: {_eq: $operation_id}}, distinct_on: host, order_by: {host: asc})"`
 	}
 
@@ -71,6 +71,7 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 
 	hosts := make([]*types.HostInfo, len(query.Callback))
 	for i, cbData := range query.Callback {
+		ts, _ := parseTimestamp(cbData.LastCheckin)
 		hosts[i] = &types.HostInfo{
 			ID:           i + 1, // synthetic ID since hosts are derived
 			Hostname:     cbData.Host,
@@ -79,7 +80,7 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 			OS:           cbData.Os,
 			Architecture: cbData.Architecture,
 			OperationID:  cbData.OperationID,
-			Timestamp:    cbData.LastCheckin,
+			Timestamp:    ts,
 		}
 	}
 
@@ -125,7 +126,7 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 			Os           string    `graphql:"os"`
 			Architecture string    `graphql:"architecture"`
 			OperationID  int       `graphql:"operation_id"`
-			LastCheckin  time.Time `graphql:"last_checkin"`
+			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {id: {_eq: $host_id}})"`
 	}
 
@@ -143,6 +144,7 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 	}
 
 	cbData := query.Callback[0]
+	ts, _ := parseTimestamp(cbData.LastCheckin)
 	return &types.HostInfo{
 		ID:           cbData.ID,
 		Hostname:     cbData.Host,
@@ -151,7 +153,7 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 		OS:           cbData.Os,
 		Architecture: cbData.Architecture,
 		OperationID:  cbData.OperationID,
-		Timestamp:    cbData.LastCheckin,
+		Timestamp:    ts,
 	}, nil
 }
 
@@ -194,7 +196,7 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 			Os           string    `graphql:"os"`
 			Architecture string    `graphql:"architecture"`
 			OperationID  int       `graphql:"operation_id"`
-			LastCheckin  time.Time `graphql:"last_checkin"`
+			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {host: {_ilike: $hostname}}, order_by: {last_checkin: desc}, limit: 1)"`
 	}
 
@@ -212,6 +214,7 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 	}
 
 	cbData := query.Callback[0]
+	ts, _ := parseTimestamp(cbData.LastCheckin)
 	return &types.HostInfo{
 		ID:           cbData.ID,
 		Hostname:     cbData.Host,
@@ -220,7 +223,7 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 		OS:           cbData.Os,
 		Architecture: cbData.Architecture,
 		OperationID:  cbData.OperationID,
-		Timestamp:    cbData.LastCheckin,
+		Timestamp:    ts,
 	}, nil
 }
 
@@ -268,8 +271,8 @@ func (c *Client) GetCallbacksForHost(ctx context.Context, hostname string) ([]*t
 			ID                  int       `graphql:"id"`
 			DisplayID           int       `graphql:"display_id"`
 			AgentCallbackID     string    `graphql:"agent_callback_id"`
-			InitCallback        time.Time `graphql:"init_callback"`
-			LastCheckin         time.Time `graphql:"last_checkin"`
+			InitCallback        string `graphql:"init_callback"`
+			LastCheckin         string `graphql:"last_checkin"`
 			User                string    `graphql:"user"`
 			Host                string    `graphql:"host"`
 			PID                 int       `graphql:"pid"`
@@ -307,12 +310,14 @@ func (c *Client) GetCallbacksForHost(ctx context.Context, hostname string) ([]*t
 			ips = []string{cbData.IP}
 		}
 
+		initCb, _ := parseTimestamp(cbData.InitCallback)
+		lastCb, _ := parseTimestamp(cbData.LastCheckin)
 		callbacks[i] = &types.Callback{
 			ID:                  cbData.ID,
 			DisplayID:           cbData.DisplayID,
 			AgentCallbackID:     cbData.AgentCallbackID,
-			InitCallback:        cbData.InitCallback,
-			LastCheckin:         cbData.LastCheckin,
+			InitCallback:        initCb,
+			LastCheckin:         lastCb,
 			User:                cbData.User,
 			Host:                cbData.Host,
 			PID:                 cbData.PID,

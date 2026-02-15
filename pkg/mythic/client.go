@@ -281,6 +281,12 @@ func (c *Client) ExecuteRawGraphQL(ctx context.Context, query string, variables 
 		return nil, WrapError("ExecuteRawGraphQL", fmt.Errorf("%s", errMsg), "query failed")
 	}
 
+	// Return just the "data" envelope contents so callers can access
+	// top-level query/mutation keys directly (e.g. result["myMutation"]).
+	if data, ok := result["data"].(map[string]interface{}); ok {
+		return data, nil
+	}
+
 	return result, nil
 }
 
