@@ -94,7 +94,6 @@ type C2SampleMessage struct {
 
 // C2IOC represents indicators of compromise for a C2 profile.
 type C2IOC struct {
-	ProfileID int      `json:"profile_id"`
-	IOCs      []string `json:"iocs"`
-	Type      string   `json:"type,omitempty"`
+	ProfileName string `json:"profile_name"`
+	Output      string `json:"output"`
 }

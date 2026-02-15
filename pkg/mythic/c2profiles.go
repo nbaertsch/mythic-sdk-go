@@ -295,76 +295,99 @@ func (c *Client) C2HostFile(ctx context.Context, profileID int, fileUUID string)
 }
 
 // C2SampleMessage generates a sample C2 message for testing.
-func (c *Client) C2SampleMessage(ctx context.Context, profileID int, messageType string) (*types.C2SampleMessage, error) {
+// The profileName parameter is the C2 profile's name (e.g., "http", "httpx"),
+// which Mythic's c2SampleMessage query accepts as the "uuid" argument.
+func (c *Client) C2SampleMessage(ctx context.Context, profileName string) (*types.C2SampleMessage, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
-	if profileID == 0 {
-		return nil, WrapError("C2SampleMessage", ErrInvalidInput, "profile ID is required")
+	if profileName == "" {
+		return nil, WrapError("C2SampleMessage", ErrInvalidInput, "profile name is required")
 	}
 
-	var query struct {
-		C2SampleMessage struct {
-			Status  string `graphql:"status"`
-			Error   string `graphql:"error"`
-			Message string `graphql:"message"`
-		} `graphql:"c2SampleMessage(profile_id: $profile_id, message_type: $message_type)"`
-	}
+	query := `query C2SampleMessage($uuid: String!) {
+		c2SampleMessage(uuid: $uuid) {
+			status
+			error
+			output
+		}
+	}`
 
 	variables := map[string]interface{}{
-		"profile_id":   profileID,
-		"message_type": messageType,
+		"uuid": profileName,
 	}
 
-	err := c.executeQuery(ctx, &query, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return nil, WrapError("C2SampleMessage", err, "failed to generate sample C2 message")
 	}
 
-	if query.C2SampleMessage.Status != "success" {
-		return nil, WrapError("C2SampleMessage", ErrOperationFailed, query.C2SampleMessage.Error)
+	sampleResult, ok := result["c2SampleMessage"].(map[string]interface{})
+	if !ok {
+		return nil, WrapError("C2SampleMessage", ErrInvalidResponse, "unexpected response format")
 	}
 
+	if status, ok := sampleResult["status"].(string); ok && status != "success" {
+		errMsg := ""
+		if e, ok := sampleResult["error"].(string); ok {
+			errMsg = e
+		}
+		return nil, WrapError("C2SampleMessage", ErrOperationFailed, errMsg)
+	}
+
+	output, _ := sampleResult["output"].(string)
 	return &types.C2SampleMessage{
-		Message: query.C2SampleMessage.Message,
+		Message: output,
 	}, nil
 }
 
 // C2GetIOC retrieves indicators of compromise for a C2 profile.
-func (c *Client) C2GetIOC(ctx context.Context, profileID int) (*types.C2IOC, error) {
+// The profileName parameter is the C2 profile's name (e.g., "http", "httpx"),
+// which Mythic's c2GetIOC query accepts as the "uuid" argument.
+func (c *Client) C2GetIOC(ctx context.Context, profileName string) (*types.C2IOC, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
-	if profileID == 0 {
-		return nil, WrapError("C2GetIOC", ErrInvalidInput, "profile ID is required")
+	if profileName == "" {
+		return nil, WrapError("C2GetIOC", ErrInvalidInput, "profile name is required")
 	}
 
-	var query struct {
-		C2GetIOC struct {
-			Status string   `graphql:"status"`
-			Error  string   `graphql:"error"`
-			IOCs   []string `graphql:"iocs"`
-		} `graphql:"c2GetIOC(profile_id: $profile_id)"`
-	}
+	query := `query C2GetIOC($uuid: String!) {
+		c2GetIOC(uuid: $uuid) {
+			status
+			error
+			output
+		}
+	}`
 
 	variables := map[string]interface{}{
-		"profile_id": profileID,
+		"uuid": profileName,
 	}
 
-	err := c.executeQuery(ctx, &query, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return nil, WrapError("C2GetIOC", err, "failed to get C2 IOCs")
 	}
 
-	if query.C2GetIOC.Status != "success" {
-		return nil, WrapError("C2GetIOC", ErrOperationFailed, query.C2GetIOC.Error)
+	iocResult, ok := result["c2GetIOC"].(map[string]interface{})
+	if !ok {
+		return nil, WrapError("C2GetIOC", ErrInvalidResponse, "unexpected response format")
 	}
 
+	if status, ok := iocResult["status"].(string); ok && status != "success" {
+		errMsg := ""
+		if e, ok := iocResult["error"].(string); ok {
+			errMsg = e
+		}
+		return nil, WrapError("C2GetIOC", ErrOperationFailed, errMsg)
+	}
+
+	output, _ := iocResult["output"].(string)
 	return &types.C2IOC{
-		ProfileID: profileID,
-		IOCs:      query.C2GetIOC.IOCs,
+		ProfileName: profileName,
+		Output:      output,
 	}, nil
 }
 
