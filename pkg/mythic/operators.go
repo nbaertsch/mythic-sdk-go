@@ -3,6 +3,7 @@ package mythic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -411,70 +412,68 @@ func (c *Client) UpdateOperatorSecrets(ctx context.Context, req *types.UpdateOpe
 }
 
 // GetInviteLinks retrieves all invitation links for new operators.
-// Note: This uses the getInviteLinks query action which returns links as jsonb.
+// Queries the invite_link table directly via raw GraphQL to avoid
+// Go GraphQL client type mapping issues with timestamps and JSONB.
 func (c *Client) GetInviteLinks(ctx context.Context) ([]*types.InviteLink, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
 	}
 
-	// Use the getInviteLinks query action (returns jsonb)
-	// Since jsonb is a scalar type causing GraphQL client issues, query without links field
-	// and use a separate REST/GraphQL call or handle via alternate method
-	var query struct {
-		GetInviteLinks struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-			// Note: Omitting Links field due to GraphQL client JSONB scalar handling issues
-			// Links field causes reflection panics in shurcooL/graphql library
-		} `graphql:"getInviteLinks"`
-	}
+	query := `query GetInviteLinks {
+		invite_link(order_by: {created_at: desc}) {
+			id
+			short_code
+			created_at
+			operator_id
+			operation_id
+			name
+			total_uses
+			total_used
+			operation_role
+		}
+	}`
 
-	err := c.executeQuery(ctx, &query, nil)
+	result, err := c.ExecuteRawGraphQL(ctx, query, nil)
 	if err != nil {
 		return nil, WrapError("GetInviteLinks", err, "failed to query invite links")
 	}
 
-	if query.GetInviteLinks.Status != "success" {
-		return nil, WrapError("GetInviteLinks", ErrOperationFailed, query.GetInviteLinks.Error)
+	linksRaw, ok := result["invite_link"].([]interface{})
+	if !ok {
+		// No invite links found or unexpected format
+		return []*types.InviteLink{}, nil
 	}
 
-	// Since we can't reliably get links via GraphQL due to JSONB scalar issues,
-	// query the database table directly via GraphQL table query
-	var linksQuery struct {
-		InviteLinks []struct {
-			ID            int       `graphql:"id"`
-			ShortCode     string    `graphql:"short_code"`
-			CreatedAt     time.Time `graphql:"created_at"`
-			OperatorID    int       `graphql:"operator_id"`
-			OperationID   int       `graphql:"operation_id"`
-			Name          string    `graphql:"name"`
-			TotalUses     int       `graphql:"total_uses"`
-			TotalUsed     int       `graphql:"total_used"`
-			OperationRole string    `graphql:"operation_role"`
-		} `graphql:"invite_link(order_by: {created_at: desc})"`
-	}
-
-	err = c.executeQuery(ctx, &linksQuery, nil)
-	if err != nil {
-		return nil, WrapError("GetInviteLinks", err, "failed to query invite links table")
-	}
-
-	// Convert to types.InviteLink
-	links := make([]*types.InviteLink, len(linksQuery.InviteLinks))
-	for i, link := range linksQuery.InviteLinks {
-		// Calculate if link is still active (used < max)
-		active := link.TotalUsed < link.TotalUses
-
-		links[i] = &types.InviteLink{
-			ID:          link.ID,
-			Code:        link.ShortCode,
-			ExpiresAt:   time.Time{}, // Not tracked in database
-			CreatedBy:   link.OperatorID,
-			CreatedAt:   link.CreatedAt,
-			MaxUses:     link.TotalUses,
-			CurrentUses: link.TotalUsed,
-			Active:      active,
+	links := make([]*types.InviteLink, 0, len(linksRaw))
+	for _, raw := range linksRaw {
+		linkMap, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
 		}
+
+		link := &types.InviteLink{}
+		if id, ok := linkMap["id"].(float64); ok {
+			link.ID = int(id)
+		}
+		if code, ok := linkMap["short_code"].(string); ok {
+			link.Code = code
+		}
+		if createdAt, ok := linkMap["created_at"].(string); ok {
+			if t, err := parseTimestamp(createdAt); err == nil {
+				link.CreatedAt = t
+			}
+		}
+		if operatorID, ok := linkMap["operator_id"].(float64); ok {
+			link.CreatedBy = int(operatorID)
+		}
+		if totalUses, ok := linkMap["total_uses"].(float64); ok {
+			link.MaxUses = int(totalUses)
+		}
+		if totalUsed, ok := linkMap["total_used"].(float64); ok {
+			link.CurrentUses = int(totalUsed)
+		}
+		link.Active = link.CurrentUses < link.MaxUses
+		links = append(links, link)
 	}
 
 	return links, nil
@@ -486,66 +485,84 @@ func (c *Client) CreateInviteLink(ctx context.Context, req *types.CreateInviteLi
 		return nil, err
 	}
 
-	// Build variables map with only provided parameters
-	// Using empty strings for optional string params to avoid nil pointer issues
-	variables := map[string]interface{}{
-		"operation_id":   0,
-		"operation_role": "",
-		"total":          0,
-		"name":           "",
-		"short_code":     "",
-	}
+	// Build dynamic mutation with only provided parameters
+	varDecls := []string{}
+	argParts := []string{}
+	variables := map[string]interface{}{}
 
 	if req != nil {
 		if req.OperationID != nil {
+			varDecls = append(varDecls, "$operation_id: Int")
+			argParts = append(argParts, "operation_id: $operation_id")
 			variables["operation_id"] = *req.OperationID
 		}
 		if req.OperationRole != "" {
+			varDecls = append(varDecls, "$operation_role: String")
+			argParts = append(argParts, "operation_role: $operation_role")
 			variables["operation_role"] = req.OperationRole
 		}
 		if req.MaxUses > 0 {
-			variables["total"] = req.MaxUses // GraphQL parameter is 'total', not 'max_uses'
+			varDecls = append(varDecls, "$total: Int")
+			argParts = append(argParts, "total: $total")
+			variables["total"] = req.MaxUses
 		}
 		if req.Name != "" {
+			varDecls = append(varDecls, "$name: String")
+			argParts = append(argParts, "name: $name")
 			variables["name"] = req.Name
 		}
 		if req.ShortCode != "" {
+			varDecls = append(varDecls, "$short_code: String")
+			argParts = append(argParts, "short_code: $short_code")
 			variables["short_code"] = req.ShortCode
 		}
 	}
 
-	var mutation struct {
-		CreateInviteLink struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-			Link   string `graphql:"link"` // The actual invite link URL
-		} `graphql:"createInviteLink(operation_id: $operation_id, operation_role: $operation_role, total: $total, name: $name, short_code: $short_code)"`
+	varDeclStr := ""
+	if len(varDecls) > 0 {
+		varDeclStr = "(" + strings.Join(varDecls, ", ") + ")"
+	}
+	argStr := ""
+	if len(argParts) > 0 {
+		argStr = "(" + strings.Join(argParts, ", ") + ")"
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	query := fmt.Sprintf(`mutation CreateInviteLink%s {
+		createInviteLink%s {
+			status
+			error
+			link
+		}
+	}`, varDeclStr, argStr)
+
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return nil, WrapError("CreateInviteLink", err, "failed to create invite link")
 	}
 
-	if mutation.CreateInviteLink.Status != "success" {
-		return nil, WrapError("CreateInviteLink", ErrOperationFailed, mutation.CreateInviteLink.Error)
+	createResult, ok := result["createInviteLink"].(map[string]interface{})
+	if !ok {
+		return nil, WrapError("CreateInviteLink", ErrInvalidResponse, "unexpected response format")
+	}
+
+	if status, ok := createResult["status"].(string); ok && status != "success" {
+		errMsg := ""
+		if e, ok := createResult["error"].(string); ok {
+			errMsg = e
+		}
+		return nil, WrapError("CreateInviteLink", ErrOperationFailed, errMsg)
 	}
 
 	// Parse the link URL to extract the short code
-	// Link format is typically: https://<server>/new/invite/<short_code>
-	link := mutation.CreateInviteLink.Link
+	link, _ := createResult["link"].(string)
 	shortCode := ""
 	if link != "" {
-		// Extract short code from URL
 		parts := strings.Split(link, "/")
 		if len(parts) > 0 {
 			shortCode = parts[len(parts)-1]
 		}
 	}
 
-	// Return the invite link with the short code
-	// Note: Other fields (ID, ExpiresAt, CreatedBy, etc.) are not returned by the mutation
-	// and would need to be retrieved via GetInviteLinks()
 	maxUses := 0
 	if req != nil {
 		maxUses = req.MaxUses

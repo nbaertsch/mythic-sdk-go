@@ -3,6 +3,7 @@ package mythic
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -148,7 +149,7 @@ func (c *Client) CreateOperation(ctx context.Context, req *types.CreateOperation
 	return c.GetOperationByID(ctx, mutation.CreateOperation.OperationID)
 }
 
-// UpdateOperation updates an existing operation using the REST API webhook.
+// UpdateOperation updates an existing operation using the GraphQL mutation.
 func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperationRequest) (*types.Operation, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -159,42 +160,76 @@ func (c *Client) UpdateOperation(ctx context.Context, req *types.UpdateOperation
 	}
 
 	// Check if there are any fields to update
-	hasUpdates := req.Complete != nil || req.Webhook != nil
+	hasUpdates := req.Name != nil || req.Channel != nil || req.Complete != nil ||
+		req.Webhook != nil || req.AdminID != nil || req.BannerText != nil || req.BannerColor != nil
 
 	if !hasUpdates {
 		return nil, WrapError("UpdateOperation", ErrInvalidInput, "no fields to update")
 	}
 
-	// Build REST API request using Mythic's webhook format
-	// Note: Mythic webhook expects parameters wrapped in "Input" object
-	inputData := map[string]interface{}{
+	// Build dynamic GraphQL mutation using updateOperation custom mutation
+	varDecls := []string{"$operation_id: Int!"}
+	variables := map[string]interface{}{
 		"operation_id": req.OperationID,
 	}
+	argParts := []string{"operation_id: $operation_id"}
 
-	// Add fields that are being updated
+	if req.Name != nil {
+		varDecls = append(varDecls, "$name: String")
+		variables["name"] = *req.Name
+		argParts = append(argParts, "name: $name")
+	}
+	if req.Channel != nil {
+		varDecls = append(varDecls, "$channel: String")
+		variables["channel"] = *req.Channel
+		argParts = append(argParts, "channel: $channel")
+	}
 	if req.Complete != nil {
-		inputData["complete"] = *req.Complete
+		varDecls = append(varDecls, "$complete: Boolean")
+		variables["complete"] = *req.Complete
+		argParts = append(argParts, "complete: $complete")
 	}
 	if req.Webhook != nil {
-		inputData["webhook"] = *req.Webhook
+		varDecls = append(varDecls, "$webhook: String")
+		variables["webhook"] = *req.Webhook
+		argParts = append(argParts, "webhook: $webhook")
+	}
+	if req.AdminID != nil {
+		varDecls = append(varDecls, "$admin_id: Int")
+		variables["admin_id"] = *req.AdminID
+		argParts = append(argParts, "admin_id: $admin_id")
+	}
+	if req.BannerText != nil {
+		varDecls = append(varDecls, "$banner_text: String")
+		variables["banner_text"] = *req.BannerText
+		argParts = append(argParts, "banner_text: $banner_text")
+	}
+	if req.BannerColor != nil {
+		varDecls = append(varDecls, "$banner_color: String")
+		variables["banner_color"] = *req.BannerColor
+		argParts = append(argParts, "banner_color: $banner_color")
 	}
 
-	requestData := map[string]interface{}{
-		"Input": inputData,
-	}
+	query := fmt.Sprintf(`mutation UpdateOperation(%s) {
+		updateOperation(%s) {
+			status
+			error
+		}
+	}`, strings.Join(varDecls, ", "), strings.Join(argParts, ", "))
 
-	var response struct {
-		Status string `json:"status"`
-		Error  string `json:"error"`
-	}
-
-	err := c.executeRESTWebhook(ctx, "api/v1.4/update_operation_webhook", requestData, &response)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
-		return nil, WrapError("UpdateOperation", err, "failed to execute webhook")
+		return nil, WrapError("UpdateOperation", err, "failed to update operation")
 	}
 
-	if response.Status != "success" {
-		return nil, WrapError("UpdateOperation", ErrOperationFailed, response.Error)
+	if updateResult, ok := result["updateOperation"].(map[string]interface{}); ok {
+		if status, ok := updateResult["status"].(string); ok && status != "success" {
+			errMsg := ""
+			if e, ok := updateResult["error"].(string); ok {
+				errMsg = e
+			}
+			return nil, WrapError("UpdateOperation", ErrOperationFailed, errMsg)
+		}
 	}
 
 	// Fetch the updated operation
@@ -345,26 +380,44 @@ func (c *Client) UpdateOperatorOperation(ctx context.Context, req *types.UpdateO
 
 	variables := map[string]interface{}{
 		"operation_id":         req.OperationID,
-		"add_users":            addUsersVar,    // []int (empty or with values)
-		"remove_users":         removeUsersVar, // []int (empty or with values)
-		"view_mode_operators":  viewOpsVar,     // []int (empty or with values)
-		"view_mode_spectators": viewSpecsVar,   // []int (empty or with values)
+		"add_users":            addUsersVar,
+		"remove_users":         removeUsersVar,
+		"view_mode_operators":  viewOpsVar,
+		"view_mode_spectators": viewSpecsVar,
 	}
 
-	var mutation struct {
-		UpdateOperatorOperation struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"updateOperatorOperation(operation_id: $operation_id, add_users: $add_users, remove_users: $remove_users, view_mode_operators: $view_mode_operators, view_mode_spectators: $view_mode_spectators)"`
-	}
+	query := `mutation UpdateOperatorOperation(
+		$operation_id: Int!,
+		$add_users: [Int],
+		$remove_users: [Int],
+		$view_mode_operators: [Int],
+		$view_mode_spectators: [Int]
+	) {
+		updateOperatorOperation(
+			operation_id: $operation_id,
+			add_users: $add_users,
+			remove_users: $remove_users,
+			view_mode_operators: $view_mode_operators,
+			view_mode_spectators: $view_mode_spectators
+		) {
+			status
+			error
+		}
+	}`
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return WrapError("UpdateOperatorOperation", err, "failed to update operator in operation")
 	}
 
-	if mutation.UpdateOperatorOperation.Status != "success" {
-		return WrapError("UpdateOperatorOperation", ErrOperationFailed, mutation.UpdateOperatorOperation.Error)
+	if updateResult, ok := result["updateOperatorOperation"].(map[string]interface{}); ok {
+		if status, ok := updateResult["status"].(string); ok && status != "success" {
+			errMsg := ""
+			if e, ok := updateResult["error"].(string); ok {
+				errMsg = e
+			}
+			return WrapError("UpdateOperatorOperation", ErrOperationFailed, errMsg)
+		}
 	}
 
 	return nil
