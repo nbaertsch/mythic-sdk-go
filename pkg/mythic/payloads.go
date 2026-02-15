@@ -489,9 +489,9 @@ func (c *Client) GetPayloadOnHost(ctx context.Context, operationID int) ([]*type
 		PayloadOnHost []struct {
 			ID int `graphql:"id"`
 			// HostID field removed - not available in Mythic v3.4.20 schema
-			PayloadID   int       `graphql:"payload_id"`
-			OperationID int       `graphql:"operation_id"`
-			Timestamp   time.Time `graphql:"timestamp"`
+			PayloadID   int    `graphql:"payload_id"`
+			OperationID int    `graphql:"operation_id"`
+			Timestamp   string `graphql:"timestamp"`
 			Deleted     bool      `graphql:"deleted"`
 			// Host is a scalar string in Mythic v3.4.20, not an object
 			Host    string `graphql:"host"`
@@ -512,12 +512,13 @@ func (c *Client) GetPayloadOnHost(ctx context.Context, operationID int) ([]*type
 
 	results := make([]*types.PayloadOnHost, len(query.PayloadOnHost))
 	for i, poh := range query.PayloadOnHost {
+		ts, _ := parseTimestamp(poh.Timestamp)
 		results[i] = &types.PayloadOnHost{
 			ID:          poh.ID,
 			HostID:      0, // HostID field not available in Mythic v3.4.20 schema
 			PayloadID:   poh.PayloadID,
 			OperationID: poh.OperationID,
-			Timestamp:   poh.Timestamp,
+			Timestamp:   ts,
 			Deleted:     poh.Deleted,
 			Host:        poh.Host,
 			Payload: &types.Payload{

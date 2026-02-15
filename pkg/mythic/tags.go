@@ -120,16 +120,10 @@ func (c *Client) CreateTagType(ctx context.Context, req *types.CreateTagTypeRequ
 		return nil, WrapError("CreateTagType", ErrInvalidInput, "tag type name is required")
 	}
 
-	// Use current operation
-	operationID := c.GetCurrentOperation()
-	if operationID == nil {
-		return nil, WrapError("CreateTagType", ErrInvalidInput, "no current operation set")
-	}
-
-	// Build dynamic insert mutation
+	// Build dynamic insert mutation — operation_id is auto-assigned by Mythic
+	// based on the authenticated JWT token
 	fields := map[string]interface{}{
-		"name":         req.Name,
-		"operation_id": *operationID,
+		"name": req.Name,
 	}
 	if req.Description != nil && *req.Description != "" {
 		fields["description"] = *req.Description

@@ -15,7 +15,7 @@ type Credential struct {
 	Comment     string     `json:"comment"`
 	OperationID int        `json:"operation_id"`
 	OperatorID  int        `json:"operator_id"`
-	TaskID      *int       `json:"task_id,omitempty"`
+	TaskID      *int       `json:"task_id"`
 	Timestamp   time.Time  `json:"timestamp"`
 	Deleted     bool       `json:"deleted"`
 	Metadata    string     `json:"metadata"`

@@ -587,9 +587,16 @@ func (c *Client) ImportCallbackConfig(ctx context.Context, config string) error 
 	}
 
 	// Parse config as JSON to validate and pass as jsonb
-	var configObj interface{}
+	var configObj map[string]interface{}
 	if err := json.Unmarshal([]byte(config), &configObj); err != nil {
 		return WrapError("ImportCallbackConfig", err, "invalid config JSON")
+	}
+
+	// Ensure mythictree_groups has a default value to avoid database not-null constraint
+	if cb, ok := configObj["callback"].(map[string]interface{}); ok {
+		if _, has := cb["mythictree_groups"]; !has {
+			cb["mythictree_groups"] = []string{"Default"}
+		}
 	}
 
 	query := `mutation importConfig($config: jsonb!) {
