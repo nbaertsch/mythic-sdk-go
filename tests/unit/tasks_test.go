@@ -315,6 +315,91 @@ func TestTaskRequest_OptionalFields(t *testing.T) {
 	}
 }
 
+func TestTaskRequest_PayloadType(t *testing.T) {
+	callbackID := 2
+	pt := "forge"
+
+	req := &mythic.TaskRequest{
+		CallbackID:  &callbackID,
+		Command:     "forge_collections",
+		Params:      "",
+		PayloadType: &pt,
+	}
+
+	if req.PayloadType == nil {
+		t.Fatal("Expected PayloadType to be set")
+	}
+	if *req.PayloadType != "forge" {
+		t.Errorf("Expected PayloadType 'forge', got %q", *req.PayloadType)
+	}
+	if req.Command != "forge_collections" {
+		t.Errorf("Expected Command 'forge_collections', got %q", req.Command)
+	}
+}
+
+func TestTaskRequest_PayloadTypeNil(t *testing.T) {
+	callbackID := 1
+
+	req := &mythic.TaskRequest{
+		CallbackID: &callbackID,
+		Command:    "shell",
+		Params:     "whoami",
+	}
+
+	if req.PayloadType != nil {
+		t.Errorf("Expected PayloadType nil for normal task, got %q", *req.PayloadType)
+	}
+}
+
+func TestScriptOnlyTaskRequest(t *testing.T) {
+	req := &mythic.ScriptOnlyTaskRequest{
+		CallbackID:         2,
+		Command:            "forge_collections",
+		Params:             "{\"collection_name\": \"test\"}",
+		TaskingLocation:    "command_line",
+		ParameterGroupName: "Default",
+	}
+
+	if req.CallbackID != 2 {
+		t.Errorf("Expected CallbackID 2, got %d", req.CallbackID)
+	}
+	if req.Command != "forge_collections" {
+		t.Errorf("Expected Command 'forge_collections', got %q", req.Command)
+	}
+	if req.Params != "{\"collection_name\": \"test\"}" {
+		t.Errorf("Expected Params JSON, got %q", req.Params)
+	}
+	if req.TaskingLocation != "command_line" {
+		t.Errorf("Expected TaskingLocation 'command_line', got %q", req.TaskingLocation)
+	}
+	if req.ParameterGroupName != "Default" {
+		t.Errorf("Expected ParameterGroupName 'Default', got %q", req.ParameterGroupName)
+	}
+}
+
+func TestScriptOnlyTaskRequest_MinimalFields(t *testing.T) {
+	req := &mythic.ScriptOnlyTaskRequest{
+		CallbackID: 5,
+		Command:    "forge_download",
+	}
+
+	if req.CallbackID != 5 {
+		t.Errorf("Expected CallbackID 5, got %d", req.CallbackID)
+	}
+	if req.Command != "forge_download" {
+		t.Errorf("Expected Command 'forge_download', got %q", req.Command)
+	}
+	if req.Params != "" {
+		t.Errorf("Expected empty Params, got %q", req.Params)
+	}
+	if req.TaskingLocation != "" {
+		t.Errorf("Expected empty TaskingLocation, got %q", req.TaskingLocation)
+	}
+	if req.ParameterGroupName != "" {
+		t.Errorf("Expected empty ParameterGroupName, got %q", req.ParameterGroupName)
+	}
+}
+
 // Helper function to create int pointers
 func intPtr(i int) *int {
 	return &i

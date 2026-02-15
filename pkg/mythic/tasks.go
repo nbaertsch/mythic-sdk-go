@@ -58,6 +58,7 @@ type TaskRequest struct {
 	CallbackIDs         []int    `json:"callback_ids,omitempty"`
 	Command             string   `json:"command"`
 	Params              string   `json:"params"`
+	PayloadType         *string  `json:"payload_type,omitempty"`
 	Files               []string `json:"files,omitempty"`
 	IsInteractiveTask   bool     `json:"is_interactive_task"`
 	InteractiveTaskType *int     `json:"interactive_task_type,omitempty"`
@@ -152,6 +153,9 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 	if req.TokenID != nil {
 		input["token_id"] = req.TokenID
 	}
+	if req.PayloadType != nil && *req.PayloadType != "" {
+		input["payload_type"] = *req.PayloadType
+	}
 
 	// Call the Hasura webhook endpoint
 	var response struct {
@@ -173,6 +177,63 @@ func (c *Client) IssueTask(ctx context.Context, req *TaskRequest) (*Task, error)
 
 	// Get the full task details
 	return c.GetTask(ctx, response.DisplayID)
+}
+
+// ScriptOnlyTaskRequest represents a request to issue a script_only command.
+// Script-only commands (e.g. forge_collections, forge_download) run server-side
+// in the payload type container and don't require an agent to pick them up.
+// They still require a callback_id because Mythic associates all tasks with a
+// callback, but the payload_type is auto-discovered from the loaded commands.
+type ScriptOnlyTaskRequest struct {
+	CallbackID         int    // Display ID of the callback to issue against
+	Command            string // Command name (e.g. "forge_collections")
+	Params             string // Command parameters (JSON or plain string)
+	TaskingLocation    string // Optional tasking location
+	ParameterGroupName string // Optional parameter group name
+}
+
+// IssueScriptOnlyTask issues a script_only command against a callback.
+// It auto-discovers the correct payload_type by looking up the command in
+// the callback's loaded commands list. This is necessary because script_only
+// commands (like forge_*) belong to a different payload type than the callback's
+// native type, and the server needs the payload_type field to resolve the command.
+func (c *Client) IssueScriptOnlyTask(ctx context.Context, req *ScriptOnlyTaskRequest) (*Task, error) {
+	if req.Command == "" {
+		return nil, WrapError("IssueScriptOnlyTask", ErrInvalidInput, "command is required")
+	}
+	if req.CallbackID == 0 {
+		return nil, WrapError("IssueScriptOnlyTask", ErrInvalidInput, "callback_id is required")
+	}
+
+	// Look up the command in the callback's loaded commands to find its payload type
+	loadedCmds, err := c.GetLoadedCommands(ctx, req.CallbackID)
+	if err != nil {
+		return nil, WrapError("IssueScriptOnlyTask", err, "failed to get loaded commands")
+	}
+
+	var payloadTypeName string
+	for _, lc := range loadedCmds {
+		if lc.Command != nil && lc.Command.Cmd == req.Command {
+			payloadTypeName = lc.Command.PayloadTypeName
+			break
+		}
+	}
+	if payloadTypeName == "" {
+		return nil, WrapError("IssueScriptOnlyTask", ErrNotFound,
+			fmt.Sprintf("command %q not found in callback %d loaded commands", req.Command, req.CallbackID))
+	}
+
+	callbackID := req.CallbackID
+	taskReq := &TaskRequest{
+		CallbackID:         &callbackID,
+		Command:            req.Command,
+		Params:             req.Params,
+		PayloadType:        &payloadTypeName,
+		TaskingLocation:    req.TaskingLocation,
+		ParameterGroupName: req.ParameterGroupName,
+	}
+
+	return c.IssueTask(ctx, taskReq)
 }
 
 // GetTask retrieves a task by its display ID.

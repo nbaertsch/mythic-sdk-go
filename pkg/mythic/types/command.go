@@ -10,6 +10,7 @@ type Command struct {
 	ID                  int       `json:"id"`
 	Cmd                 string    `json:"cmd"`
 	PayloadTypeID       int       `json:"payload_type_id"`
+	PayloadTypeName     string    `json:"payload_type_name,omitempty"`
 	Description         string    `json:"description"`
 	Help                string    `json:"help_cmd"`
 	Version             int       `json:"version"`

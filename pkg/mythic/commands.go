@@ -24,6 +24,9 @@ func (c *Client) GetCommands(ctx context.Context) ([]*types.Command, error) {
 			Version       int    `graphql:"version"`
 			Author        string `graphql:"author"`
 			ScriptOnly    bool   `graphql:"script_only"`
+			PayloadType   struct {
+				Name string `graphql:"name"`
+			} `graphql:"payloadtype"`
 		} `graphql:"command(order_by: {cmd: asc})"`
 	}
 
@@ -35,14 +38,15 @@ func (c *Client) GetCommands(ctx context.Context) ([]*types.Command, error) {
 	commands := make([]*types.Command, len(query.Commands))
 	for i, cmd := range query.Commands {
 		commands[i] = &types.Command{
-			ID:            cmd.ID,
-			Cmd:           cmd.Cmd,
-			PayloadTypeID: cmd.PayloadTypeID,
-			Description:   cmd.Description,
-			Help:          cmd.Help,
-			Version:       cmd.Version,
-			Author:        cmd.Author,
-			ScriptOnly:    cmd.ScriptOnly,
+			ID:              cmd.ID,
+			Cmd:             cmd.Cmd,
+			PayloadTypeID:   cmd.PayloadTypeID,
+			PayloadTypeName: cmd.PayloadType.Name,
+			Description:     cmd.Description,
+			Help:            cmd.Help,
+			Version:         cmd.Version,
+			Author:          cmd.Author,
+			ScriptOnly:      cmd.ScriptOnly,
 		}
 	}
 
@@ -115,9 +119,17 @@ func (c *Client) GetLoadedCommands(ctx context.Context, callbackID int) ([]*type
 			OperatorID int `graphql:"operator_id"`
 			Version    int `graphql:"version"`
 			Command    struct {
-				Cmd         string `graphql:"cmd"`
-				Description string `graphql:"description"`
-				Version     int    `graphql:"version"`
+				ID            int    `graphql:"id"`
+				Cmd           string `graphql:"cmd"`
+				PayloadTypeID int    `graphql:"payload_type_id"`
+				Description   string `graphql:"description"`
+				Help          string `graphql:"help_cmd"`
+				Version       int    `graphql:"version"`
+				Author        string `graphql:"author"`
+				ScriptOnly    bool   `graphql:"script_only"`
+				PayloadType   struct {
+					Name string `graphql:"name"`
+				} `graphql:"payloadtype"`
 			} `graphql:"command"`
 		} `graphql:"loadedcommands(where: {callback_id: {_eq: $callback_id}}, order_by: {command: {cmd: asc}})"`
 	}
@@ -140,9 +152,15 @@ func (c *Client) GetLoadedCommands(ctx context.Context, callbackID int) ([]*type
 			OperatorID: lc.OperatorID,
 			Version:    lc.Version,
 			Command: &types.Command{
-				Cmd:         lc.Command.Cmd,
-				Description: lc.Command.Description,
-				Version:     lc.Command.Version,
+				ID:              lc.Command.ID,
+				Cmd:             lc.Command.Cmd,
+				PayloadTypeID:   lc.Command.PayloadTypeID,
+				PayloadTypeName: lc.Command.PayloadType.Name,
+				Description:     lc.Command.Description,
+				Help:            lc.Command.Help,
+				Version:         lc.Command.Version,
+				Author:          lc.Command.Author,
+				ScriptOnly:      lc.Command.ScriptOnly,
 			},
 		}
 	}
@@ -177,6 +195,9 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 			Version           int    `graphql:"version"`
 			Author            string `graphql:"author"`
 			ScriptOnly        bool   `graphql:"script_only"`
+			PayloadType       struct {
+				Name string `graphql:"name"`
+			} `graphql:"payloadtype"`
 			CommandParameters []struct {
 				ID           int    `graphql:"id"`
 				CommandID    int    `graphql:"command_id"`
@@ -210,14 +231,15 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 
 	cmd := query.Command[0]
 	command := &types.Command{
-		ID:            cmd.ID,
-		Cmd:           cmd.Cmd,
-		PayloadTypeID: cmd.PayloadTypeID,
-		Description:   cmd.Description,
-		Help:          cmd.Help,
-		Version:       cmd.Version,
-		Author:        cmd.Author,
-		ScriptOnly:    cmd.ScriptOnly,
+		ID:              cmd.ID,
+		Cmd:             cmd.Cmd,
+		PayloadTypeID:   cmd.PayloadTypeID,
+		PayloadTypeName: cmd.PayloadType.Name,
+		Description:     cmd.Description,
+		Help:            cmd.Help,
+		Version:         cmd.Version,
+		Author:          cmd.Author,
+		ScriptOnly:      cmd.ScriptOnly,
 	}
 
 	parameters := make([]*types.CommandParameter, len(cmd.CommandParameters))
@@ -336,6 +358,9 @@ func (c *Client) GetCommandsByPayloadType(ctx context.Context, payloadTypeID int
 			Version       int    `graphql:"version"`
 			Author        string `graphql:"author"`
 			ScriptOnly    bool   `graphql:"script_only"`
+			PayloadType   struct {
+				Name string `graphql:"name"`
+			} `graphql:"payloadtype"`
 		} `graphql:"command(where: {payload_type_id: {_eq: $payload_type_id}}, order_by: {cmd: asc})"`
 	}
 
@@ -351,14 +376,15 @@ func (c *Client) GetCommandsByPayloadType(ctx context.Context, payloadTypeID int
 	commands := make([]*types.Command, len(query.Commands))
 	for i, cmd := range query.Commands {
 		commands[i] = &types.Command{
-			ID:            cmd.ID,
-			Cmd:           cmd.Cmd,
-			PayloadTypeID: cmd.PayloadTypeID,
-			Description:   cmd.Description,
-			Help:          cmd.Help,
-			Version:       cmd.Version,
-			Author:        cmd.Author,
-			ScriptOnly:    cmd.ScriptOnly,
+			ID:              cmd.ID,
+			Cmd:             cmd.Cmd,
+			PayloadTypeID:   cmd.PayloadTypeID,
+			PayloadTypeName: cmd.PayloadType.Name,
+			Description:     cmd.Description,
+			Help:            cmd.Help,
+			Version:         cmd.Version,
+			Author:          cmd.Author,
+			ScriptOnly:      cmd.ScriptOnly,
 		}
 	}
 

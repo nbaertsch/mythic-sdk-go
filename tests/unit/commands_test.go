@@ -451,6 +451,75 @@ func TestLoadedCommandTypes(t *testing.T) {
 	}
 }
 
+// TestLoadedCommandWithPayloadType tests loaded commands with enriched metadata
+func TestLoadedCommandWithPayloadType(t *testing.T) {
+	loaded := types.LoadedCommand{
+		ID:         1,
+		CommandID:  105,
+		CallbackID: 5,
+		OperatorID: 1,
+		Version:    1,
+		Command: &types.Command{
+			ID:              105,
+			Cmd:             "forge_collections",
+			PayloadTypeID:   3,
+			PayloadTypeName: "forge",
+			Description:     "List available collections",
+			Help:            "forge_collections",
+			Version:         1,
+			Author:          "@nbaertsch",
+			ScriptOnly:      true,
+			Supported:       true,
+		},
+	}
+
+	if loaded.Command.PayloadTypeName != "forge" {
+		t.Errorf("Expected PayloadTypeName 'forge', got %q", loaded.Command.PayloadTypeName)
+	}
+	if loaded.Command.PayloadTypeID != 3 {
+		t.Errorf("Expected PayloadTypeID 3, got %d", loaded.Command.PayloadTypeID)
+	}
+	if !loaded.Command.ScriptOnly {
+		t.Error("Expected ScriptOnly to be true for forge command")
+	}
+	if loaded.Command.Cmd != "forge_collections" {
+		t.Errorf("Expected Cmd 'forge_collections', got %q", loaded.Command.Cmd)
+	}
+	if loaded.Command.Author != "@nbaertsch" {
+		t.Errorf("Expected Author '@nbaertsch', got %q", loaded.Command.Author)
+	}
+}
+
+// TestCommandPayloadTypeName tests the PayloadTypeName field on Command
+func TestCommandPayloadTypeName(t *testing.T) {
+	tests := []struct {
+		name            string
+		payloadTypeName string
+		payloadTypeID   int
+	}{
+		{"poseidon", "poseidon", 1},
+		{"xenon", "xenon", 2},
+		{"forge", "forge", 3},
+		{"empty", "", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := types.Command{
+				Cmd:             "test_cmd",
+				PayloadTypeName: tt.payloadTypeName,
+				PayloadTypeID:   tt.payloadTypeID,
+			}
+			if cmd.PayloadTypeName != tt.payloadTypeName {
+				t.Errorf("Expected PayloadTypeName %q, got %q", tt.payloadTypeName, cmd.PayloadTypeName)
+			}
+			if cmd.PayloadTypeID != tt.payloadTypeID {
+				t.Errorf("Expected PayloadTypeID %d, got %d", tt.payloadTypeID, cmd.PayloadTypeID)
+			}
+		})
+	}
+}
+
 // TestParameterTypeConstants tests parameter type constants
 func TestParameterTypeConstants(t *testing.T) {
 	paramTypes := map[string]string{
