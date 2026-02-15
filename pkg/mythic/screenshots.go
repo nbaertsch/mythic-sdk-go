@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+// timestamp is a local GraphQL scalar helper type.
+// Mythic's GraphQL schema uses a `timestamp` scalar (Hasura/Postgres).
+// The go-graphql-client library infers variable types from Go type names;
+// using a type named `timestamp` ensures variables are declared correctly.
+type timestamp string
+
 // GetScreenshots retrieves screenshots from a specific callback with optional filters.
 //
 // Screenshots are stored in the filemeta table with is_screenshot=true and require
@@ -379,8 +385,8 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_gte: $start_time, _lte: $end_time}}, order_by: {timestamp: asc})"`
 		}
 
-		variables["start_time"] = startTime.Format(time.RFC3339)
-		variables["end_time"] = endTime.Format(time.RFC3339)
+		variables["start_time"] = timestamp(startTime.Format(time.RFC3339))
+		variables["end_time"] = timestamp(endTime.Format(time.RFC3339))
 
 		err := c.executeQuery(ctx, &query, variables)
 		if err != nil {
@@ -437,7 +443,7 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_gte: $start_time}}, order_by: {timestamp: asc})"`
 		}
 
-		variables["start_time"] = startTime.Format(time.RFC3339)
+		variables["start_time"] = timestamp(startTime.Format(time.RFC3339))
 
 		err := c.executeQuery(ctx, &query, variables)
 		if err != nil {
@@ -494,7 +500,7 @@ func (c *Client) GetScreenshotTimeline(ctx context.Context, callbackID int, star
 			} `graphql:"filemeta(where: {is_screenshot: {_eq: true}, deleted: {_eq: false}, task: {callback_id: {_eq: $callback_id}}, timestamp: {_lte: $end_time}}, order_by: {timestamp: asc})"`
 		}
 
-		variables["end_time"] = endTime.Format(time.RFC3339)
+		variables["end_time"] = timestamp(endTime.Format(time.RFC3339))
 
 		err := c.executeQuery(ctx, &query, variables)
 		if err != nil {
