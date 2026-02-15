@@ -47,7 +47,7 @@ type Callback struct {
 	Active bool `json:"active"`
 
 	// RegisteredPayloadID is the ID of the payload that created this callback
-	RegisteredPayloadID string `json:"registered_payload_id"`
+	RegisteredPayloadID int `json:"registered_payload_id"`
 
 	// IntegrityLevel is the Windows integrity level (2=low, 3=medium, 4=high, 5=system)
 	IntegrityLevel CallbackIntegrityLevel `json:"integrity_level"`

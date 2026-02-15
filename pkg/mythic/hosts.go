@@ -282,7 +282,7 @@ func (c *Client) GetCallbacksForHost(ctx context.Context, hostname string) ([]*t
 			Description         string    `graphql:"description"`
 			OperatorID          int       `graphql:"operator_id"`
 			Active              bool      `graphql:"active"`
-			RegisteredPayloadID string    `graphql:"registered_payload_id"`
+			RegisteredPayloadID int       `graphql:"registered_payload_id"`
 			IntegrityLevel      int       `graphql:"integrity_level"`
 			Locked              bool      `graphql:"locked"`
 			OperationID         int       `graphql:"operation_id"`
