@@ -2,10 +2,44 @@ package mythic
 
 import (
 	"context"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
+
+// credentialFieldGraphQLTypes maps credential _set field names to their GraphQL type declarations.
+var credentialFieldGraphQLTypes = map[string]string{
+	"account":        "String",
+	"comment":        "String",
+	"credential_raw": "String",
+	"deleted":        "Boolean",
+	"metadata":       "String",
+	"realm":          "String",
+	"type":           "String",
+}
+
+// buildCredentialVarDeclarations returns the GraphQL variable declarations for a set of fields.
+// e.g. "$comment: String, $deleted: Boolean"
+func buildCredentialVarDeclarations(fields map[string]interface{}) string {
+	parts := make([]string, 0, len(fields))
+	// Sort for deterministic output
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		gqlType, ok := credentialFieldGraphQLTypes[k]
+		if !ok {
+			gqlType = "String" // safe default
+		}
+		parts = append(parts, fmt.Sprintf("$%s: %s", k, gqlType))
+	}
+	return strings.Join(parts, ", ")
+}
 
 // parseTimestamp parses Mythic's timestamp format (RFC3339 without timezone)
 func parseCredentialTimestamp(ts string) (time.Time, error) {
@@ -275,6 +309,7 @@ func (c *Client) CreateCredential(ctx context.Context, req *types.CreateCredenti
 }
 
 // UpdateCredential updates an existing credential.
+// Supports updating: type, account, realm, credential (text), comment, deleted, metadata.
 func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredentialRequest) (*types.Credential, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return nil, err
@@ -296,7 +331,10 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 		return nil, WrapError("UpdateCredential", ErrInvalidInput, "no fields to update")
 	}
 
-	// Build the _set object dynamically based on which fields are provided
+	// Build the _set object dynamically based on which fields are provided.
+	// The GraphQL schema's credential_set_input supports: account, comment,
+	// credential_raw (bytea), deleted, metadata, realm, type.
+	// Note: credential_text is a computed column; the writable column is credential_raw.
 	setFields := make(map[string]interface{})
 
 	if req.Comment != nil {
@@ -305,57 +343,58 @@ func (c *Client) UpdateCredential(ctx context.Context, req *types.UpdateCredenti
 	if req.Deleted != nil {
 		setFields["deleted"] = *req.Deleted
 	}
-
-	// For now, only support updating comment and deleted fields
-	if req.Type != nil || req.Account != nil || req.Realm != nil || req.Credential != nil || req.Metadata != nil {
-		return nil, WrapError("UpdateCredential", ErrInvalidInput, "currently only comment and deleted field updates are supported")
+	if req.Type != nil {
+		setFields["type"] = *req.Type
+	}
+	if req.Account != nil {
+		setFields["account"] = *req.Account
+	}
+	if req.Realm != nil {
+		setFields["realm"] = *req.Realm
+	}
+	if req.Credential != nil {
+		setFields["credential_raw"] = *req.Credential
+	}
+	if req.Metadata != nil {
+		setFields["metadata"] = *req.Metadata
 	}
 
-	// If only deleted is being set, use simplified mutation
-	if req.Deleted != nil && req.Comment == nil {
-		var mutation struct {
-			UpdateCredential struct {
-				Affected int `graphql:"affected_rows"`
-			} `graphql:"update_credential(where: {id: {_eq: $id}}, _set: {deleted: $deleted})"`
-		}
-
-		variables := map[string]interface{}{
-			"id":      req.ID,
-			"deleted": *req.Deleted,
-		}
-
-		err := c.executeMutation(ctx, &mutation, variables)
-		if err != nil {
-			return nil, WrapError("UpdateCredential", err, "failed to update credential")
-		}
-
-		if mutation.UpdateCredential.Affected == 0 {
-			return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
-		}
-
-		// Fetch and return the updated credential
-		return c.GetCredentialByID(ctx, req.ID)
+	// Build the _set clause dynamically since the Go GraphQL client
+	// requires struct tags at compile time and can't handle dynamic fields.
+	// We use a raw GraphQL mutation instead.
+	setParts := make([]string, 0, len(setFields))
+	setKeys := make([]string, 0, len(setFields))
+	for k := range setFields {
+		setKeys = append(setKeys, k)
+	}
+	sort.Strings(setKeys)
+	for _, k := range setKeys {
+		setParts = append(setParts, fmt.Sprintf("%s: $%s", k, k))
 	}
 
-	// Otherwise update comment
-	var mutation struct {
-		UpdateCredential struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_credential(where: {id: {_eq: $id}}, _set: {comment: $comment})"`
-	}
+	query := fmt.Sprintf(`mutation UpdateCredential($id: Int!, %s) {
+		update_credential(where: {id: {_eq: $id}}, _set: {%s}) {
+			affected_rows
+		}
+	}`, buildCredentialVarDeclarations(setFields), strings.Join(setParts, ", "))
 
 	variables := map[string]interface{}{
-		"id":      req.ID,
-		"comment": *req.Comment,
+		"id": req.ID,
+	}
+	for k, v := range setFields {
+		variables[k] = v
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return nil, WrapError("UpdateCredential", err, "failed to update credential")
 	}
 
-	if mutation.UpdateCredential.Affected == 0 {
-		return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
+	// Check affected rows
+	if updateCred, ok := result["update_credential"].(map[string]interface{}); ok {
+		if affected, ok := updateCred["affected_rows"].(float64); ok && affected == 0 {
+			return nil, WrapError("UpdateCredential", ErrNotFound, "credential not found or not updated")
+		}
 	}
 
 	// Fetch and return the updated credential
