@@ -321,10 +321,61 @@ func (c *Client) GetArtifactsByHost(ctx context.Context, host string) ([]*types.
 	return artifacts, nil
 }
 
-// GetArtifactsByType retrieves artifacts of a specific type.
-// Note: Mythic's taskartifact table doesn't have a type field, so this function
-// simply returns all artifacts for the current operation.
+// GetArtifactsByType retrieves artifacts filtered by their base_artifact (type) field.
+// Uses case-insensitive partial matching (SQL ILIKE) so "Process" matches "ProcessCreate", etc.
 func (c *Client) GetArtifactsByType(ctx context.Context, artifactType string) ([]*types.Artifact, error) {
-	// Since taskartifact doesn't have a type field, just return all artifacts
-	return c.GetArtifacts(ctx)
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if artifactType == "" {
+		return nil, WrapError("GetArtifactsByType", ErrInvalidInput, "artifact type is required")
+	}
+
+	operationID := c.GetCurrentOperation()
+	if operationID == nil {
+		return nil, WrapError("GetArtifactsByType", ErrInvalidInput, "no current operation set")
+	}
+
+	var query struct {
+		TaskArtifact []struct {
+			ID           int    `graphql:"id"`
+			Artifact     string `graphql:"artifact_text"`
+			BaseArtifact string `graphql:"base_artifact"`
+			Host         string `graphql:"host"`
+			OperationID  int    `graphql:"operation_id"`
+			TaskID       *int   `graphql:"task_id"`
+			Timestamp    string `graphql:"timestamp"`
+		} `graphql:"taskartifact(where: {operation_id: {_eq: $operation_id}, base_artifact: {_ilike: $base_artifact}}, order_by: {timestamp: desc})"`
+	}
+
+	variables := map[string]interface{}{
+		"operation_id":  *operationID,
+		"base_artifact": "%" + artifactType + "%",
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetArtifactsByType", err, "failed to query artifacts by type")
+	}
+
+	artifacts := make([]*types.Artifact, len(query.TaskArtifact))
+	for i, a := range query.TaskArtifact {
+		ts, err := parseTimestamp(a.Timestamp)
+		if err != nil {
+			return nil, WrapError("GetArtifactsByType", err, "failed to parse timestamp")
+		}
+
+		artifacts[i] = &types.Artifact{
+			ID:           a.ID,
+			Artifact:     a.Artifact,
+			BaseArtifact: a.BaseArtifact,
+			Host:         a.Host,
+			OperationID:  a.OperationID,
+			TaskID:       a.TaskID,
+			Timestamp:    ts,
+		}
+	}
+
+	return artifacts, nil
 }

@@ -30,8 +30,10 @@ type CreateCredentialRequest struct {
 	Realm      string `json:"realm"`              // Domain, hostname, or scope
 	Credential string `json:"credential_text"`    // The actual credential value
 	Comment    string `json:"comment,omitempty"`  // Optional comment
-	TaskID     *int   `json:"task_id,omitempty"`  // Optional task that discovered it
 	Metadata   string `json:"metadata,omitempty"` // Optional JSON metadata
+	// Note: task_id is populated automatically by Mythic when credentials are
+	// reported by C2 agents through task responses. It cannot be set manually
+	// via the createCredential mutation.
 }
 
 // UpdateCredentialRequest represents a request to update a credential.
