@@ -414,6 +414,90 @@ func (c *Client) GetTasksForCallback(ctx context.Context, callbackDisplayID int,
 	return tasks, nil
 }
 
+// GetTasksByDisplayIDs retrieves multiple tasks by their display IDs in a single
+// GraphQL query. Returns tasks in the order they are found. Tasks that don't
+// exist are silently omitted from the result.
+func (c *Client) GetTasksByDisplayIDs(ctx context.Context, displayIDs []int) ([]*Task, error) {
+	if err := c.EnsureAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	if len(displayIDs) == 0 {
+		return nil, WrapError("GetTasksByDisplayIDs", ErrInvalidInput, "at least one display_id is required")
+	}
+
+	var query struct {
+		Task []struct {
+			ID                        int    `graphql:"id"`
+			DisplayID                 int    `graphql:"display_id"`
+			AgentTaskID               string `graphql:"agent_task_id"`
+			CommandName               string `graphql:"command_name"`
+			Params                    string `graphql:"params"`
+			DisplayParams             string `graphql:"display_params"`
+			OriginalParams            string `graphql:"original_params"`
+			Status                    string `graphql:"status"`
+			Completed                 bool   `graphql:"completed"`
+			Comment                   string `graphql:"comment"`
+			Timestamp                 string `graphql:"timestamp"`
+			CallbackID                int    `graphql:"callback_id"`
+			OperatorID                int    `graphql:"operator_id"`
+			OperationID               int    `graphql:"operation_id"`
+			ResponseCount             int    `graphql:"response_count"`
+			IsInteractiveTask         bool   `graphql:"is_interactive_task"`
+			Stdout                    string `graphql:"stdout"`
+			Stderr                    string `graphql:"stderr"`
+			OpsecPreBlocked           *bool  `graphql:"opsec_pre_blocked"`
+			OpsecPreBypassed          bool   `graphql:"opsec_pre_bypassed"`
+			OpsecPostBlocked          *bool  `graphql:"opsec_post_blocked"`
+			OpsecPostBypassed         bool   `graphql:"opsec_post_bypassed"`
+		} `graphql:"task(where: {display_id: {_in: $display_ids}}, order_by: {display_id: asc})"`
+	}
+
+	variables := map[string]interface{}{
+		"display_ids": displayIDs,
+	}
+
+	err := c.executeQuery(ctx, &query, variables)
+	if err != nil {
+		return nil, WrapError("GetTasksByDisplayIDs", err, "failed to query tasks")
+	}
+
+	tasks := make([]*Task, 0, len(query.Task))
+	for _, t := range query.Task {
+		timestamp, err := parseTimestamp(t.Timestamp)
+		if err != nil {
+			timestamp = time.Time{}
+		}
+
+		tasks = append(tasks, &Task{
+			ID:                t.ID,
+			DisplayID:         t.DisplayID,
+			AgentTaskID:       t.AgentTaskID,
+			CommandName:       t.CommandName,
+			Params:            t.Params,
+			DisplayParams:     t.DisplayParams,
+			OriginalParams:    t.OriginalParams,
+			Status:            t.Status,
+			Completed:         t.Completed,
+			Comment:           t.Comment,
+			Timestamp:         timestamp,
+			CallbackID:        t.CallbackID,
+			OperatorID:        t.OperatorID,
+			OperationID:       t.OperationID,
+			ResponseCount:     t.ResponseCount,
+			IsInteractiveTask: t.IsInteractiveTask,
+			Stdout:            t.Stdout,
+			Stderr:            t.Stderr,
+			OpsecPreBlocked:   t.OpsecPreBlocked,
+			OpsecPreBypassed:  t.OpsecPreBypassed,
+			OpsecPostBlocked:  t.OpsecPostBlocked,
+			OpsecPostBypassed: t.OpsecPostBypassed,
+		})
+	}
+
+	return tasks, nil
+}
+
 // GetTaskOutput retrieves all responses (output) for a task.
 func (c *Client) GetTaskOutput(ctx context.Context, taskDisplayID int) ([]*TaskResponse, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {

@@ -187,15 +187,15 @@ func (c *Client) GetCommandWithParameters(ctx context.Context, payloadTypeID int
 
 	var query struct {
 		Command []struct {
-			ID                int    `graphql:"id"`
-			Cmd               string `graphql:"cmd"`
-			PayloadTypeID     int    `graphql:"payload_type_id"`
-			Description       string `graphql:"description"`
-			Help              string `graphql:"help_cmd"`
-			Version           int    `graphql:"version"`
-			Author            string `graphql:"author"`
-			ScriptOnly        bool   `graphql:"script_only"`
-			PayloadType       struct {
+			ID            int    `graphql:"id"`
+			Cmd           string `graphql:"cmd"`
+			PayloadTypeID int    `graphql:"payload_type_id"`
+			Description   string `graphql:"description"`
+			Help          string `graphql:"help_cmd"`
+			Version       int    `graphql:"version"`
+			Author        string `graphql:"author"`
+			ScriptOnly    bool   `graphql:"script_only"`
+			PayloadType   struct {
 				Name string `graphql:"name"`
 			} `graphql:"payloadtype"`
 			CommandParameters []struct {

@@ -50,12 +50,12 @@ func (c *Client) GetHosts(ctx context.Context, operationID int) ([]*types.HostIn
 	// host values in the callback table and enriched with mythictree data.
 	var query struct {
 		Callback []struct {
-			Host         string    `graphql:"host"`
-			Os           string    `graphql:"os"`
-			Domain       string    `graphql:"domain"`
-			Architecture string    `graphql:"architecture"`
-			IP           string    `graphql:"ip"`
-			OperationID  int       `graphql:"operation_id"`
+			Host         string `graphql:"host"`
+			Os           string `graphql:"os"`
+			Domain       string `graphql:"domain"`
+			Architecture string `graphql:"architecture"`
+			IP           string `graphql:"ip"`
+			OperationID  int    `graphql:"operation_id"`
 			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {operation_id: {_eq: $operation_id}}, distinct_on: host, order_by: {host: asc})"`
 	}
@@ -119,13 +119,13 @@ func (c *Client) GetHostByID(ctx context.Context, hostID int) (*types.HostInfo, 
 	// compatibility while using the actual Mythic schema.
 	var query struct {
 		Callback []struct {
-			ID           int       `graphql:"id"`
-			Host         string    `graphql:"host"`
-			IP           string    `graphql:"ip"`
-			Domain       string    `graphql:"domain"`
-			Os           string    `graphql:"os"`
-			Architecture string    `graphql:"architecture"`
-			OperationID  int       `graphql:"operation_id"`
+			ID           int    `graphql:"id"`
+			Host         string `graphql:"host"`
+			IP           string `graphql:"ip"`
+			Domain       string `graphql:"domain"`
+			Os           string `graphql:"os"`
+			Architecture string `graphql:"architecture"`
+			OperationID  int    `graphql:"operation_id"`
 			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {id: {_eq: $host_id}})"`
 	}
@@ -189,13 +189,13 @@ func (c *Client) GetHostByHostname(ctx context.Context, hostname string) (*types
 	// matching this hostname.
 	var query struct {
 		Callback []struct {
-			ID           int       `graphql:"id"`
-			Host         string    `graphql:"host"`
-			IP           string    `graphql:"ip"`
-			Domain       string    `graphql:"domain"`
-			Os           string    `graphql:"os"`
-			Architecture string    `graphql:"architecture"`
-			OperationID  int       `graphql:"operation_id"`
+			ID           int    `graphql:"id"`
+			Host         string `graphql:"host"`
+			IP           string `graphql:"ip"`
+			Domain       string `graphql:"domain"`
+			Os           string `graphql:"os"`
+			Architecture string `graphql:"architecture"`
+			OperationID  int    `graphql:"operation_id"`
 			LastCheckin  string `graphql:"last_checkin"`
 		} `graphql:"callback(where: {host: {_ilike: $hostname}}, order_by: {last_checkin: desc}, limit: 1)"`
 	}
@@ -268,28 +268,28 @@ func (c *Client) GetCallbacksForHost(ctx context.Context, hostname string) ([]*t
 	// Query callbacks by matching hostname directly
 	var query struct {
 		Callback []struct {
-			ID                  int       `graphql:"id"`
-			DisplayID           int       `graphql:"display_id"`
-			AgentCallbackID     string    `graphql:"agent_callback_id"`
+			ID                  int    `graphql:"id"`
+			DisplayID           int    `graphql:"display_id"`
+			AgentCallbackID     string `graphql:"agent_callback_id"`
 			InitCallback        string `graphql:"init_callback"`
 			LastCheckin         string `graphql:"last_checkin"`
-			User                string    `graphql:"user"`
-			Host                string    `graphql:"host"`
-			PID                 int       `graphql:"pid"`
-			IP                  string    `graphql:"ip"`
-			ExternalIP          string    `graphql:"external_ip"`
-			ProcessName         string    `graphql:"process_name"`
-			Description         string    `graphql:"description"`
-			OperatorID          int       `graphql:"operator_id"`
-			Active              bool      `graphql:"active"`
-			RegisteredPayloadID int       `graphql:"registered_payload_id"`
-			IntegrityLevel      int       `graphql:"integrity_level"`
-			Locked              bool      `graphql:"locked"`
-			OperationID         int       `graphql:"operation_id"`
-			SleepInfo           string    `graphql:"sleep_info"`
-			Architecture        string    `graphql:"architecture"`
-			Domain              string    `graphql:"domain"`
-			Os                  string    `graphql:"os"`
+			User                string `graphql:"user"`
+			Host                string `graphql:"host"`
+			PID                 int    `graphql:"pid"`
+			IP                  string `graphql:"ip"`
+			ExternalIP          string `graphql:"external_ip"`
+			ProcessName         string `graphql:"process_name"`
+			Description         string `graphql:"description"`
+			OperatorID          int    `graphql:"operator_id"`
+			Active              bool   `graphql:"active"`
+			RegisteredPayloadID int    `graphql:"registered_payload_id"`
+			IntegrityLevel      int    `graphql:"integrity_level"`
+			Locked              bool   `graphql:"locked"`
+			OperationID         int    `graphql:"operation_id"`
+			SleepInfo           string `graphql:"sleep_info"`
+			Architecture        string `graphql:"architecture"`
+			Domain              string `graphql:"domain"`
+			Os                  string `graphql:"os"`
 		} `graphql:"callback(where: {host: {_ilike: $hostname}}, order_by: {last_checkin: desc})"`
 	}
 

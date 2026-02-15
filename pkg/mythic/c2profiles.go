@@ -160,7 +160,7 @@ func (c *Client) ImportC2Instance(ctx context.Context, req *types.ImportC2Instan
 	}`
 
 	variables := map[string]interface{}{
-		"c2_instance":   c2InstanceData,
+		"c2_instance":    c2InstanceData,
 		"c2profile_name": req.C2ProfileName,
 		"instance_name":  req.InstanceName,
 	}
