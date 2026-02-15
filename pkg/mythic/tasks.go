@@ -518,70 +518,55 @@ func (t *Task) String() string {
 		t.DisplayID, t.CommandName, t.DisplayParams, t.Status, t.Completed)
 }
 
-// ReissueTask reissues an existing task (creates a copy with same parameters).
-func (c *Client) ReissueTask(ctx context.Context, taskID int) error {
+// ReissueTask reissues an existing task by fetching the original task's
+// command and parameters and creating a new identical task via IssueTask.
+// The Mythic server's reissue_task mutation is not implemented, so this
+// works around it at the SDK level.
+func (c *Client) ReissueTask(ctx context.Context, taskID int) (*Task, error) {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	if taskID <= 0 {
-		return WrapError("ReissueTask", ErrInvalidInput, "task_id must be positive")
+		return nil, WrapError("ReissueTask", ErrInvalidInput, "task_id must be positive")
 	}
 
-	var mutation struct {
-		ReissueTask struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"reissue_task(task_id: $task_id)"`
-	}
-
-	variables := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
+	// Fetch original task to get command, params, callback
+	originalTask, err := c.GetTask(ctx, taskID)
 	if err != nil {
-		return WrapError("ReissueTask", err, "failed to reissue task")
+		return nil, WrapError("ReissueTask", err, "failed to get original task for reissue")
 	}
 
-	if mutation.ReissueTask.Status != "success" {
-		return WrapError("ReissueTask", ErrInvalidResponse, fmt.Sprintf("reissue failed: %s", mutation.ReissueTask.Error))
+	// Use original_params if available, fall back to params
+	params := originalTask.OriginalParams
+	if params == "" {
+		params = originalTask.Params
 	}
 
-	return nil
+	// Create new task with same command and parameters
+	callbackID := originalTask.CallbackID
+	req := &TaskRequest{
+		CallbackID:         &callbackID,
+		Command:            originalTask.CommandName,
+		Params:             params,
+		ParameterGroupName: originalTask.ParameterGroupName,
+		TaskingLocation:    "command_line",
+	}
+
+	newTask, err := c.IssueTask(ctx, req)
+	if err != nil {
+		return nil, WrapError("ReissueTask", err, "failed to create reissued task")
+	}
+
+	return newTask, nil
 }
 
-// ReissueTaskWithHandler reissues a task using the handler (advanced reissue).
-func (c *Client) ReissueTaskWithHandler(ctx context.Context, taskID int) error {
-	if err := c.EnsureAuthenticated(ctx); err != nil {
-		return err
-	}
-
-	if taskID <= 0 {
-		return WrapError("ReissueTaskWithHandler", ErrInvalidInput, "task_id must be positive")
-	}
-
-	var mutation struct {
-		ReissueTaskHandler struct {
-			Status string `graphql:"status"`
-			Error  string `graphql:"error"`
-		} `graphql:"reissue_task_handler(task_id: $task_id)"`
-	}
-
-	variables := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	err := c.executeMutation(ctx, &mutation, variables)
-	if err != nil {
-		return WrapError("ReissueTaskWithHandler", err, "failed to reissue task with handler")
-	}
-
-	if mutation.ReissueTaskHandler.Status != "success" {
-		return WrapError("ReissueTaskWithHandler", ErrInvalidResponse, fmt.Sprintf("reissue failed: %s", mutation.ReissueTaskHandler.Error))
-	}
-
-	return nil
+// ReissueTaskWithHandler reissues a task using the handler approach.
+// Like ReissueTask, this works around the unimplemented server mutation
+// by fetching original task params and creating a new task.
+func (c *Client) ReissueTaskWithHandler(ctx context.Context, taskID int) (*Task, error) {
+	// Uses the same SDK-level workaround as ReissueTask
+	return c.ReissueTask(ctx, taskID)
 }
 
 // RequestOpsecBypass requests OPSEC bypass for a blocked task.

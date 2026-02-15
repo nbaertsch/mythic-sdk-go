@@ -246,8 +246,9 @@ func (c *Client) UpdateArtifact(ctx context.Context, req *types.UpdateArtifactRe
 	return c.GetArtifactByID(ctx, req.ID)
 }
 
-// DeleteArtifact is not supported by Mythic's GraphQL API.
-// Artifacts cannot be deleted once created.
+// DeleteArtifact soft-deletes an artifact by marking it as resolved.
+// Mythic does not support hard deletion of artifacts, so this marks
+// the artifact as resolved (cleaned up) instead.
 func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -257,9 +258,28 @@ func (c *Client) DeleteArtifact(ctx context.Context, artifactID int) error {
 		return WrapError("DeleteArtifact", ErrInvalidInput, "artifact ID is required")
 	}
 
-	// Mythic does not provide a delete mutation for taskartifact
-	// Artifacts are permanent once created
-	return WrapError("DeleteArtifact", ErrOperationFailed, "artifact deletion is not supported by Mythic API")
+	// Soft delete: mark artifact as resolved (cleaned up)
+	result, err := c.ExecuteRawGraphQL(ctx, `
+		mutation DeleteArtifact($artifact_id: Int!) {
+			update_taskartifact(where: {id: {_eq: $artifact_id}}, _set: {resolved: true, needs_cleanup: false}) {
+				affected_rows
+			}
+		}
+	`, map[string]interface{}{
+		"artifact_id": artifactID,
+	})
+	if err != nil {
+		return WrapError("DeleteArtifact", err, "failed to delete artifact")
+	}
+
+	// Check affected rows
+	if updateResult, ok := result["update_taskartifact"].(map[string]interface{}); ok {
+		if affected, ok := updateResult["affected_rows"].(float64); ok && affected == 0 {
+			return WrapError("DeleteArtifact", ErrNotFound, "artifact not found")
+		}
+	}
+
+	return nil
 }
 
 // GetArtifactsByHost retrieves artifacts for a specific host.
