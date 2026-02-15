@@ -261,25 +261,26 @@ func (c *Client) GetProfileOutput(ctx context.Context, profileID int) (*types.C2
 }
 
 // C2HostFile hosts a file via a C2 profile.
-func (c *Client) C2HostFile(ctx context.Context, profileID int, fileUUID string) error {
+func (c *Client) C2HostFile(ctx context.Context, c2ID int, fileUUID string, hostURL string) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
 	}
 
-	if profileID == 0 || fileUUID == "" {
-		return WrapError("C2HostFile", ErrInvalidInput, "profile ID and file UUID are required")
+	if c2ID == 0 || fileUUID == "" || hostURL == "" {
+		return WrapError("C2HostFile", ErrInvalidInput, "C2 profile ID, file UUID, and host URL are required")
 	}
 
 	var mutation struct {
 		C2HostFile struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"c2HostFile(profile_id: $profile_id, file_uuid: $file_uuid)"`
+		} `graphql:"c2HostFile(c2_id: $c2_id, file_uuid: $file_uuid, host_url: $host_url)"`
 	}
 
 	variables := map[string]interface{}{
-		"profile_id": profileID,
-		"file_uuid":  fileUUID,
+		"c2_id":     c2ID,
+		"file_uuid": fileUUID,
+		"host_url":  hostURL,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)

@@ -8,7 +8,6 @@ import (
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
-
 // mythictreeProcess is the internal GraphQL shape for a process entry in mythictree.
 type mythictreeProcess struct {
 	ID          int             `graphql:"id"`

@@ -334,7 +334,7 @@ func (c *Client) RebuildPayload(ctx context.Context, uuid string) (*types.Payloa
 			UUID   string `graphql:"uuid"`
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"rebuild_payload(payloadUUID: $uuid)"`
+		} `graphql:"rebuild_payload(uuid: $uuid)"`
 	}
 
 	variables := map[string]interface{}{
@@ -369,7 +369,7 @@ func (c *Client) ExportPayloadConfig(ctx context.Context, uuid string) (string, 
 			Config string `graphql:"config"`
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-		} `graphql:"exportPayloadConfig(payload_uuid: $uuid)"`
+		} `graphql:"exportPayloadConfig(uuid: $uuid)"`
 	}
 
 	variables := map[string]interface{}{
