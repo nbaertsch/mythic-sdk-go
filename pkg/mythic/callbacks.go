@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -425,6 +426,9 @@ func (c *Client) CreateCallback(ctx context.Context, input *CreateCallbackInput)
 }
 
 // DeleteCallback deletes callback(s) and their associated tasks.
+// For admin users, this performs a hard delete via the deleteTasksAndCallbacks mutation.
+// For non-admin users, this falls back to deactivating the callbacks (setting active=false,
+// dead=true) via updateCallback, since hard deletion requires the mythic_admin role.
 func (c *Client) DeleteCallback(ctx context.Context, callbackIDs []int) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
 		return err
@@ -434,6 +438,24 @@ func (c *Client) DeleteCallback(ctx context.Context, callbackIDs []int) error {
 		return WrapError("DeleteCallback", ErrInvalidInput, "at least one callback ID required")
 	}
 
+	// Try hard delete first (admin-only mutation)
+	err := c.deleteCallbacksHard(ctx, callbackIDs)
+	if err == nil {
+		return nil
+	}
+
+	// If the mutation is not available (non-admin role), fall back to soft delete
+	errMsg := err.Error()
+	if strings.Contains(errMsg, "not found in type") || strings.Contains(errMsg, "field") {
+		return c.deleteCallbacksSoft(ctx, callbackIDs)
+	}
+
+	return err
+}
+
+// deleteCallbacksHard performs a hard delete via the deleteTasksAndCallbacks mutation.
+// This is only available to mythic_admin role users.
+func (c *Client) deleteCallbacksHard(ctx context.Context, callbackIDs []int) error {
 	query := `mutation deleteCallbacks($callbacks: [Int]) {
 		deleteTasksAndCallbacks(callbacks: $callbacks) {
 			status
@@ -464,6 +486,45 @@ func (c *Client) DeleteCallback(ctx context.Context, callbackIDs []int) error {
 
 	if failedCallbacks, ok := data["failed_callbacks"].([]interface{}); ok && len(failedCallbacks) > 0 {
 		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("failed to delete some callbacks: %v", failedCallbacks))
+	}
+
+	return nil
+}
+
+// deleteCallbacksSoft deactivates callbacks by setting active=false and dead=true.
+// This is the fallback for non-admin users who cannot hard-delete callbacks.
+func (c *Client) deleteCallbacksSoft(ctx context.Context, callbackIDs []int) error {
+	query := `mutation deactivateCallbacks($input: updateCallbackInput!) {
+		updateCallback(input: $input) {
+			status
+			error
+		}
+	}`
+
+	active := false
+	dead := true
+	variables := map[string]interface{}{
+		"input": map[string]interface{}{
+			"callback_display_ids": callbackIDs,
+			"active":               active,
+			"dead":                 dead,
+		},
+	}
+
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
+	if err != nil {
+		return WrapError("DeleteCallback", err, "failed to deactivate callbacks (soft delete)")
+	}
+
+	data, ok := result["updateCallback"].(map[string]interface{})
+	if !ok {
+		return WrapError("DeleteCallback", ErrInvalidResponse, "unexpected response format from updateCallback")
+	}
+
+	status, _ := data["status"].(string)
+	if status != "success" {
+		errMsg, _ := data["error"].(string)
+		return WrapError("DeleteCallback", ErrInvalidResponse, fmt.Sprintf("soft delete failed: %s", errMsg))
 	}
 
 	return nil

@@ -190,18 +190,22 @@ func TestCreateC2InstanceRequest(t *testing.T) {
 
 // TestImportC2InstanceRequest tests ImportC2InstanceRequest structure
 func TestImportC2InstanceRequest(t *testing.T) {
-	config := `{"name":"http","parameters":{"port":8080}}`
+	instance := `{"name":"http","parameters":{"port":8080}}`
 
 	req := types.ImportC2InstanceRequest{
-		Config: config,
-		Name:   "imported-http",
+		C2ProfileName: "http",
+		InstanceName:  "imported-http",
+		C2Instance:    instance,
 	}
 
-	if req.Config != config {
-		t.Errorf("Expected Config %q, got %q", config, req.Config)
+	if req.C2Instance != instance {
+		t.Errorf("Expected C2Instance %q, got %q", instance, req.C2Instance)
 	}
-	if req.Name != "imported-http" {
-		t.Errorf("Expected Name 'imported-http', got %q", req.Name)
+	if req.C2ProfileName != "http" {
+		t.Errorf("Expected C2ProfileName 'http', got %q", req.C2ProfileName)
+	}
+	if req.InstanceName != "imported-http" {
+		t.Errorf("Expected InstanceName 'imported-http', got %q", req.InstanceName)
 	}
 }
 
@@ -245,23 +249,15 @@ func TestC2SampleMessageTypes(t *testing.T) {
 // TestC2IOCTypes tests C2IOC structure
 func TestC2IOCTypes(t *testing.T) {
 	iocs := types.C2IOC{
-		ProfileID: 1,
-		IOCs: []string{
-			"example.com",
-			"192.168.1.1",
-			"/api/callback",
-		},
-		Type: "network",
+		ProfileName: "http",
+		Output:      "example.com\n192.168.1.1\n/api/callback",
 	}
 
-	if iocs.ProfileID != 1 {
-		t.Errorf("Expected ProfileID 1, got %d", iocs.ProfileID)
+	if iocs.ProfileName != "http" {
+		t.Errorf("Expected ProfileName 'http', got %q", iocs.ProfileName)
 	}
-	if len(iocs.IOCs) != 3 {
-		t.Errorf("Expected 3 IOCs, got %d", len(iocs.IOCs))
-	}
-	if iocs.Type != "network" {
-		t.Errorf("Expected Type 'network', got %q", iocs.Type)
+	if iocs.Output == "" {
+		t.Error("Expected Output to be set")
 	}
 }
 

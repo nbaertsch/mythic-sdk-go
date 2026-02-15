@@ -124,15 +124,12 @@ func TestCredentialTypes(t *testing.T) {
 
 // TestCreateCredentialRequestTypes tests the CreateCredentialRequest type structure
 func TestCreateCredentialRequestTypes(t *testing.T) {
-	taskID := 123
-
 	req := types.CreateCredentialRequest{
 		Type:       "hash",
 		Account:    "user1",
 		Realm:      "DOMAIN",
 		Credential: "aad3b435b51404eeaad3b435b51404ee",
 		Comment:    "NTLM hash",
-		TaskID:     &taskID,
 		Metadata:   `{"hash_type":"ntlm"}`,
 	}
 
@@ -142,8 +139,8 @@ func TestCreateCredentialRequestTypes(t *testing.T) {
 	if req.Account != "user1" {
 		t.Errorf("Expected Account 'user1', got %q", req.Account)
 	}
-	if req.TaskID == nil || *req.TaskID != 123 {
-		t.Errorf("Expected TaskID 123, got %v", req.TaskID)
+	if req.Credential != "aad3b435b51404eeaad3b435b51404ee" {
+		t.Errorf("Expected Credential to be set, got %q", req.Credential)
 	}
 }
 
