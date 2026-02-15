@@ -96,55 +96,42 @@ func (c *Client) GetC2ProfileByID(ctx context.Context, profileID int) (*types.C2
 }
 
 // CreateC2Instance creates a new C2 profile instance.
-func (c *Client) CreateC2Instance(ctx context.Context, req *types.CreateC2InstanceRequest) (*types.C2Profile, error) {
+func (c *Client) CreateC2Instance(ctx context.Context, req *types.CreateC2InstanceRequest) error {
 	if err := c.EnsureAuthenticated(ctx); err != nil {
-		return nil, err
+		return err
 	}
 
-	if req == nil || req.Name == "" {
-		return nil, WrapError("CreateC2Instance", ErrInvalidInput, "request and profile name are required")
+	if req == nil || req.InstanceName == "" || req.C2Instance == "" {
+		return WrapError("CreateC2Instance", ErrInvalidInput, "instance_name and c2_instance are required")
 	}
 
-	// Use current operation if not specified
-	operationID := c.GetCurrentOperation()
-	if req.OperationID != nil {
-		operationID = req.OperationID
-	}
-	if operationID == nil {
-		return nil, WrapError("CreateC2Instance", ErrInvalidInput, "operation ID is required")
+	if req.C2ProfileID <= 0 {
+		return WrapError("CreateC2Instance", ErrInvalidInput, "c2profile_id must be positive")
 	}
 
 	var mutation struct {
 		CreateC2Instance struct {
 			Status string `graphql:"status"`
 			Error  string `graphql:"error"`
-			ID     int    `graphql:"id"`
-		} `graphql:"create_c2_instance(name: $name, description: $description, operation_id: $operation_id, parameters: $parameters)"`
-	}
-
-	description := ""
-	if req.Description != nil {
-		description = *req.Description
+		} `graphql:"create_c2_instance(c2_instance: $c2_instance, c2profile_id: $c2profile_id, instance_name: $instance_name)"`
 	}
 
 	variables := map[string]interface{}{
-		"name":         req.Name,
-		"description":  description,
-		"operation_id": *operationID,
-		"parameters":   req.Parameters,
+		"c2_instance":   req.C2Instance,
+		"c2profile_id":  req.C2ProfileID,
+		"instance_name": req.InstanceName,
 	}
 
 	err := c.executeMutation(ctx, &mutation, variables)
 	if err != nil {
-		return nil, WrapError("CreateC2Instance", err, "failed to create C2 instance")
+		return WrapError("CreateC2Instance", err, "failed to create C2 instance")
 	}
 
 	if mutation.CreateC2Instance.Status != "success" {
-		return nil, WrapError("CreateC2Instance", ErrOperationFailed, mutation.CreateC2Instance.Error)
+		return WrapError("CreateC2Instance", ErrOperationFailed, mutation.CreateC2Instance.Error)
 	}
 
-	// Fetch the created profile
-	return c.GetC2ProfileByID(ctx, mutation.CreateC2Instance.ID)
+	return nil
 }
 
 // ImportC2Instance imports a C2 instance configuration.

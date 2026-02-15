@@ -43,10 +43,9 @@ func (c *C2Profile) IsDeleted() bool {
 
 // CreateC2InstanceRequest represents a request to create a C2 profile instance.
 type CreateC2InstanceRequest struct {
-	Name        string                 `json:"name"`
-	Description *string                `json:"description,omitempty"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
-	OperationID *int                   `json:"operation_id,omitempty"`
+	C2ProfileID  int    `json:"c2profile_id"`    // ID of the C2 profile to create an instance of
+	InstanceName string `json:"instance_name"`   // Name for this instance
+	C2Instance   string `json:"c2_instance"`     // JSON string of the instance configuration
 }
 
 // ImportC2InstanceRequest represents a request to import a C2 instance configuration.

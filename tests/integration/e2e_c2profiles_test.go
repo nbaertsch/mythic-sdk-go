@@ -224,21 +224,17 @@ func TestE2E_C2ProfileCreation(t *testing.T) {
 
 	// Use minimal parameters for HTTP profile
 	instanceReq := &types.CreateC2InstanceRequest{
-		Name:       "E2E-Test-HTTP-Instance",
-		Parameters: map[string]interface{}{},
+		C2ProfileID:  1,
+		InstanceName: "E2E-Test-HTTP-Instance",
+		C2Instance:   `{}`,
 	}
 
-	newInstance, err := client.CreateC2Instance(ctx2, instanceReq)
+	err = client.CreateC2Instance(ctx2, instanceReq)
 	if err != nil {
 		// Instance creation may fail if parameters are required or Docker isn't available
 		t.Logf("⚠ CreateC2Instance failed (expected in CI without full Docker): %v", err)
 	} else {
-		t.Logf("✓ C2 instance created: ID %d", newInstance.ID)
-
-		// If we created an instance, try to stop it
-		ctx3, cancel3 := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel3()
-		_ = client.StartStopProfile(ctx3, newInstance.ID, false)
+		t.Logf("✓ C2 instance created: %s", instanceReq.InstanceName)
 	}
 
 	t.Log("=== ✓ C2 profile creation tests completed ===")

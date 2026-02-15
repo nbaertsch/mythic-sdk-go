@@ -171,30 +171,20 @@ func TestC2ProfileWithoutOptionalFields(t *testing.T) {
 
 // TestCreateC2InstanceRequest tests CreateC2InstanceRequest structure
 func TestCreateC2InstanceRequest(t *testing.T) {
-	description := "Test C2 Profile"
-	operationID := 5
-
 	req := types.CreateC2InstanceRequest{
-		Name:        "test-http",
-		Description: &description,
-		OperationID: &operationID,
-		Parameters: map[string]interface{}{
-			"port":     8080,
-			"callback": "https://example.com/callback",
-		},
+		C2ProfileID:  1,
+		InstanceName: "test-http",
+		C2Instance:   `{"port":8080,"callback":"https://example.com/callback"}`,
 	}
 
-	if req.Name != "test-http" {
-		t.Errorf("Expected Name 'test-http', got %q", req.Name)
+	if req.C2ProfileID != 1 {
+		t.Errorf("Expected C2ProfileID 1, got %d", req.C2ProfileID)
 	}
-	if req.Description == nil || *req.Description != "Test C2 Profile" {
-		t.Error("Expected Description to be 'Test C2 Profile'")
+	if req.InstanceName != "test-http" {
+		t.Errorf("Expected InstanceName 'test-http', got %q", req.InstanceName)
 	}
-	if req.OperationID == nil || *req.OperationID != 5 {
-		t.Error("Expected OperationID to be 5")
-	}
-	if req.Parameters == nil {
-		t.Error("Expected Parameters to be set")
+	if req.C2Instance == "" {
+		t.Error("Expected C2Instance to be set")
 	}
 }
 
