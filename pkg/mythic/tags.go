@@ -2,6 +2,9 @@ package mythic
 
 import (
 	"context"
+	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
@@ -123,9 +126,67 @@ func (c *Client) CreateTagType(ctx context.Context, req *types.CreateTagTypeRequ
 		return nil, WrapError("CreateTagType", ErrInvalidInput, "no current operation set")
 	}
 
-	// Mythic does not provide a createTagType mutation in GraphQL
-	// Tag types must be managed through the admin interface
-	return nil, WrapError("CreateTagType", ErrOperationFailed, "tag type creation not supported via GraphQL API")
+	// Build dynamic insert mutation
+	fields := map[string]interface{}{
+		"name":         req.Name,
+		"operation_id": *operationID,
+	}
+	if req.Description != nil && *req.Description != "" {
+		fields["description"] = *req.Description
+	}
+	if req.Color != nil && *req.Color != "" {
+		fields["color"] = *req.Color
+	}
+
+	query := `mutation CreateTagType($object: tagtype_insert_input!) {
+		insert_tagtype_one(object: $object) {
+			id
+			name
+			description
+			color
+			operation_id
+		}
+	}`
+
+	variables := map[string]interface{}{
+		"object": fields,
+	}
+
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
+	if err != nil {
+		return nil, WrapError("CreateTagType", err, "failed to create tag type")
+	}
+
+	// Parse result
+	inserted, ok := result["insert_tagtype_one"].(map[string]interface{})
+	if !ok {
+		return nil, WrapError("CreateTagType", ErrInvalidResponse, "unexpected response format")
+	}
+
+	tagType := &types.TagType{
+		Name: fmt.Sprintf("%v", inserted["name"]),
+	}
+	if id, ok := inserted["id"].(float64); ok {
+		tagType.ID = int(id)
+	}
+	if desc, ok := inserted["description"].(string); ok {
+		tagType.Description = desc
+	}
+	if color, ok := inserted["color"].(string); ok {
+		tagType.Color = color
+	}
+	if opID, ok := inserted["operation_id"].(float64); ok {
+		tagType.OperationID = int(opID)
+	}
+
+	return tagType, nil
+}
+
+// tagTypeFieldGraphQLTypes maps tagtype _set field names to their GraphQL type declarations.
+var tagTypeFieldGraphQLTypes = map[string]string{
+	"name":        "String",
+	"description": "String",
+	"color":       "String",
 }
 
 // UpdateTagType updates a tag type's properties.
@@ -145,33 +206,60 @@ func (c *Client) UpdateTagType(ctx context.Context, req *types.UpdateTagTypeRequ
 		return nil, WrapError("UpdateTagType", ErrInvalidInput, "no fields to update")
 	}
 
-	// Simplified: only support updating name for now
-	// Note: Full multi-field updates require a different GraphQL approach
-	if req.Name == nil {
-		return nil, WrapError("UpdateTagType", ErrInvalidInput, "currently only name field updates are supported")
+	// Build dynamic _set fields
+	setFields := make(map[string]interface{})
+	if req.Name != nil {
+		setFields["name"] = *req.Name
+	}
+	if req.Description != nil {
+		setFields["description"] = *req.Description
+	}
+	if req.Color != nil {
+		setFields["color"] = *req.Color
 	}
 
-	var mutation struct {
-		UpdateTagtype struct {
-			Affected int `graphql:"affected_rows"`
-		} `graphql:"update_tagtype(where: {id: {_eq: $tagtype_id}}, _set: {name: $name})"`
+	// Build dynamic mutation
+	setParts := make([]string, 0, len(setFields))
+	setKeys := make([]string, 0, len(setFields))
+	for k := range setFields {
+		setKeys = append(setKeys, k)
 	}
+	sort.Strings(setKeys)
+	for _, k := range setKeys {
+		setParts = append(setParts, fmt.Sprintf("%s: $%s", k, k))
+	}
+
+	// Build var declarations
+	varDecls := make([]string, 0, len(setFields))
+	for _, k := range setKeys {
+		gqlType := tagTypeFieldGraphQLTypes[k]
+		varDecls = append(varDecls, fmt.Sprintf("$%s: %s", k, gqlType))
+	}
+
+	query := fmt.Sprintf(`mutation UpdateTagType($tagtype_id: Int!, %s) {
+		update_tagtype(where: {id: {_eq: $tagtype_id}}, _set: {%s}) {
+			affected_rows
+		}
+	}`, strings.Join(varDecls, ", "), strings.Join(setParts, ", "))
 
 	variables := map[string]interface{}{
 		"tagtype_id": req.ID,
-		"name":       *req.Name,
+	}
+	for k, v := range setFields {
+		variables[k] = v
 	}
 
-	err := c.executeMutation(ctx, &mutation, variables)
+	result, err := c.ExecuteRawGraphQL(ctx, query, variables)
 	if err != nil {
 		return nil, WrapError("UpdateTagType", err, "failed to update tag type")
 	}
 
-	if mutation.UpdateTagtype.Affected == 0 {
-		return nil, WrapError("UpdateTagType", ErrNotFound, "tag type not found or not updated")
+	if updateResult, ok := result["update_tagtype"].(map[string]interface{}); ok {
+		if affected, ok := updateResult["affected_rows"].(float64); ok && affected == 0 {
+			return nil, WrapError("UpdateTagType", ErrNotFound, "tag type not found or not updated")
+		}
 	}
 
-	// Fetch the updated tag type
 	return c.GetTagTypeByID(ctx, req.ID)
 }
 

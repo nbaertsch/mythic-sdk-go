@@ -8,6 +8,7 @@ import (
 	"github.com/nbaertsch/mythic-sdk-go/pkg/mythic/types"
 )
 
+
 // mythictreeProcess is the internal GraphQL shape for a process entry in mythictree.
 type mythictreeProcess struct {
 	ID          int             `graphql:"id"`
@@ -18,7 +19,7 @@ type mythictreeProcess struct {
 	CallbackID  *int            `graphql:"callback_id"`
 	TaskID      *int            `graphql:"task_id"`
 	OperationID int             `graphql:"operation_id"`
-	Timestamp   time.Time       `graphql:"timestamp"`
+	Timestamp   string          `graphql:"timestamp"`
 	Deleted     bool            `graphql:"deleted"`
 	Os          string          `graphql:"os"`
 	ParentPath  string          `graphql:"parent_path"`
@@ -58,6 +59,14 @@ func (m *mythictreeProcess) toProcess() *types.Process {
 		name = meta.BinPath
 	}
 
+	var ts time.Time
+	if m.Timestamp != "" {
+		parsed, err := parseTimestamp(m.Timestamp)
+		if err == nil {
+			ts = parsed
+		}
+	}
+
 	return &types.Process{
 		ID:              m.ID,
 		Name:            name,
@@ -73,7 +82,7 @@ func (m *mythictreeProcess) toProcess() *types.Process {
 		OperationID:     m.OperationID,
 		CallbackID:      m.CallbackID,
 		TaskID:          m.TaskID,
-		Timestamp:       m.Timestamp,
+		Timestamp:       ts,
 		Deleted:         m.Deleted,
 		Host: &types.Host{
 			Host: m.Host,
